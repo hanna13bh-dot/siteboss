@@ -3291,7 +3291,7 @@ function renderLostRentals() {
   // Combine: lost prospects + lostRents log
   const lostProspects = prospects.filter(p => p.stage === 'Lost');
   
-  function parseAmt(str) { return parseFloat((str||'').replace(/[^0-9.]/g,''))||0; }
+  function parseAmt(str) { if (typeof str === 'number') return str; return parseFloat((str||'').toString().replace(/[^0-9.]/g,''))||0; }
 
   // This month lost rent
   const now = new Date();
