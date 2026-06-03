@@ -3296,7 +3296,12 @@ function renderLostRentals() {
   // This month lost rent
   const now = new Date();
   const thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  const thisMonthLost = lostRents.filter(r => (r.date||'').startsWith(thisMonth));
+  const thisMonthLost = lostRents.filter(r => {
+    const d = (r.date||'').toString();
+    const dDate = new Date(d);
+    const dMonth = dDate.getFullYear() + '-' + String(dDate.getMonth()+1).padStart(2,'0');
+    return dMonth === thisMonth || d.startsWith(thisMonth);
+  });
   const thisMonthLostAmt = thisMonthLost.reduce((s,r) => s + parseAmt(r.value), 0);
   const tmLostEl = document.getElementById('d-lost-month');
   const tmLostSub = document.getElementById('d-lost-month-sub');
