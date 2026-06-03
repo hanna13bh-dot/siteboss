@@ -1570,7 +1570,7 @@ async function syncAll() {
   if (id_ && id_.records) invoices  = id_.records.filter(r => r.id);
   if (td  && td.records)  tasks     = td.records.filter(r => r.id);
   if (rd  && rd.records)  revenue   = rd.records.filter(r => r.id);
-  if (lrd && lrd.records) lostRents = lrd.records.filter(r => r.id);
+  if (lrd && lrd.records) lostRents = lrd.records.filter(r => r.id || r.equip || r.clientName || r.siteName);
   populateClientDropdowns();
   renderAll();
   if (activeProfileId) openProfile(activeProfileId);
