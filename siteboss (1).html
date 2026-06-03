@@ -1,0 +1,2787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Site Boss">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f0f0f">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f0f0f'/><text y='.9em' font-size='80' x='10'>🏗</text></svg>">
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Site Boss&quot;,&quot;short_name&quot;:&quot;Site Boss&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230f0f0f&quot;,&quot;theme_color&quot;:&quot;%23e8a020&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f0f0f'/><text y='.9em' font-size='80' x='10'>🏗</text></svg>&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
+<title>Site Boss</title>
+<title>Site Boss</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:#0f0f0f; --surface:#181818; --surface2:#222; --surface3:#1d1d1d;
+  --border:#2a2a2a; --border2:#333;
+  --accent:#e8a020; --accent2:#c45c1a;
+  --green:#2ecc71; --yellow:#f39c12; --red:#e74c3c; --blue:#3498db;
+  --text:#e8e8e8; --muted:#666; --muted2:#999;
+  --fh:'Bebas Neue',sans-serif;
+  --fm:'IBM Plex Mono',monospace;
+  --fb:'IBM Plex Sans',sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;min-height:-webkit-fill-available}
+html{height:-webkit-fill-available}
+.app-body{padding-bottom:env(safe-area-inset-bottom)}
+header{padding-top:max(14px,env(safe-area-inset-top))}
+
+/* SETUP */
+#setup-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.setup-card{background:var(--surface);border:1px solid var(--border);border-top:4px solid var(--accent);padding:40px;max-width:580px;width:100%}
+.setup-title{font-family:var(--fh);font-size:32px;letter-spacing:3px;color:var(--accent);margin-bottom:6px}
+.setup-sub{font-family:var(--fm);font-size:12px;color:var(--muted2);margin-bottom:28px}
+.setup-hint{font-size:11px;color:var(--muted2);font-family:var(--fm);margin-bottom:20px;line-height:1.9;background:var(--surface2);border-left:3px solid var(--accent);padding:14px}
+.setup-hint code{color:var(--accent)} .setup-hint strong{color:var(--text)}
+.setup-label{font-family:var(--fm);font-size:10px;letter-spacing:1px;color:var(--muted2);text-transform:uppercase;margin-bottom:6px}
+.setup-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 14px;font-family:var(--fm);font-size:13px;outline:none;margin-bottom:16px}
+.setup-input:focus{border-color:var(--accent)}
+
+/* LOADING / TOAST */
+#loading-bar{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0%;transition:width .3s;z-index:9999}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--accent);border-left:4px solid var(--accent);padding:14px 20px;font-family:var(--fm);font-size:12px;color:var(--accent);z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s;max-width:320px}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:2px solid var(--accent);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:10px}
+.logo{font-family:var(--fh);font-size:26px;letter-spacing:3px;color:var(--accent)}
+.logo span{color:var(--text)}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stat-pill{background:var(--surface2);border:1px solid var(--border);padding:5px 11px;border-radius:20px;font-family:var(--fm);font-size:10px;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%}
+.icon-btn{font-family:var(--fm);font-size:10px;letter-spacing:1px;padding:6px 12px;border:1px solid var(--border);background:transparent;color:var(--muted2);cursor:pointer;text-transform:uppercase;transition:all .2s}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* LAYOUT */
+.app-body{display:flex;height:calc(100vh - 58px)}
+
+/* SIDEBAR NAV */
+.sidebar{width:200px;min-width:200px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0}
+.nav-item{font-family:var(--fm);font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:12px 20px;cursor:pointer;color:var(--muted2);border-left:3px solid transparent;transition:all .2s;display:flex;align-items:center;gap:10px}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(232,160,32,.05)}
+.nav-item.green-nav.active{color:var(--green);border-left-color:var(--green)}
+.nav-item.blue-nav.active{color:var(--blue);border-left-color:var(--blue)}
+.nav-divider{height:1px;background:var(--border);margin:10px 20px}
+.nav-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--muted);padding:8px 20px 4px;text-transform:uppercase}
+
+/* MAIN CONTENT */
+.main-content{flex:1;overflow-y:auto;padding:24px}
+
+/* PANELS */
+.panel{display:none}.panel.active{display:block}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-bottom:24px}
+.dash-card{background:var(--surface);border:1px solid var(--border);padding:16px;position:relative;overflow:hidden;cursor:default}
+.dash-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.c-accent::before{background:var(--accent)}.c-green::before{background:var(--green)}
+.c-yellow::before{background:var(--yellow)}.c-red::before{background:var(--red)}.c-blue::before{background:var(--blue)}
+.dash-label{font-family:var(--fm);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:8px}
+.dash-number{font-family:var(--fh);font-size:40px;line-height:1}
+.dash-sub{font-size:10px;color:var(--muted2);margin-top:4px;font-family:var(--fm)}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.two-col{grid-template-columns:1fr}}
+.col-title{font-family:var(--fh);font-size:17px;letter-spacing:2px;margin-bottom:12px}
+
+/* SECTION HEADERS */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:var(--fh);font-size:19px;letter-spacing:2px}
+.section-actions{display:flex;gap:8px;align-items:center}
+.badge{font-family:var(--fm);font-size:10px;padding:3px 10px;background:var(--surface2);border:1px solid var(--border)}
+
+/* FORMS */
+.form-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);padding:22px;margin-bottom:20px}
+.form-card.gt{border-top-color:var(--green)}
+.form-title{font-family:var(--fh);font-size:20px;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
+.form-title.g{color:var(--green)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+label{font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--muted2);text-transform:uppercase}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 11px;font-family:var(--fb);font-size:13px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+textarea{resize:vertical}
+
+/* BUTTONS */
+.btn{font-family:var(--fm);font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:10px 20px;border:none;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled,.btn-green:disabled{opacity:.5;cursor:not-allowed}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{background:#27ae60}
+.btn-small{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:5px 10px;border:1px solid var(--border);background:transparent;color:var(--muted2);cursor:pointer;text-transform:uppercase;transition:all .2s}
+.btn-small:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{font-family:var(--fm);font-size:9px;padding:5px 10px;border:1px solid #333;background:transparent;color:#555;cursor:pointer;transition:all .2s}
+.btn-danger:hover{border-color:var(--red);color:var(--red)}
+.btn-ghost{font-family:var(--fm);font-size:10px;letter-spacing:1px;padding:9px 18px;border:1px solid var(--border);background:transparent;color:var(--muted2);cursor:pointer;text-transform:uppercase}
+
+/* TIERS */
+.tier{display:inline-block;font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:2px}
+.tier-1{background:rgba(46,204,113,.12);color:var(--green);border:1px solid rgba(46,204,113,.25)}
+.tier-2{background:rgba(243,156,18,.12);color:var(--yellow);border:1px solid rgba(243,156,18,.25)}
+.tier-3{background:rgba(231,76,60,.12);color:var(--red);border:1px solid rgba(231,76,60,.25)}
+.status-badge{display:inline-block;font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:2px}
+.s-active{background:rgba(46,204,113,.12);color:var(--green);border:1px solid rgba(46,204,113,.25)}
+.s-pending{background:rgba(243,156,18,.12);color:var(--yellow);border:1px solid rgba(243,156,18,.25)}
+.s-complete{background:rgba(100,100,100,.15);color:var(--muted2);border:1px solid #333}
+.s-lost{background:rgba(231,76,60,.12);color:var(--red);border:1px solid rgba(231,76,60,.25)}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2);border-bottom:2px solid var(--border)}
+th{font-family:var(--fm);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);padding:10px 13px;text-align:left;white-space:nowrap}
+td{padding:11px 13px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.015)}
+.cell-name{font-weight:600;font-size:13px;cursor:pointer;color:var(--text);transition:color .2s}
+.cell-name:hover{color:var(--accent)}
+.cell-sub{font-size:10px;color:var(--muted2);font-family:var(--fm);margin-top:1px}
+.note-clip{font-size:11px;color:var(--muted2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actions{display:flex;gap:4px;flex-wrap:wrap}
+.days-badge{font-family:var(--fm);font-size:11px;font-weight:500}
+.dh{color:var(--green)}.dw{color:var(--yellow)}.dc{color:var(--red)}
+
+/* FILTERS */
+.filters{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--muted2);cursor:pointer;text-transform:uppercase;transition:all .2s}
+.filter-btn.active,.filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+.search-box{flex:1;min-width:150px;max-width:260px}
+
+/* RE-ENGAGEMENT CARDS */
+.reeng-cards{display:flex;flex-direction:column;gap:8px}
+.reeng-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid;padding:13px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rc-t1{border-left-color:var(--green)}.rc-t2{border-left-color:var(--yellow)}.rc-t3{border-left-color:var(--red)}
+.reeng-name{font-weight:600;font-size:13px;cursor:pointer;color:var(--text)}
+.reeng-name:hover{color:var(--accent)}
+.reeng-meta{font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:3px}
+.prompt-box{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:11px 13px;margin-top:8px;font-size:11px;line-height:1.7;color:#bbb;font-family:var(--fm);white-space:pre-wrap;display:none}
+.prompt-box.open{display:block}
+.copy-btn{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:3px 9px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;margin-top:6px;text-transform:uppercase;transition:all .2s;display:inline-block}
+.copy-btn:hover{background:var(--accent);color:#000}
+
+/* ══════════════════════════════════════
+   CUSTOMER PROFILE PANEL
+══════════════════════════════════════ */
+#profile-panel{display:none;position:fixed;top:58px;right:0;width:520px;height:calc(100vh - 58px);background:var(--surface);border-left:2px solid var(--accent);overflow-y:auto;z-index:90;transform:translateX(100%);transition:transform .3s ease}
+#profile-panel.open{display:block;transform:translateX(0)}
+
+.profile-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:20px 22px;position:sticky;top:0;z-index:10}
+.profile-close{position:absolute;top:16px;right:18px;font-family:var(--fm);font-size:11px;color:var(--muted2);cursor:pointer;padding:4px 8px;border:1px solid var(--border);background:transparent;transition:all .2s}
+.profile-close:hover{color:var(--red);border-color:var(--red)}
+.profile-name{font-family:var(--fh);font-size:28px;letter-spacing:2px;color:var(--accent);margin-bottom:2px}
+.profile-company{font-family:var(--fm);font-size:12px;color:var(--muted2)}
+
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin:16px 22px}
+.pstat{background:var(--surface2);padding:14px 12px;text-align:center}
+.pstat-num{font-family:var(--fh);font-size:28px;line-height:1}
+.pstat-label{font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--muted2);text-transform:uppercase;margin-top:4px}
+
+.profile-section{padding:16px 22px;border-bottom:1px solid var(--border)}
+.profile-section-title{font-family:var(--fh);font-size:16px;letter-spacing:2px;color:var(--muted2);margin-bottom:12px}
+
+.profile-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pinfo{display:flex;flex-direction:column;gap:3px}
+.pinfo-label{font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.pinfo-val{font-size:13px;font-weight:500}
+
+/* Site cards in profile */
+.profile-site{background:var(--surface2);border:1px solid var(--border);border-left:3px solid;padding:12px 14px;margin-bottom:8px}
+.profile-site.s-a{border-left-color:var(--green)}
+.profile-site.s-p{border-left-color:var(--yellow)}
+.profile-site.s-c{border-left-color:var(--muted)}
+.profile-site.s-l{border-left-color:var(--red)}
+.ps-name{font-weight:600;font-size:13px;margin-bottom:4px}
+.ps-meta{font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:2px}
+.ps-equip{font-family:var(--fm);font-size:10px;color:var(--blue);margin-top:2px}
+.ps-value{font-family:var(--fm);font-size:10px;color:var(--green);margin-top:2px}
+.ps-actions{display:flex;gap:5px;margin-top:8px}
+
+/* Prompt in profile */
+.profile-prompt-box{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px;margin-top:8px;font-size:11px;line-height:1.7;color:#bbb;font-family:var(--fm);white-space:pre-wrap;display:none}
+.profile-prompt-box.open{display:block}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);padding:24px;width:90%;max-width:620px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--fh);font-size:20px;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
+.modal-title.g{color:var(--green)}
+.modal-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:36px;color:var(--muted2);font-family:var(--fm);font-size:12px}
+.empty-icon{font-size:30px;margin-bottom:8px}
+
+/* ANIMATIONS */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pulse{animation:pulse 2s infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{display:inline-block;animation:spin 1s linear infinite}
+
+/* AR */
+.ar-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid;padding:14px 18px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ar-card.ar-critical{border-left-color:var(--red)}
+.ar-card.ar-warning{border-left-color:var(--yellow)}
+.ar-card.ar-ok{border-left-color:var(--green)}
+.ar-name{font-weight:600;font-size:14px;cursor:pointer}
+.ar-name:hover{color:var(--accent)}
+.ar-meta{font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:3px}
+.ar-amount{font-family:var(--fh);font-size:28px;line-height:1}
+.ar-days{font-family:var(--fm);font-size:11px;font-weight:500;margin-top:4px}
+.ar-overdue{color:var(--red)}
+.ar-warning-text{color:var(--yellow)}
+.ar-action-log{background:var(--surface2);border:1px solid var(--border);padding:8px 12px;margin-top:8px;font-size:11px;font-family:var(--fm);color:var(--muted2)}
+.ar-action-item{padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:10px}
+.ar-action-item:last-child{border-bottom:none}
+.ar-action-date{color:var(--accent);min-width:90px}
+.ar-action-note{color:var(--text)}
+.ar-report-header{background:var(--surface2);border:1px solid var(--border);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.ar-report-title{font-family:var(--fh);font-size:24px;letter-spacing:2px;color:var(--accent)}
+.ar-report-date{font-family:var(--fm);font-size:11px;color:var(--muted2)}
+
+/* FOLLOW-UP */
+.followup-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);padding:13px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.followup-card.urgent{border-left-color:var(--red)}
+.followup-card.today{border-left-color:var(--yellow)}
+.followup-card.upcoming{border-left-color:var(--blue)}
+.followup-name{font-weight:600;font-size:13px;cursor:pointer}
+.followup-name:hover{color:var(--accent)}
+.followup-meta{font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:3px}
+.followup-due{font-family:var(--fm);font-size:11px;font-weight:500;margin-top:4px}
+.due-overdue{color:var(--red)}
+.due-today{color:var(--yellow)}
+.due-upcoming{color:var(--blue)}
+
+/* COMPETITOR */
+.competitor-badge{display:inline-block;font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:2px;background:rgba(231,76,60,.12);color:var(--red);border:1px solid rgba(231,76,60,.25)}
+
+/* PROSPECTS */
+.pipeline-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:24px}
+.pipeline-col{background:var(--surface);border:1px solid var(--border);border-top:3px solid}
+.pipeline-col.stage-lead{border-top-color:var(--muted2)}
+.pipeline-col.stage-contacted{border-top-color:var(--blue)}
+.pipeline-col.stage-quoted{border-top-color:var(--yellow)}
+.pipeline-col.stage-won{border-top-color:var(--green)}
+.pipeline-col.stage-lost{border-top-color:var(--red)}
+.pipeline-col-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.pipeline-col-title{font-family:var(--fh);font-size:16px;letter-spacing:2px}
+.pipeline-col-count{font-family:var(--fm);font-size:10px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border)}
+.pipeline-col-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:100px}
+.prospect-card{background:var(--surface2);border:1px solid var(--border);padding:12px;cursor:pointer;transition:all .2s}
+.prospect-card:hover{border-color:var(--accent)}
+.prospect-card-name{font-weight:600;font-size:13px;margin-bottom:3px}
+.prospect-card-sub{font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:2px}
+.prospect-card-value{font-family:var(--fm);font-size:10px;color:var(--green);margin-top:4px}
+.prospect-card-date{font-family:var(--fm);font-size:10px;color:var(--muted2)}
+.prospect-source{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:2px;display:inline-block;margin-top:4px}
+.src-drive{background:rgba(52,152,219,.15);color:var(--blue);border:1px solid rgba(52,152,219,.25)}
+.src-referral{background:rgba(46,204,113,.15);color:var(--green);border:1px solid rgba(46,204,113,.25)}
+.src-permit{background:rgba(232,160,32,.15);color:var(--accent);border:1px solid rgba(232,160,32,.25)}
+.src-other{background:rgba(100,100,100,.15);color:var(--muted2);border:1px solid #333}
+.pipeline-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.pip-stat{background:var(--surface);border:1px solid var(--border);padding:14px;position:relative;overflow:hidden}
+.pip-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+
+/* MAP */
+#map-container{width:100%;height:calc(100vh - 180px);min-height:500px;background:var(--surface2);border:1px solid var(--border);position:relative}
+#map-frame{width:100%;height:100%;border:none}
+.map-legend{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:11px;color:var(--muted2)}
+.legend-dot{width:12px;height:12px;border-radius:50%}
+.map-info-bar{background:var(--surface2);border:1px solid var(--border);padding:10px 16px;font-family:var(--fm);font-size:11px;color:var(--muted2);margin-bottom:14px}
+
+/* MAP POPUP */
+.map-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;align-items:center;justify-content:center}
+.map-popup-overlay.open{display:flex}
+.map-popup{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);padding:24px;width:90%;max-width:480px;max-height:80vh;overflow-y:auto}
+.map-popup.green-top{border-top-color:var(--green)}
+.map-popup.red-top{border-top-color:var(--red)}
+.map-popup.yellow-top{border-top-color:var(--yellow)}
+.popup-title{font-family:var(--fh);font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:4px}
+.popup-title.green{color:var(--green)}
+.popup-sub{font-family:var(--fm);font-size:11px;color:var(--muted2);margin-bottom:16px}
+.popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.popup-field{display:flex;flex-direction:column;gap:3px}
+.popup-label{font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.popup-val{font-size:13px;font-weight:500}
+.popup-subs{margin-top:10px}
+.popup-sub-item{background:var(--surface2);border:1px solid var(--border);padding:8px 12px;margin-bottom:6px;font-size:12px}
+.popup-sub-name{font-weight:600}
+.popup-sub-detail{font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:2px}
+.popup-close{font-family:var(--fm);font-size:10px;letter-spacing:1px;padding:8px 16px;border:1px solid var(--border);background:transparent;color:var(--muted2);cursor:pointer;text-transform:uppercase;margin-top:14px}
+.popup-close:hover{border-color:var(--red);color:var(--red)}
+
+/* MAP FILTERS */
+.map-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.map-filter-btn{font-family:var(--fm);font-size:10px;letter-spacing:1px;padding:6px 14px;border:1px solid var(--border);background:transparent;color:var(--muted2);cursor:pointer;text-transform:uppercase;transition:all .2s}
+.map-filter-btn.active,.map-filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div id="loading-bar"></div>
+<div id="toast"></div>
+
+<!-- ═══════ SETUP ═══════ -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-title">BRAD HANNA CRM</div>
+    <div class="setup-sub">v3 — Customers + Job Sites + Profiles</div>
+    <div class="setup-hint">
+      <strong>Step 1:</strong> Create a new Google Spreadsheet<br>
+      <strong>Step 2:</strong> Extensions → Apps Script → paste <code>google-apps-script-v3.js</code><br>
+      <strong>Step 3:</strong> Run → <code>setupSheets</code> and authorize<br>
+      <strong>Step 4:</strong> Deploy → New deployment → Web app → Anyone → Deploy<br>
+      <strong>Step 5:</strong> Paste your Web App URL below
+    </div>
+    <div class="setup-label">Google Apps Script Web App URL</div>
+    <input class="setup-input" type="text" id="sheet-url-input" placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
+    <button class="btn btn-primary" onclick="saveUrl()" style="width:100%">CONNECT & LAUNCH →</button>
+  </div>
+</div>
+
+<!-- ═══════ MAIN APP ═══════ -->
+<div id="main-app" style="display:none">
+
+<header>
+  <div class="logo">🏗 <span>SITE</span> BOSS</div>
+  <div class="header-right">
+    <div class="stat-pill"><div class="dot pulse" style="background:var(--green)"></div><span id="hdr-active">0</span></div>
+    <div class="stat-pill"><div class="dot" style="background:var(--yellow)"></div><span id="hdr-warm">0</span></div>
+    <div class="stat-pill"><div class="dot" style="background:var(--red)"></div><span id="hdr-cold">0</span></div>
+    <div class="stat-pill"><div class="dot" style="background:var(--blue)"></div><span id="hdr-sites">0 SITES</span></div>
+    <div class="stat-pill"><div class="dot" style="background:var(--accent)"></div><span id="hdr-revenue">$0/mo</span></div>
+    <button class="icon-btn" onclick="syncAll()" id="sync-btn">⟳ SYNC</button>
+    <button class="icon-btn" onclick="resetUrl()" style="font-size:9px">⚙</button>
+  </div>
+</header>
+
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPanel('dashboard')">📊 Dashboard</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Manage</div>
+    <div class="nav-item green-nav" onclick="showPanel('customers')">👷 Customers</div>
+    <div class="nav-item blue-nav" onclick="showPanel('jobsites')">🏗 Job Sites</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Actions</div>
+    <div class="nav-item" onclick="showPanel('reengagement')">🔁 Re-Engage</div>
+    <div class="nav-item" onclick="showPanel('add-customer')">+ Customer</div>
+    <div class="nav-item" onclick="showPanel('add-site')">+ Job Site</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Territory</div>
+    <div class="nav-item" onclick="showPanel('map')">🗺 Map View</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Pipeline</div>
+    <div class="nav-item" onclick="showPanel('prospects')">🔍 Prospects</div>
+    <div class="nav-item" onclick="showPanel('add-prospect')">+ Prospect</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Daily</div>
+    <div class="nav-item" onclick="showPanel('followups')">⏰ Follow-Ups</div>
+    <div class="nav-item" onclick="showPanel('ar')">💵 AR / Invoices</div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="dash-grid">
+        <div class="dash-card c-accent">
+          <div class="dash-label">Total Customers</div>
+          <div class="dash-number" id="d-total">0</div>
+          <div class="dash-sub">in your book</div>
+        </div>
+        <div class="dash-card c-green">
+          <div class="dash-label">🟢 Active</div>
+          <div class="dash-number" id="d-t1">0</div>
+          <div class="dash-sub">0–30 days</div>
+        </div>
+        <div class="dash-card c-yellow">
+          <div class="dash-label">🟡 Warm</div>
+          <div class="dash-number" id="d-t2">0</div>
+          <div class="dash-sub">30–90 days</div>
+        </div>
+        <div class="dash-card c-red">
+          <div class="dash-label">🔴 Cold</div>
+          <div class="dash-number" id="d-t3">0</div>
+          <div class="dash-sub">90+ days</div>
+        </div>
+        <div class="dash-card c-blue">
+          <div class="dash-label">Active Sites</div>
+          <div class="dash-number" id="d-sites">0</div>
+          <div class="dash-sub">running now</div>
+        </div>
+        <div class="dash-card c-accent">
+          <div class="dash-label">Monthly Revenue</div>
+          <div class="dash-number" id="d-rev" style="font-size:28px;margin-top:4px">$0</div>
+          <div class="dash-sub">active sites total</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="col-title" style="color:var(--red)">NEEDS ATTENTION</div>
+          <div id="dash-attention" class="reeng-cards">
+            <div class="empty-state"><div class="empty-icon">⟳</div>Loading...</div>
+          </div>
+        </div>
+        <div>
+          <div class="col-title" style="color:var(--blue)">ACTIVE JOB SITES</div>
+          <div id="dash-sites-list">
+            <div class="empty-state"><div class="empty-icon">⟳</div>Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CUSTOMERS ══ -->
+    <div class="panel" id="panel-customers">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--green)">👷 CUSTOMERS</div>
+        <div class="section-actions">
+          <span class="badge" id="cust-count">0 customers</span>
+          <button class="btn btn-primary" onclick="showPanel('add-customer')">+ Add</button>
+        </div>
+      </div>
+      <div class="filters">
+        <button class="filter-btn active" onclick="filterC('all',this)">All</button>
+        <button class="filter-btn" onclick="filterC('1',this)">🟢 Active</button>
+        <button class="filter-btn" onclick="filterC('2',this)">🟡 Warm</button>
+        <button class="filter-btn" onclick="filterC('3',this)">🔴 Cold</button>
+        <input class="search-box" type="text" placeholder="Search..." oninput="searchC(this.value)">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Customer</th><th>Equipment</th><th>Last Contact</th>
+            <th>Days</th><th>Tier</th><th>Sites</th><th>Total/Mo</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="c-tbody"><tr><td colspan="8" class="empty-state"><div class="empty-icon">⟳</div>Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ JOB SITES ══ -->
+    <div class="panel" id="panel-jobsites">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--blue)">🏗 JOB SITES</div>
+        <div class="section-actions">
+          <span class="badge" id="sites-count">0 sites</span>
+          <button class="btn btn-green" onclick="showPanel('add-site')">+ Add Site</button>
+        </div>
+      </div>
+      <div class="filters">
+        <button class="filter-btn active" onclick="filterS('all',this)">All</button>
+        <button class="filter-btn" onclick="filterS('Active',this)">🟢 Active</button>
+        <button class="filter-btn" onclick="filterS('Pending',this)">🟡 Pending</button>
+        <button class="filter-btn" onclick="filterS('Complete',this)">✓ Complete</button>
+        <button class="filter-btn" onclick="filterS('Lost',this)">✕ Lost</button>
+        <input class="search-box" type="text" placeholder="Search..." oninput="searchS(this.value)">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Job Site</th><th>Customer</th><th>City</th><th>Superintendent</th>
+            <th>Equipment</th><th>Zone</th><th>Last Check-In</th><th>Subs</th><th>Status</th><th>Value/Mo</th><th>Dates</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="s-tbody"><tr><td colspan="9" class="empty-state"><div class="empty-icon">⟳</div>Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ RE-ENGAGEMENT ══ -->
+    <div class="panel" id="panel-reengagement">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--yellow)">🔁 RE-ENGAGEMENT</div>
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--yellow);margin-bottom:10px">TIER 2 — WARM (30–90 DAYS)</div>
+        <div id="re-t2" class="reeng-cards"><div class="empty-state">None right now.</div></div>
+      </div>
+      <div>
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--red);margin-bottom:10px">TIER 3 — COLD (90+ DAYS)</div>
+        <div id="re-t3" class="reeng-cards"><div class="empty-state">None right now.</div></div>
+      </div>
+    </div>
+
+    <!-- ══ ADD CUSTOMER ══ -->
+    <div class="panel" id="panel-add-customer">
+      <div class="form-card">
+        <div class="form-title">ADD NEW CUSTOMER</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Name *</label><input type="text" id="f-name" placeholder="John Smith"></div>
+          <div class="form-group"><label>Company *</label><input type="text" id="f-company" placeholder="ABC Construction"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="f-phone" placeholder="(555) 000-0000"></div>
+          <div class="form-group"><label>Email</label><input type="text" id="f-email" placeholder="john@abc.com"></div>
+          <div class="form-group"><label>Equipment They Rent</label><input type="text" id="f-equip" placeholder="Excavators, lifts..."></div>
+          <div class="form-group"><label>Last Contact Date *</label><input type="date" id="f-date"></div>
+          <div class="form-group"><label>Project Type</label><input type="text" id="f-project" placeholder="Commercial, residential..."></div>
+          <div class="form-group"><label>Est. Monthly Value</label><input type="text" id="f-value" placeholder="$5,000"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="f-notes" rows="3" placeholder="What did you last discuss? Any upcoming projects?"></textarea></div>
+        <button class="btn btn-primary" id="add-c-btn" onclick="addClient()">ADD CUSTOMER →</button>
+      </div>
+    </div>
+
+    <!-- ══ ADD JOB SITE ══ -->
+    <div class="panel" id="panel-add-site">
+      <div class="form-card gt">
+        <div class="form-title g">ADD NEW JOB SITE</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Site Name *</label><input type="text" id="s-name" placeholder="Downtown Hotel Project"></div>
+          <div class="form-group"><label>Customer * (select or type)</label>
+            <select id="s-clientId" onchange="fillClientName()">
+              <option value="">— Select Customer —</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Address</label><input type="text" id="s-address" placeholder="123 Main St"></div>
+          <div class="form-group"><label>City</label><input type="text" id="s-city" placeholder="Houston, TX"></div>
+          <div class="form-group"><label>Last Check-In Date</label><input type="date" id="s-checkin"></div>
+          <div class="form-group"><label>Sub 1 Name</label><input type="text" id="s-supe" placeholder="Mike Johnson"></div>
+          <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="s-supephone" placeholder="(555) 000-0000"></div>
+          <div class="form-group"><label>Sub 1 Company</label><input type="text" id="s-sub1company" placeholder=""></div>
+          <div class="form-group"><label>Sub 2 Name</label><input type="text" id="s-sub2name" placeholder=""></div>
+          <div class="form-group"><label>Sub 2 Phone</label><input type="text" id="s-sub2phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 2 Company</label><input type="text" id="s-sub2company" placeholder=""></div>
+          <div class="form-group"><label>Sub 3 Name</label><input type="text" id="s-sub3name" placeholder=""></div>
+          <div class="form-group"><label>Sub 3 Phone</label><input type="text" id="s-sub3phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 3 Company</label><input type="text" id="s-sub3company" placeholder=""></div>
+          <div class="form-group"><label>Sub 4 Name</label><input type="text" id="s-sub4name" placeholder=""></div>
+          <div class="form-group"><label>Sub 4 Phone</label><input type="text" id="s-sub4phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 4 Company</label><input type="text" id="s-sub4company" placeholder=""></div>
+          <div class="form-group"><label>Sub 5 Name</label><input type="text" id="s-sub5name" placeholder=""></div>
+          <div class="form-group"><label>Sub 5 Phone</label><input type="text" id="s-sub5phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 5 Company</label><input type="text" id="s-sub5company" placeholder=""></div>
+          <div class="form-group"><label>Sub 6 Name</label><input type="text" id="s-sub6name" placeholder=""></div>
+          <div class="form-group"><label>Sub 6 Phone</label><input type="text" id="s-sub6phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 6 Company</label><input type="text" id="s-sub6company" placeholder=""></div>
+          <div class="form-group"><label>Sub 7 Name</label><input type="text" id="s-sub7name" placeholder=""></div>
+          <div class="form-group"><label>Sub 7 Phone</label><input type="text" id="s-sub7phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 7 Company</label><input type="text" id="s-sub7company" placeholder=""></div>
+          <div class="form-group"><label>Sub 8 Name</label><input type="text" id="s-sub8name" placeholder=""></div>
+          <div class="form-group"><label>Sub 8 Phone</label><input type="text" id="s-sub8phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 8 Company</label><input type="text" id="s-sub8company" placeholder=""></div>
+          <div class="form-group"><label>Sub 9 Name</label><input type="text" id="s-sub9name" placeholder=""></div>
+          <div class="form-group"><label>Sub 9 Phone</label><input type="text" id="s-sub9phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 9 Company</label><input type="text" id="s-sub9company" placeholder=""></div>
+          <div class="form-group"><label>Sub 10 Name</label><input type="text" id="s-sub10name" placeholder=""></div>
+          <div class="form-group"><label>Sub 10 Phone</label><input type="text" id="s-sub10phone" placeholder=""></div>
+          <div class="form-group"><label>Sub 10 Company</label><input type="text" id="s-sub10company" placeholder=""></div>
+          <div class="form-group"><label>Equipment On Site</label><input type="text" id="s-equip" placeholder="Scissor lift, excavator..."></div>
+          <div class="form-group"><label>Est. Monthly Value</label><input type="text" id="s-value" placeholder="$8,000"></div>
+          <div class="form-group"><label>Zone</label><input type="text" id="s-zone" placeholder="North, South, Zone 1..."></div>
+          <div class="form-group"><label>Start Date</label><input type="date" id="s-start"></div>
+          <div class="form-group"><label>End Date (est.)</label><input type="date" id="s-end"></div>
+          <div class="form-group"><label>Status</label>
+            <select id="s-status">
+              <option value="Active">Active</option>
+              <option value="Pending">Pending</option>
+              <option value="Complete">Complete</option>
+              <option value="Lost">Lost</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Competitor on Site</label><input type="text" id="s-competitor" placeholder="e.g. Sunbelt, United, RSC..."></div>
+        <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="s-notes" rows="3" placeholder="Access details, equipment needs, key contacts..."></textarea></div>
+        <button class="btn btn-green" id="add-s-btn" onclick="addSite()">ADD JOB SITE →</button>
+      </div>
+    </div>
+
+  <!-- ══ PROSPECTS ══ -->
+    <div class="panel" id="panel-prospects">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--blue)">🔍 PROSPECT PIPELINE</div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="showPanel('add-prospect')">+ Add Prospect</button>
+        </div>
+      </div>
+
+      <!-- Pipeline Summary Stats -->
+      <div class="pipeline-summary">
+        <div class="pip-stat" style="--c:var(--blue)"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue)"></div><div class="dash-label">Pipeline Value</div><div style="font-family:var(--fh);font-size:28px" id="pip-total-val">$0</div></div>
+        <div class="pip-stat"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--muted2)"></div><div class="dash-label">Leads</div><div style="font-family:var(--fh);font-size:28px" id="pip-lead-count">0</div></div>
+        <div class="pip-stat"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue)"></div><div class="dash-label">Contacted</div><div style="font-family:var(--fh);font-size:28px" id="pip-contacted-count">0</div></div>
+        <div class="pip-stat"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--yellow)"></div><div class="dash-label">Quoted</div><div style="font-family:var(--fh);font-size:28px" id="pip-quoted-count">0</div></div>
+        <div class="pip-stat"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--green)"></div><div class="dash-label">Won</div><div style="font-family:var(--fh);font-size:28px" id="pip-won-count">0</div></div>
+      </div>
+
+      <!-- Kanban Board -->
+      <div class="pipeline-board" id="pipeline-board">
+        <div class="pipeline-col stage-lead">
+          <div class="pipeline-col-header"><div class="pipeline-col-title" style="color:var(--muted2)">🔍 LEAD</div><div class="pipeline-col-count" id="col-lead-count">0</div></div>
+          <div class="pipeline-col-body" id="col-lead"></div>
+        </div>
+        <div class="pipeline-col stage-contacted">
+          <div class="pipeline-col-header"><div class="pipeline-col-title" style="color:var(--blue)">📞 CONTACTED</div><div class="pipeline-col-count" id="col-contacted-count">0</div></div>
+          <div class="pipeline-col-body" id="col-contacted"></div>
+        </div>
+        <div class="pipeline-col stage-quoted">
+          <div class="pipeline-col-header"><div class="pipeline-col-title" style="color:var(--yellow)">💰 QUOTED</div><div class="pipeline-col-count" id="col-quoted-count">0</div></div>
+          <div class="pipeline-col-body" id="col-quoted"></div>
+        </div>
+        <div class="pipeline-col stage-won">
+          <div class="pipeline-col-header"><div class="pipeline-col-title" style="color:var(--green)">🏆 WON</div><div class="pipeline-col-count" id="col-won-count">0</div></div>
+          <div class="pipeline-col-body" id="col-won"></div>
+        </div>
+        <div class="pipeline-col stage-lost">
+          <div class="pipeline-col-header"><div class="pipeline-col-title" style="color:var(--red)">✕ LOST</div><div class="pipeline-col-count" id="col-lost-count">0</div></div>
+          <div class="pipeline-col-body" id="col-lost"></div>
+        </div>
+      </div>
+    </div>
+
+  <!-- ══ ADD PROSPECT ══ -->
+    <div class="panel" id="panel-add-prospect">
+      <div class="form-card" style="border-top-color:var(--blue)">
+        <div class="form-title" style="color:var(--blue)">ADD NEW PROSPECT</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Project Name *</label><input type="text" id="p-name" placeholder="Downtown Office Tower"></div>
+          <div class="form-group"><label>GC / Company *</label><input type="text" id="p-company" placeholder="ABC Construction"></div>
+          <div class="form-group"><label>Contact Name</label><input type="text" id="p-contact" placeholder="John Smith"></div>
+          <div class="form-group"><label>Contact Phone</label><input type="text" id="p-phone" placeholder="(555) 000-0000"></div>
+          <div class="form-group"><label>Address</label><input type="text" id="p-address" placeholder="123 Main St"></div>
+          <div class="form-group"><label>City</label><input type="text" id="p-city" placeholder="Houston, TX"></div>
+          <div class="form-group"><label>Zone</label><input type="text" id="p-zone" placeholder="North, South..."></div>
+          <div class="form-group"><label>Est. Start Date</label><input type="date" id="p-start"></div>
+          <div class="form-group"><label>Est. Monthly Value</label><input type="text" id="p-value" placeholder="$8,000"></div>
+          <div class="form-group"><label>Equipment Needed</label><input type="text" id="p-equip" placeholder="Scissor lifts, excavator..."></div>
+          <div class="form-group"><label>Stage</label>
+            <select id="p-stage">
+              <option value="Lead">🔍 Lead</option>
+              <option value="Contacted">📞 Contacted</option>
+              <option value="Quoted">💰 Quoted</option>
+              <option value="Won">🏆 Won</option>
+              <option value="Lost">✕ Lost</option>
+            </select>
+          </div>
+          <div class="form-group"><label>How Did You Find It?</label>
+            <select id="p-source">
+              <option value="Drive By">🚗 Drive By</option>
+              <option value="Referral">🤝 Referral</option>
+              <option value="Permit">📋 Permit Filing</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Linked Customer</label>
+            <select id="p-clientId">
+              <option value="">— None —</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Last Follow-Up Date</label><input type="date" id="p-followup"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Competitor Quoting</label><input type="text" id="p-competitor" placeholder="e.g. Sunbelt, United, RSC..."></div>
+        <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="p-notes" rows="3" placeholder="Details about the project, who you spoke to, what equipment they need..."></textarea></div>
+        <button class="btn" style="background:var(--blue);color:#000" id="add-p-btn" onclick="addProspect()">ADD PROSPECT →</button>
+      </div>
+    </div>
+
+  <!-- ══ FOLLOW-UPS ══ -->
+    <div class="panel" id="panel-followups">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--accent)">⏰ FOLLOW-UPS</div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="showPanel('add-followup')">+ Add Follow-Up</button>
+        </div>
+      </div>
+
+      <div class="dash-grid" style="margin-bottom:20px">
+        <div class="dash-card c-red"><div class="dash-label">⚠ Overdue</div><div class="dash-number" id="fu-overdue">0</div><div class="dash-sub">past due date</div></div>
+        <div class="dash-card c-yellow"><div class="dash-label">📅 Due Today</div><div class="dash-number" id="fu-today">0</div><div class="dash-sub">follow up now</div></div>
+        <div class="dash-card c-blue"><div class="dash-label">📆 This Week</div><div class="dash-number" id="fu-week">0</div><div class="dash-sub">coming up</div></div>
+        <div class="dash-card c-accent"><div class="dash-label">Total Open</div><div class="dash-number" id="fu-total">0</div><div class="dash-sub">follow-ups</div></div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--red);margin-bottom:10px">⚠ OVERDUE</div>
+        <div id="fu-overdue-list" class="reeng-cards"><div class="empty-state">None overdue.</div></div>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--yellow);margin-bottom:10px">📅 DUE TODAY</div>
+        <div id="fu-today-list" class="reeng-cards"><div class="empty-state">Nothing due today.</div></div>
+      </div>
+      <div>
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--blue);margin-bottom:10px">📆 UPCOMING</div>
+        <div id="fu-upcoming-list" class="reeng-cards"><div class="empty-state">Nothing upcoming.</div></div>
+      </div>
+    </div>
+
+  <!-- ══ ADD FOLLOW-UP ══ -->
+    <div class="panel" id="panel-add-followup">
+      <div class="form-card" style="border-top-color:var(--accent)">
+        <div class="form-title">ADD FOLLOW-UP</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Title *</label><input type="text" id="fu-title" placeholder="Call John re: scissor lift renewal"></div>
+          <div class="form-group"><label>Due Date *</label><input type="date" id="fu-due"></div>
+          <div class="form-group"><label>Linked Customer</label>
+            <select id="fu-clientId"><option value="">— None —</option></select>
+          </div>
+          <div class="form-group"><label>Linked Job Site</label>
+            <select id="fu-siteId"><option value="">— None —</option></select>
+          </div>
+          <div class="form-group"><label>Type</label>
+            <select id="fu-type">
+              <option value="Call">📞 Call</option>
+              <option value="Visit">🚗 Site Visit</option>
+              <option value="Email">📧 Email</option>
+              <option value="Quote">💰 Send Quote</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Priority</label>
+            <select id="fu-priority">
+              <option value="High">🔴 High</option>
+              <option value="Medium">🟡 Medium</option>
+              <option value="Low">🟢 Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="fu-notes" rows="3" placeholder="What needs to happen on this follow-up?"></textarea></div>
+        <button class="btn btn-primary" id="add-fu-btn" onclick="addFollowUp()">ADD FOLLOW-UP →</button>
+      </div>
+    </div>
+
+  <!-- ══ AR / INVOICES ══ -->
+    <div class="panel" id="panel-ar">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--accent)">💵 ACCOUNTS RECEIVABLE</div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="showPanel('add-invoice')">+ Add Invoice</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)" onclick="exportAR()">⬇ Export Report</button>
+        </div>
+      </div>
+
+      <!-- AR Summary -->
+      <div class="dash-grid" style="margin-bottom:20px">
+        <div class="dash-card c-accent"><div class="dash-label">Total Outstanding</div><div class="dash-number" id="ar-total" style="font-size:28px;margin-top:4px">$0</div><div class="dash-sub">all open invoices</div></div>
+        <div class="dash-card c-red"><div class="dash-label">⚠ 60–90+ Days</div><div class="dash-number" id="ar-60" style="font-size:28px;margin-top:4px">$0</div><div class="dash-sub">action required</div></div>
+        <div class="dash-card c-yellow"><div class="dash-label">30–60 Days</div><div class="dash-number" id="ar-30" style="font-size:28px;margin-top:4px">$0</div><div class="dash-sub">watch list</div></div>
+        <div class="dash-card c-green"><div class="dash-label">30 Days</div><div class="dash-number" id="ar-current" style="font-size:28px;margin-top:4px">$0</div><div class="dash-sub">current</div></div>
+        <div class="dash-card c-red"><div class="dash-label">Invoices 60+</div><div class="dash-number" id="ar-60-count">0</div><div class="dash-sub">customers</div></div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters" style="margin-bottom:16px">
+        <button class="filter-btn active" onclick="filterAR('all',this)">All</button>
+        <button class="filter-btn" onclick="filterAR('60+',this)">⚠ 60+ Days</button>
+        <button class="filter-btn" onclick="filterAR('30-60',this)">30–60 Days</button>
+        <button class="filter-btn" onclick="filterAR('current',this)">Current</button>
+        <button class="filter-btn" onclick="filterAR('paid',this)">✓ Paid</button>
+        <input class="search-box" type="text" placeholder="Search customer..." oninput="searchAR(this.value)">
+      </div>
+
+      <!-- 60+ Day Alert Section -->
+      <div id="ar-60-section" style="margin-bottom:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--red);margin-bottom:12px">⚠ ACTION REQUIRED — 60+ DAYS OUTSTANDING</div>
+        <div id="ar-60-list"><div class="empty-state">No invoices over 60 days.</div></div>
+      </div>
+
+      <!-- All Invoices Table -->
+      <div id="ar-all-section">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--muted2);margin-bottom:12px">ALL OPEN INVOICES</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Customer</th><th>Invoice #</th><th>Amount</th><th>Invoice Date</th>
+              <th>Days Out</th><th>Status</th><th>Last Action</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="ar-tbody"><tr><td colspan="6" class="empty-state"><div class="empty-icon">💵</div>No invoices yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  <!-- ══ ADD INVOICE ══ -->
+    <div class="panel" id="panel-add-invoice">
+      <div class="form-card" style="border-top-color:var(--accent)">
+        <div class="form-title">ADD INVOICE</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Customer *</label>
+            <select id="inv-clientId"><option value="">— Select Customer —</option></select>
+          </div>
+          <div class="form-group"><label>Amount *</label><input type="text" id="inv-amount" placeholder="$5,000"></div>
+          <div class="form-group"><label>Days Past Due</label>
+            <select id="inv-due">
+              <option value="30">30 Days Past Due</option>
+              <option value="60">60 Days Past Due</option>
+              <option value="90">90 Days Past Due</option>
+              <option value="120">120+ Days Past Due</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Job Site</label>
+            <select id="inv-siteId"><option value="">— None —</option></select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="inv-status">
+              <option value="Open">Open</option>
+              <option value="Partial">Partial Payment</option>
+              <option value="Disputed">Disputed</option>
+              <option value="Paid">✓ Paid</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="inv-notes" rows="2" placeholder="Any details about this invoice..."></textarea></div>
+        <button class="btn btn-primary" id="add-inv-btn" onclick="addInvoice()">ADD INVOICE →</button>
+      </div>
+    </div>
+
+  <!-- ══ MAP VIEW ══ -->
+    <div class="panel" id="panel-map">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--accent)">🗺 TERRITORY MAP</div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="renderMap()">⟳ Refresh Map</button>
+        </div>
+      </div>
+
+      <div class="map-info-bar" id="map-info-bar">Loading your territory...</div>
+
+      <div class="map-filters">
+        <button class="map-filter-btn active" onclick="setMapFilter('all',this)">All</button>
+        <button class="map-filter-btn" onclick="setMapFilter('clients',this)">👷 Customers</button>
+        <button class="map-filter-btn" onclick="setMapFilter('sites',this)">🏗 Job Sites</button>
+        <button class="map-filter-btn" onclick="setMapFilter('cold',this)">🔴 Cold Clients</button>
+        <button class="map-filter-btn" onclick="setMapFilter('prospects',this)">🔍 Prospects</button>
+      </div>
+
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Active Customer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Warm Customer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Cold Customer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Active Job Site</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Pending Site</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b59b6"></div>🔍 Prospect</div>
+      </div>
+
+      <div id="map-container">
+        <div id="map-frame-container" style="width:100%;height:100%"></div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app-body -->
+<!-- PROSPECT EDIT MODAL -->
+<div class="modal-overlay" id="ep-modal">
+  <div class="modal" style="border-top-color:var(--blue)">
+    <div class="modal-title" style="color:var(--blue)">EDIT PROSPECT</div>
+    <input type="hidden" id="ep-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Project Name</label><input type="text" id="ep-name"></div>
+      <div class="form-group"><label>GC / Company</label><input type="text" id="ep-company"></div>
+      <div class="form-group"><label>Contact Name</label><input type="text" id="ep-contact"></div>
+      <div class="form-group"><label>Contact Phone</label><input type="text" id="ep-phone"></div>
+      <div class="form-group"><label>Address</label><input type="text" id="ep-address"></div>
+      <div class="form-group"><label>City</label><input type="text" id="ep-city"></div>
+      <div class="form-group"><label>Zone</label><input type="text" id="ep-zone"></div>
+      <div class="form-group"><label>Est. Start Date</label><input type="date" id="ep-start"></div>
+      <div class="form-group"><label>Est. Monthly Value</label><input type="text" id="ep-value"></div>
+      <div class="form-group"><label>Equipment Needed</label><input type="text" id="ep-equip"></div>
+      <div class="form-group"><label>Stage</label>
+        <select id="ep-stage">
+          <option value="Lead">🔍 Lead</option>
+          <option value="Contacted">📞 Contacted</option>
+          <option value="Quoted">💰 Quoted</option>
+          <option value="Won">🏆 Won</option>
+          <option value="Lost">✕ Lost</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Source</label>
+        <select id="ep-source">
+          <option value="Drive By">🚗 Drive By</option>
+          <option value="Referral">🤝 Referral</option>
+          <option value="Permit">📋 Permit Filing</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Linked Customer</label>
+        <select id="ep-clientId"><option value="">— None —</option></select>
+      </div>
+      <div class="form-group"><label>Last Follow-Up</label><input type="date" id="ep-followup"></div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>Competitor Quoting</label><input type="text" id="ep-competitor"></div>
+    <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="ep-notes" rows="3"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn" style="background:var(--blue);color:#000" id="ep-save-btn" onclick="saveProspectEdit()">SAVE →</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOLLOW-UP EDIT MODAL -->
+<div class="modal-overlay" id="efu-modal">
+  <div class="modal" style="border-top-color:var(--accent)">
+    <div class="modal-title">EDIT FOLLOW-UP</div>
+    <input type="hidden" id="efu-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Title</label><input type="text" id="efu-title"></div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="efu-due"></div>
+      <div class="form-group"><label>Linked Customer</label>
+        <select id="efu-clientId"><option value="">— None —</option></select>
+      </div>
+      <div class="form-group"><label>Linked Job Site</label>
+        <select id="efu-siteId"><option value="">— None —</option></select>
+      </div>
+      <div class="form-group"><label>Type</label>
+        <select id="efu-type">
+          <option value="Call">📞 Call</option>
+          <option value="Visit">🚗 Site Visit</option>
+          <option value="Email">📧 Email</option>
+          <option value="Quote">💰 Send Quote</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Priority</label>
+        <select id="efu-priority">
+          <option value="High">🔴 High</option>
+          <option value="Medium">🟡 Medium</option>
+          <option value="Low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select id="efu-status">
+          <option value="Open">Open</option>
+          <option value="Done">✓ Done</option>
+          <option value="Snoozed">💤 Snoozed</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="efu-notes" rows="3"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" id="efu-save-btn" onclick="saveFollowUpEdit()">SAVE →</button>
+    </div>
+  </div>
+</div>
+
+<!-- AR EDIT MODAL -->
+<div class="modal-overlay" id="einv-modal">
+  <div class="modal" style="border-top-color:var(--accent)">
+    <div class="modal-title">EDIT INVOICE</div>
+    <input type="hidden" id="einv-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Customer</label>
+        <select id="einv-clientId"><option value="">— Select —</option></select>
+      </div>
+      <div class="form-group"><label>Amount</label><input type="text" id="einv-amount"></div>
+      <div class="form-group"><label>Days Past Due</label>
+        <select id="einv-due">
+          <option value="30">30 Days Past Due</option>
+          <option value="60">60 Days Past Due</option>
+          <option value="90">90 Days Past Due</option>
+          <option value="120">120+ Days Past Due</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Job Site</label>
+        <select id="einv-siteId"><option value="">— None —</option></select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select id="einv-status">
+          <option value="Open">Open</option>
+          <option value="Partial">Partial Payment</option>
+          <option value="Disputed">Disputed</option>
+          <option value="Paid">✓ Paid</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="einv-notes" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" id="einv-save-btn" onclick="saveInvoiceEdit()">SAVE →</button>
+    </div>
+  </div>
+</div>
+
+<!-- AR ACTION LOG MODAL -->
+<div class="modal-overlay" id="ar-action-modal">
+  <div class="modal" style="border-top-color:var(--red)">
+    <div class="modal-title" style="color:var(--red)">LOG ACTION</div>
+    <input type="hidden" id="ar-action-inv-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Date Contacted</label><input type="date" id="ar-action-date"></div>
+      <div class="form-group"><label>Action Type</label>
+        <select id="ar-action-type">
+          <option value="Called">📞 Called</option>
+          <option value="Emailed">📧 Emailed</option>
+          <option value="Visited">🚗 Visited</option>
+          <option value="Left Message">💬 Left Message</option>
+          <option value="Promise to Pay">🤝 Promise to Pay</option>
+          <option value="Disputed">⚠ Disputed</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="ar-action-notes" rows="3" placeholder="What happened? What did they say? When do they promise to pay?"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" id="ar-action-save-btn" onclick="saveARAction()">LOG ACTION →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAP POPUP -->
+<div class="map-popup-overlay" id="map-popup-overlay">
+  <div class="map-popup" id="map-popup">
+    <div class="popup-title" id="mp-title">—</div>
+    <div class="popup-sub" id="mp-sub">—</div>
+    <div class="popup-grid" id="mp-grid"></div>
+    <div class="popup-subs" id="mp-subs"></div>
+    <button class="popup-close" onclick="closeMapPopup()">✕ CLOSE</button>
+  </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--accent);color:#000;padding:14px 20px;z-index:500;display:flex;align-items:center;justify-content:space-between;font-family:var(--fm);font-size:12px">
+  <span>🏗 Add Site Boss to your home screen for the best experience</span>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:rgba(0,0,0,.2);border:none;color:#000;padding:6px 12px;font-family:var(--fm);font-size:11px;cursor:pointer">DISMISS</button>
+</div>
+
+</div><!-- /main-app -->
+
+<!-- ═══════ CUSTOMER PROFILE PANEL ═══════ -->
+<div id="profile-panel">
+  <div class="profile-header">
+    <button class="profile-close" onclick="closeProfile()">✕ CLOSE</button>
+    <div class="profile-name" id="pp-name">—</div>
+    <div class="profile-company" id="pp-company">—</div>
+  </div>
+
+  <div class="profile-stats">
+    <div class="pstat">
+      <div class="pstat-num" id="pp-sites">0</div>
+      <div class="pstat-label">Total Sites</div>
+    </div>
+    <div class="pstat">
+      <div class="pstat-num" id="pp-active">0</div>
+      <div class="pstat-label">Active</div>
+    </div>
+    <div class="pstat">
+      <div class="pstat-num" id="pp-revenue" style="font-size:20px;padding-top:4px">$0</div>
+      <div class="pstat-label">Monthly</div>
+    </div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">CONTACT INFO</div>
+    <div class="profile-info-grid">
+      <div class="pinfo"><div class="pinfo-label">Phone</div><div class="pinfo-val" id="pp-phone">—</div></div>
+      <div class="pinfo"><div class="pinfo-label">Email</div><div class="pinfo-val" id="pp-email" style="font-size:12px">—</div></div>
+      <div class="pinfo"><div class="pinfo-label">Last Contact</div><div class="pinfo-val" id="pp-last">—</div></div>
+      <div class="pinfo"><div class="pinfo-label">Status</div><div class="pinfo-val" id="pp-tier">—</div></div>
+      <div class="pinfo"><div class="pinfo-label">Equipment</div><div class="pinfo-val" id="pp-equip" style="font-size:12px">—</div></div>
+      <div class="pinfo"><div class="pinfo-label">Project Type</div><div class="pinfo-val" id="pp-project" style="font-size:12px">—</div></div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted2);font-family:var(--fm)" id="pp-notes"></div>
+  </div>
+
+  <div class="profile-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="profile-section-title">JOB SITES</div>
+      <button class="btn-small" onclick="quickAddSite()" id="pp-add-site-btn">+ Add Site</button>
+    </div>
+    <div id="pp-sites-list"><div class="empty-state" style="padding:20px">No job sites yet.</div></div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">CLAUDE RE-ENGAGEMENT PROMPT</div>
+    <div style="font-size:11px;color:var(--muted2);font-family:var(--fm);margin-bottom:8px">Click to generate a prompt based on this customer's history</div>
+    <button class="btn-small" onclick="toggleProfilePrompt()">📋 Generate Prompt</button>
+    <div class="profile-prompt-box" id="pp-prompt"></div>
+    <button class="copy-btn" id="pp-copy-btn" onclick="copyProfilePrompt()" style="display:none;margin-top:6px">COPY TO CLAUDE</button>
+  </div>
+
+  <div class="profile-section" style="border-bottom:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="pp-touch-btn" onclick="touchFromProfile()">✓ Mark Contacted Today</button>
+      <button class="btn-small" id="pp-edit-btn" onclick="editFromProfile()">Edit Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CLIENT MODAL -->
+<div class="modal-overlay" id="ec-modal">
+  <div class="modal">
+    <div class="modal-title">EDIT CUSTOMER</div>
+    <input type="hidden" id="ec-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Name</label><input type="text" id="ec-name"></div>
+      <div class="form-group"><label>Company</label><input type="text" id="ec-company"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="ec-phone"></div>
+      <div class="form-group"><label>Email</label><input type="text" id="ec-email"></div>
+      <div class="form-group"><label>Equipment</label><input type="text" id="ec-equip"></div>
+      <div class="form-group"><label>Last Contact</label><input type="date" id="ec-date"></div>
+      <div class="form-group"><label>Project Type</label><input type="text" id="ec-project"></div>
+      <div class="form-group"><label>Monthly Value</label><input type="text" id="ec-value"></div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="ec-notes" rows="3"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" id="ec-save-btn" onclick="saveClientEdit()">SAVE →</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SITE MODAL -->
+<div class="modal-overlay" id="es-modal">
+  <div class="modal">
+    <div class="modal-title g" style="color:var(--green)">EDIT JOB SITE</div>
+    <input type="hidden" id="es-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Site Name</label><input type="text" id="es-name"></div>
+      <div class="form-group"><label>Customer</label>
+        <select id="es-clientId" onchange="fillEditClientName()">
+          <option value="">— Select Customer —</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Address</label><input type="text" id="es-address"></div>
+      <div class="form-group"><label>City</label><input type="text" id="es-city"></div>
+      <div class="form-group"><label>Last Check-In Date</label><input type="date" id="es-checkin"></div>
+      <div class="form-group"><label>Sub 1 Name</label><input type="text" id="es-supe"></div>
+      <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="es-supephone"></div>
+      <div class="form-group"><label>Sub 1 Company</label><input type="text" id="es-sub1company"></div>
+      <div class="form-group"><label>Sub 2 Name</label><input type="text" id="es-sub2name"></div>
+      <div class="form-group"><label>Sub 2 Phone</label><input type="text" id="es-sub2phone"></div>
+      <div class="form-group"><label>Sub 2 Company</label><input type="text" id="es-sub2company"></div>
+      <div class="form-group"><label>Sub 3 Name</label><input type="text" id="es-sub3name"></div>
+      <div class="form-group"><label>Sub 3 Phone</label><input type="text" id="es-sub3phone"></div>
+      <div class="form-group"><label>Sub 3 Company</label><input type="text" id="es-sub3company"></div>
+      <div class="form-group"><label>Sub 4 Name</label><input type="text" id="es-sub4name"></div>
+      <div class="form-group"><label>Sub 4 Phone</label><input type="text" id="es-sub4phone"></div>
+      <div class="form-group"><label>Sub 4 Company</label><input type="text" id="es-sub4company"></div>
+      <div class="form-group"><label>Sub 5 Name</label><input type="text" id="es-sub5name"></div>
+      <div class="form-group"><label>Sub 5 Phone</label><input type="text" id="es-sub5phone"></div>
+      <div class="form-group"><label>Sub 5 Company</label><input type="text" id="es-sub5company"></div>
+      <div class="form-group"><label>Sub 6 Name</label><input type="text" id="es-sub6name"></div>
+      <div class="form-group"><label>Sub 6 Phone</label><input type="text" id="es-sub6phone"></div>
+      <div class="form-group"><label>Sub 6 Company</label><input type="text" id="es-sub6company"></div>
+      <div class="form-group"><label>Sub 7 Name</label><input type="text" id="es-sub7name"></div>
+      <div class="form-group"><label>Sub 7 Phone</label><input type="text" id="es-sub7phone"></div>
+      <div class="form-group"><label>Sub 7 Company</label><input type="text" id="es-sub7company"></div>
+      <div class="form-group"><label>Sub 8 Name</label><input type="text" id="es-sub8name"></div>
+      <div class="form-group"><label>Sub 8 Phone</label><input type="text" id="es-sub8phone"></div>
+      <div class="form-group"><label>Sub 8 Company</label><input type="text" id="es-sub8company"></div>
+      <div class="form-group"><label>Sub 9 Name</label><input type="text" id="es-sub9name"></div>
+      <div class="form-group"><label>Sub 9 Phone</label><input type="text" id="es-sub9phone"></div>
+      <div class="form-group"><label>Sub 9 Company</label><input type="text" id="es-sub9company"></div>
+      <div class="form-group"><label>Sub 10 Name</label><input type="text" id="es-sub10name"></div>
+      <div class="form-group"><label>Sub 10 Phone</label><input type="text" id="es-sub10phone"></div>
+      <div class="form-group"><label>Sub 10 Company</label><input type="text" id="es-sub10company"></div>
+      <div class="form-group"><label>Equipment</label><input type="text" id="es-equip"></div>
+      <div class="form-group"><label>Monthly Value</label><input type="text" id="es-value"></div>
+      <div class="form-group"><label>Zone</label><input type="text" id="es-zone"></div>
+      <div class="form-group"><label>Start Date</label><input type="date" id="es-start"></div>
+      <div class="form-group"><label>End Date</label><input type="date" id="es-end"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="es-status">
+          <option value="Active">Active</option>
+          <option value="Pending">Pending</option>
+          <option value="Complete">Complete</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>Competitor on Site</label><input type="text" id="es-competitor"></div>
+    <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="es-notes" rows="3"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-green" id="es-save-btn" onclick="saveSiteEdit()">SAVE →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let clients   = [];
+let jobsites  = [];
+let prospects = [];
+let followups = [];
+let invoices  = [];
+let arFilter  = 'all';
+let arSearch  = '';
+let cFilter   = 'all', cSearch = '';
+let sFilter   = 'all', sSearch = '';
+let activeProfileId = null;
+let SHEET_URL = localStorage.getItem('brad_crm_v3_url') || 'https://script.google.com/macros/s/AKfycbyY9IQfOjZrvrCwvabb_h_hDTnlKT272TW5St2_HS13Tb5jML-7yZMoRavpOajmbXxB8Q/exec';
+
+// Always hide setup screen and launch
+document.addEventListener('DOMContentLoaded', function() {
+  const setup = document.getElementById('setup-screen');
+  if (setup) setup.style.display = 'none';
+  const app = document.getElementById('main-app');
+  if (app) app.style.display = 'block';
+});
+launch(); // Auto-launch with baked in URL
+
+// ══════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════
+function saveUrl() {
+  const url = document.getElementById('sheet-url-input').value.trim();
+  if (!url.startsWith('https://script.google.com')) { toast('Paste a valid Apps Script URL', true); return; }
+  localStorage.setItem('brad_crm_v3_url', url);
+  SHEET_URL = url;
+  launch();
+}
+
+function launch() {
+  SHEET_URL = 'https://script.google.com/macros/s/AKfycbyY9IQfOjZrvrCwvabb_h_hDTnlKT272TW5St2_HS13Tb5jML-7yZMoRavpOajmbXxB8Q/exec';
+  localStorage.setItem('brad_crm_v3_url', SHEET_URL);
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('f-date').value = today();
+  document.getElementById('s-start').value = today();
+  syncAll();
+}
+
+function resetUrl() { localStorage.removeItem('brad_crm_v3_url'); location.reload(); }
+function today()    { return new Date().toISOString().split('T')[0]; }
+
+// ══════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════
+function bar(on) {
+  const el = document.getElementById('loading-bar');
+  el.style.width = on ? '70%' : '100%';
+  if (!on) setTimeout(() => el.style.width = '0%', 400);
+}
+
+async function api(params) {
+  bar(true);
+  try {
+    let res;
+    if (params.action === 'getAll') {
+      res = await fetch(`${SHEET_URL}?action=getAll&type=${params.type}`);
+    } else {
+      res = await fetch(SHEET_URL, { method:'POST', body:JSON.stringify(params) });
+    }
+    const data = await res.json();
+    bar(false);
+    return data;
+  } catch(e) { bar(false); toast('Connection error', true); return null; }
+}
+
+async function syncAll() {
+  const btn = document.getElementById('sync-btn');
+  btn.innerHTML = '<span class="spinning">⟳</span> SYNCING';
+  const [cd, sd] = await Promise.all([
+    api({ action:'getAll', type:'clients' }),
+    api({ action:'getAll', type:'jobsites' })
+  ]);
+  btn.innerHTML = '⟳ SYNC';
+  if (cd && cd.records) clients  = cd.records.filter(r => r.id || r.siteName || r.name);
+  if (sd && sd.records) jobsites = sd.records.filter(r => r.id || r.siteName);
+  populateClientDropdowns();
+  renderAll();
+  if (activeProfileId) openProfile(activeProfileId); // refresh open profile
+  toast(`${clients.length} customers · ${jobsites.length} sites`);
+}
+
+// ══════════════════════════════════════════════
+// CLIENT CRUD
+// ══════════════════════════════════════════════
+async function addClient() {
+  const name = document.getElementById('f-name').value.trim();
+  const company = document.getElementById('f-company').value.trim();
+  const date = document.getElementById('f-date').value;
+  if (!name || !company || !date) { toast('Name, Company and Date are required', true); return; }
+  const btn = document.getElementById('add-c-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    name, company,
+    phone: document.getElementById('f-phone').value.trim(),
+    email: document.getElementById('f-email').value.trim(),
+    equip: document.getElementById('f-equip').value.trim(),
+    lastContact: date,
+    project: document.getElementById('f-project').value.trim(),
+    value: document.getElementById('f-value').value.trim(),
+    notes: document.getElementById('f-notes').value.trim()
+  };
+  const res = await api({ action:'add', type:'clients', record });
+  btn.disabled = false; btn.textContent = 'ADD CUSTOMER →';
+  if (res && res.success) {
+    toast('Customer added ✓');
+    ['f-name','f-company','f-phone','f-email','f-equip','f-project','f-value','f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-date').value = today();
+    await syncAll();
+    showPanel('customers');
+  }
+}
+
+async function touchClient(id) {
+  const res = await api({ action:'touch', type:'clients', id });
+  if (res && res.success) { toast('Marked as contacted today ✓'); await syncAll(); }
+}
+
+async function deleteClient(id) {
+  if (!confirm('Remove this customer? Their job sites will remain but become unlinked.')) return;
+  const res = await api({ action:'delete', type:'clients', id });
+  if (res && res.success) { toast('Customer removed ✓'); closeProfile(); await syncAll(); }
+}
+
+function openEditClient(id) {
+  const c = clients.find(c => c.id == id);
+  if (!c) return;
+  document.getElementById('ec-id').value = c.id || '';
+  document.getElementById('ec-name').value = c.name || '';
+  document.getElementById('ec-company').value = c.company || '';
+  document.getElementById('ec-phone').value = c.phone || '';
+  document.getElementById('ec-email').value = c.email || '';
+  document.getElementById('ec-equip').value = c.equip || '';
+  document.getElementById('ec-date').value = c.lastContact || '';
+  document.getElementById('ec-project').value = c.project || '';
+  document.getElementById('ec-value').value = c.value || '';
+  document.getElementById('ec-notes').value = c.notes || '';
+  document.getElementById('ec-modal').classList.add('open');
+}
+
+async function saveClientEdit() {
+  const id = document.getElementById('ec-id').value;
+  const btn = document.getElementById('ec-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    id,
+    name: document.getElementById('ec-name').value.trim(),
+    company: document.getElementById('ec-company').value.trim(),
+    phone: document.getElementById('ec-phone').value.trim(),
+    email: document.getElementById('ec-email').value.trim(),
+    equip: document.getElementById('ec-equip').value.trim(),
+    lastContact: document.getElementById('ec-date').value,
+    project: document.getElementById('ec-project').value.trim(),
+    value: document.getElementById('ec-value').value.trim(),
+    notes: document.getElementById('ec-notes').value.trim()
+  };
+  const res = await api({ action:'update', type:'clients', record });
+  btn.disabled = false; btn.textContent = 'SAVE →';
+  if (res && res.success) { toast('Customer updated ✓'); closeModals(); await syncAll(); }
+}
+
+// ══════════════════════════════════════════════
+// JOB SITE CRUD
+// ══════════════════════════════════════════════
+async function addSite() {
+  const name = document.getElementById('s-name').value.trim();
+  const clientId = document.getElementById('s-clientId').value;
+  if (!name || !clientId) { toast('Site Name and Customer are required', true); return; }
+  const c = clients.find(c => c.id == clientId);
+  const btn = document.getElementById('add-s-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    siteName: name, clientId,
+    client: c ? `${c.name} — ${c.company}` : '',
+    address: document.getElementById('s-address').value.trim(),
+    city: document.getElementById('s-city').value.trim(),
+    lastCheckIn: document.getElementById('s-checkin').value,
+    superintendent: document.getElementById('s-supe').value.trim(),
+    supePhone: document.getElementById('s-supephone').value.trim(),
+    sub1company: document.getElementById('s-sub1company').value.trim(),
+    sub2name: document.getElementById('s-sub2name').value.trim(),
+    sub2phone: document.getElementById('s-sub2phone').value.trim(),
+    sub2company: document.getElementById('s-sub2company').value.trim(),
+    sub3name: document.getElementById('s-sub3name').value.trim(),
+    sub3phone: document.getElementById('s-sub3phone').value.trim(),
+    sub3company: document.getElementById('s-sub3company').value.trim(),
+    sub4name: document.getElementById('s-sub4name').value.trim(),
+    sub4phone: document.getElementById('s-sub4phone').value.trim(),
+    sub4company: document.getElementById('s-sub4company').value.trim(),
+    sub5name: document.getElementById('s-sub5name').value.trim(),
+    sub5phone: document.getElementById('s-sub5phone').value.trim(),
+    sub5company: document.getElementById('s-sub5company').value.trim(),
+    sub6name: document.getElementById('s-sub6name').value.trim(),
+    sub6phone: document.getElementById('s-sub6phone').value.trim(),
+    sub6company: document.getElementById('s-sub6company').value.trim(),
+    sub7name: document.getElementById('s-sub7name').value.trim(),
+    sub7phone: document.getElementById('s-sub7phone').value.trim(),
+    sub7company: document.getElementById('s-sub7company').value.trim(),
+    sub8name: document.getElementById('s-sub8name').value.trim(),
+    sub8phone: document.getElementById('s-sub8phone').value.trim(),
+    sub8company: document.getElementById('s-sub8company').value.trim(),
+    sub9name: document.getElementById('s-sub9name').value.trim(),
+    sub9phone: document.getElementById('s-sub9phone').value.trim(),
+    sub9company: document.getElementById('s-sub9company').value.trim(),
+    sub10name: document.getElementById('s-sub10name').value.trim(),
+    sub10phone: document.getElementById('s-sub10phone').value.trim(),
+    sub10company: document.getElementById('s-sub10company').value.trim(),
+    equipOnSite: document.getElementById('s-equip').value.trim(),
+    competitor: document.getElementById('s-competitor').value.trim(),
+    monthlyValue: document.getElementById('s-value').value.trim(),
+    zone: document.getElementById('s-zone').value.trim(),
+    startDate: document.getElementById('s-start').value,
+    endDate: document.getElementById('s-end').value,
+    status: document.getElementById('s-status').value,
+    notes: document.getElementById('s-notes').value.trim()
+  };
+  const res = await api({ action:'add', type:'jobsites', record });
+  btn.disabled = false; btn.textContent = 'ADD JOB SITE →';
+  if (res && res.success) {
+    toast('Job site added ✓');
+    ['s-name','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-competitor','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('s-clientId').value = '';
+    document.getElementById('s-start').value = today();
+    document.getElementById('s-status').value = 'Active';
+    await syncAll();
+    showPanel('jobsites');
+  }
+}
+
+async function deleteSite(id) {
+  if (!confirm('Remove this job site?')) return;
+  const res = await api({ action:'delete', type:'jobsites', id });
+  if (res && res.success) { toast('Site removed ✓'); await syncAll(); }
+}
+
+function openEditSite(id) {
+  const s = jobsites.find(s => s.id == id);
+  if (!s) return;
+  document.getElementById('es-id').value = s.id || '';
+  document.getElementById('es-name').value = s.siteName || '';
+  document.getElementById('es-clientId').value = s.clientId || '';
+  document.getElementById('es-address').value = s.address || '';
+  document.getElementById('es-city').value = s.city || '';
+  document.getElementById('es-checkin').value = s.lastCheckIn || '';
+  document.getElementById('es-supe').value = s.superintendent || '';
+  document.getElementById('es-supephone').value = s.supePhone || '';
+  document.getElementById('es-sub1company').value = s.sub1company || '';
+  document.getElementById('es-sub2name').value = s.sub2name || '';
+  document.getElementById('es-sub2phone').value = s.sub2phone || '';
+  document.getElementById('es-sub2company').value = s.sub2company || '';
+  document.getElementById('es-sub3name').value = s.sub3name || '';
+  document.getElementById('es-sub3phone').value = s.sub3phone || '';
+  document.getElementById('es-sub3company').value = s.sub3company || '';
+  document.getElementById('es-sub4name').value = s.sub4name || '';
+  document.getElementById('es-sub4phone').value = s.sub4phone || '';
+  document.getElementById('es-sub4company').value = s.sub4company || '';
+  document.getElementById('es-sub5name').value = s.sub5name || '';
+  document.getElementById('es-sub5phone').value = s.sub5phone || '';
+  document.getElementById('es-sub5company').value = s.sub5company || '';
+  document.getElementById('es-sub6name').value = s.sub6name || '';
+  document.getElementById('es-sub6phone').value = s.sub6phone || '';
+  document.getElementById('es-sub6company').value = s.sub6company || '';
+  document.getElementById('es-sub7name').value = s.sub7name || '';
+  document.getElementById('es-sub7phone').value = s.sub7phone || '';
+  document.getElementById('es-sub7company').value = s.sub7company || '';
+  document.getElementById('es-sub8name').value = s.sub8name || '';
+  document.getElementById('es-sub8phone').value = s.sub8phone || '';
+  document.getElementById('es-sub8company').value = s.sub8company || '';
+  document.getElementById('es-sub9name').value = s.sub9name || '';
+  document.getElementById('es-sub9phone').value = s.sub9phone || '';
+  document.getElementById('es-sub9company').value = s.sub9company || '';
+  document.getElementById('es-sub10name').value = s.sub10name || '';
+  document.getElementById('es-sub10phone').value = s.sub10phone || '';
+  document.getElementById('es-sub10company').value = s.sub10company || '';
+  document.getElementById('es-equip').value = s.equipOnSite || '';
+  document.getElementById('es-competitor').value = s.competitor || '';
+  document.getElementById('es-value').value = s.monthlyValue || '';
+  document.getElementById('es-zone').value = s.zone || '';
+  document.getElementById('es-start').value = s.startDate || '';
+  document.getElementById('es-end').value = s.endDate || '';
+  document.getElementById('es-status').value = s.status || 'Active';
+  document.getElementById('es-notes').value = s.notes || '';
+  document.getElementById('es-modal').classList.add('open');
+}
+
+async function saveSiteEdit() {
+  const id = document.getElementById('es-id').value;
+  const clientId = document.getElementById('es-clientId').value;
+  const c = clients.find(c => c.id == clientId);
+  const btn = document.getElementById('es-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    id, clientId,
+    client: c ? `${c.name} — ${c.company}` : document.getElementById('es-name').value,
+    siteName: document.getElementById('es-name').value.trim(),
+    address: document.getElementById('es-address').value.trim(),
+    city: document.getElementById('es-city').value.trim(),
+    lastCheckIn: document.getElementById('es-checkin').value,
+    superintendent: document.getElementById('es-supe').value.trim(),
+    supePhone: document.getElementById('es-supephone').value.trim(),
+    sub1company: document.getElementById('es-sub1company').value.trim(),
+    sub2name: document.getElementById('es-sub2name').value.trim(),
+    sub2phone: document.getElementById('es-sub2phone').value.trim(),
+    sub2company: document.getElementById('es-sub2company').value.trim(),
+    sub3name: document.getElementById('es-sub3name').value.trim(),
+    sub3phone: document.getElementById('es-sub3phone').value.trim(),
+    sub3company: document.getElementById('es-sub3company').value.trim(),
+    sub4name: document.getElementById('es-sub4name').value.trim(),
+    sub4phone: document.getElementById('es-sub4phone').value.trim(),
+    sub4company: document.getElementById('es-sub4company').value.trim(),
+    sub5name: document.getElementById('es-sub5name').value.trim(),
+    sub5phone: document.getElementById('es-sub5phone').value.trim(),
+    sub5company: document.getElementById('es-sub5company').value.trim(),
+    sub6name: document.getElementById('es-sub6name').value.trim(),
+    sub6phone: document.getElementById('es-sub6phone').value.trim(),
+    sub6company: document.getElementById('es-sub6company').value.trim(),
+    sub7name: document.getElementById('es-sub7name').value.trim(),
+    sub7phone: document.getElementById('es-sub7phone').value.trim(),
+    sub7company: document.getElementById('es-sub7company').value.trim(),
+    sub8name: document.getElementById('es-sub8name').value.trim(),
+    sub8phone: document.getElementById('es-sub8phone').value.trim(),
+    sub8company: document.getElementById('es-sub8company').value.trim(),
+    sub9name: document.getElementById('es-sub9name').value.trim(),
+    sub9phone: document.getElementById('es-sub9phone').value.trim(),
+    sub9company: document.getElementById('es-sub9company').value.trim(),
+    sub10name: document.getElementById('es-sub10name').value.trim(),
+    sub10phone: document.getElementById('es-sub10phone').value.trim(),
+    sub10company: document.getElementById('es-sub10company').value.trim(),
+    equipOnSite: document.getElementById('es-equip').value.trim(),
+    competitor: document.getElementById('es-competitor').value.trim(),
+    monthlyValue: document.getElementById('es-value').value.trim(),
+    zone: document.getElementById('es-zone').value.trim(),
+    startDate: document.getElementById('es-start').value,
+    endDate: document.getElementById('es-end').value,
+    status: document.getElementById('es-status').value,
+    notes: document.getElementById('es-notes').value.trim()
+  };
+  const res = await api({ action:'update', type:'jobsites', record });
+  btn.disabled = false; btn.textContent = 'SAVE →';
+  if (res && res.success) { toast('Site updated ✓'); closeModals(); await syncAll(); }
+}
+
+function closeModals() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+}
+
+// ══════════════════════════════════════════════
+// CUSTOMER PROFILE
+// ══════════════════════════════════════════════
+function openProfile(id) {
+  const c = clients.find(c => c.id == id);
+  if (!c) return;
+  activeProfileId = id;
+
+  const days  = daysSince(c.lastContact);
+  const tier  = getTier(days);
+  const sites = jobsites.filter(s => s.clientId == id);
+  const activeSites = sites.filter(s => s.status === 'Active');
+  const totalRev = sites.filter(s => s.status === 'Active').reduce((sum, s) => {
+    const v = parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,'')) || 0;
+    return sum + v;
+  }, 0);
+
+  document.getElementById('pp-name').textContent    = c.name;
+  document.getElementById('pp-company').textContent = c.company;
+  document.getElementById('pp-phone').textContent   = c.phone || '—';
+  document.getElementById('pp-email').textContent   = c.email || '—';
+  document.getElementById('pp-equip').textContent   = c.equip || '—';
+  document.getElementById('pp-project').textContent = c.project || '—';
+  document.getElementById('pp-last').textContent    = c.lastContact ? `${c.lastContact} (${days}d ago)` : '—';
+  document.getElementById('pp-tier').innerHTML      = tierLabel(tier);
+  document.getElementById('pp-notes').textContent   = c.notes || '';
+  document.getElementById('pp-sites').textContent   = sites.length;
+  document.getElementById('pp-active').textContent  = activeSites.length;
+  document.getElementById('pp-revenue').textContent = totalRev > 0 ? '$' + totalRev.toLocaleString() : '$0';
+  document.getElementById('pp-touch-btn').onclick   = () => touchClient(id);
+  document.getElementById('pp-edit-btn').onclick    = () => openEditClient(id);
+  document.getElementById('pp-add-site-btn').onclick = () => quickAddSite(id);
+
+  // Reset prompt
+  document.getElementById('pp-prompt').classList.remove('open');
+  document.getElementById('pp-copy-btn').style.display = 'none';
+  document.getElementById('pp-prompt').textContent = buildPrompt(c, tier);
+
+  // Sites list
+  const sitesList = document.getElementById('pp-sites-list');
+  if (!sites.length) {
+    sitesList.innerHTML = '<div class="empty-state" style="padding:20px;font-size:11px">No job sites yet.<br><br><button class="btn-small" onclick="quickAddSite()">+ Add First Site</button></div>';
+  } else {
+    const statusMap = { Active:'s-a', Pending:'s-p', Complete:'s-c', Lost:'s-l' };
+    sitesList.innerHTML = sites.map(s => `
+      <div class="profile-site ${statusMap[s.status]||'s-c'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="ps-name">${s.siteName}</div>
+          ${statusBadge(s.status)}
+        </div>
+        ${s.city ? `<div class="ps-meta">📍 ${s.address ? s.address+', ' : ''}${s.city}</div>` : ''}
+        ${s.lastCheckIn ? `<div class="ps-meta" style="color:var(--accent)">Last Check-In: ${s.lastCheckIn}</div>` : '<div class="ps-meta" style="color:var(--red)">⚠ No check-in recorded</div>'}
+        ${s.superintendent ? `<div class="ps-meta">👤 Sub 1: ${s.superintendent}${s.supePhone?' · '+s.supePhone:''}${s.sub1company?' · '+s.sub1company:''}</div>` : ''}
+        ${s.sub2name ? `<div class="ps-meta">👤 Sub 2: ${s.sub2name}${s.sub2phone?' · '+s.sub2phone:''}${s.sub2company?' · '+s.sub2company:''}</div>` : ''}
+        ${s.sub3name ? `<div class="ps-meta">👤 Sub 3: ${s.sub3name}${s.sub3phone?' · '+s.sub3phone:''}${s.sub3company?' · '+s.sub3company:''}</div>` : ''}
+        ${s.sub4name ? `<div class="ps-meta">👤 Sub 4: ${s.sub4name}${s.sub4phone?' · '+s.sub4phone:''}${s.sub4company?' · '+s.sub4company:''}</div>` : ''}
+        ${s.sub5name ? `<div class="ps-meta">👤 Sub 5: ${s.sub5name}${s.sub5phone?' · '+s.sub5phone:''}${s.sub5company?' · '+s.sub5company:''}</div>` : ''}
+        ${s.sub6name ? `<div class="ps-meta">👤 Sub 6: ${s.sub6name}${s.sub6phone?' · '+s.sub6phone:''}${s.sub6company?' · '+s.sub6company:''}</div>` : ''}
+        ${s.sub7name ? `<div class="ps-meta">👤 Sub 7: ${s.sub7name}${s.sub7phone?' · '+s.sub7phone:''}${s.sub7company?' · '+s.sub7company:''}</div>` : ''}
+        ${s.sub8name ? `<div class="ps-meta">👤 Sub 8: ${s.sub8name}${s.sub8phone?' · '+s.sub8phone:''}${s.sub8company?' · '+s.sub8company:''}</div>` : ''}
+        ${s.sub9name ? `<div class="ps-meta">👤 Sub 9: ${s.sub9name}${s.sub9phone?' · '+s.sub9phone:''}${s.sub9company?' · '+s.sub9company:''}</div>` : ''}
+        ${s.sub10name ? `<div class="ps-meta">👤 Sub 10: ${s.sub10name}${s.sub10phone?' · '+s.sub10phone:''}${s.sub10company?' · '+s.sub10company:''}</div>` : ''}
+        ${s.equipOnSite ? `<div class="ps-equip">🔧 ${s.equipOnSite}</div>` : ''}
+        ${s.monthlyValue ? `<div class="ps-value">💰 ${s.monthlyValue}/mo</div>` : ''}
+        ${s.zone ? `<div class="ps-meta">📍 Zone: ${s.zone}</div>` : ''}
+        ${s.competitor ? `<div class="ps-meta"><span class="competitor-badge">⚔ vs ${s.competitor}</span></div>` : ''}
+        ${s.startDate ? `<div class="ps-meta">📅 ${s.startDate}${s.endDate?' → '+s.endDate:''}</div>` : ''}
+        ${s.notes ? `<div class="ps-meta" style="margin-top:4px;color:var(--muted2)">${s.notes}</div>` : ''}
+        <div class="ps-actions">
+          <button class="btn-small" onclick="openEditSite('${s.id}')">Edit</button>
+          <button class="btn-danger" onclick="deleteSite('${s.id}')">✕ Remove</button>
+        </div>
+      </div>`).join('');
+  }
+
+  document.getElementById('profile-panel').classList.add('open');
+}
+
+function closeProfile() {
+  document.getElementById('profile-panel').classList.remove('open');
+  activeProfileId = null;
+}
+
+function quickAddSite(prefilledId) {
+  const id = prefilledId || activeProfileId;
+  if (id) document.getElementById('s-clientId').value = id;
+  closeProfile();
+  showPanel('add-site');
+}
+
+function toggleProfilePrompt() {
+  const box = document.getElementById('pp-prompt');
+  const btn = document.getElementById('pp-copy-btn');
+  box.classList.toggle('open');
+  btn.style.display = box.classList.contains('open') ? 'inline-block' : 'none';
+}
+
+function copyProfilePrompt() {
+  const text = document.getElementById('pp-prompt').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('pp-copy-btn');
+    btn.textContent = 'COPIED!';
+    setTimeout(() => btn.textContent = 'COPY TO CLAUDE', 1500);
+  });
+}
+
+function touchFromProfile() {
+  if (activeProfileId) touchClient(activeProfileId);
+}
+
+function editFromProfile() {
+  if (activeProfileId) openEditClient(activeProfileId);
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function daysSince(d) { return d ? Math.floor((new Date() - new Date(d)) / 86400000) : 999; }
+function getTier(days) { return days <= 30 ? 1 : days <= 90 ? 2 : 3; }
+function tierLabel(t) {
+  const m = {1:['tier-1','🟢 ACTIVE'],2:['tier-2','🟡 WARM'],3:['tier-3','🔴 COLD']};
+  return `<span class="tier ${m[t][0]}">${m[t][1]}</span>`;
+}
+function dClass(d) { return d<=30?'dh':d<=90?'dw':'dc'; }
+
+function statusBadge(s) {
+  const m = {Active:'s-active',Pending:'s-pending',Complete:'s-complete',Lost:'s-lost'};
+  return `<span class="status-badge ${m[s]||'s-complete'}">${s||'—'}</span>`;
+}
+
+function clientSites(id)  { return jobsites.filter(s => s.clientId == id); }
+function clientRevenue(id) {
+  return clientSites(id)
+    .filter(s => s.status === 'Active')
+    .reduce((sum,s) => sum + (parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0), 0);
+}
+
+function buildPrompt(c, tier) {
+  const days  = daysSince(c.lastContact);
+  const sites = clientSites(c.id);
+  const active = sites.filter(s => s.status === 'Active');
+  const siteInfo = active.length
+    ? `They currently have ${active.length} active job site(s): ${active.map(s=>s.siteName).join(', ')}.`
+    : 'No currently active job sites.';
+
+  if (tier === 2) return `I'm an outside sales rep in construction equipment rental with 20 years in the industry.\n\nWrite a short, personal text message to re-engage this client:\n- Name: ${c.name}\n- Company: ${c.company}\n- Equipment they rent: ${c.equip||'construction equipment'}\n- Last contact: ${days} days ago\n- ${siteInfo}\n- Notes: ${c.notes||'none'}\n\nPersonal, no pitch. Just open a conversation. Sign as Brad Hanna.`;
+
+  return `I'm an outside sales rep in construction equipment rental with 20 years in the industry.\n\nWrite a re-engagement email for a client I haven't contacted in ${days} days:\n- Name: ${c.name}\n- Company: ${c.company}\n- Equipment: ${c.equip||'construction equipment'}\n- Project type: ${c.project||'construction'}\n- ${siteInfo}\n- Last conversation: ${c.notes||'not recorded'}\n\nPersonal, reference history, give them a reason to respond. No discounts. Sign as Brad Hanna.`;
+}
+
+function populateClientDropdowns() {
+  const opts = ['<option value="">— Select Customer —</option>',
+    ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)
+  ].join('');
+  document.getElementById('s-clientId').innerHTML = opts;
+  document.getElementById('es-clientId').innerHTML = opts;
+  const pOpts = ['<option value="">— None —</option>', ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)].join('');
+  document.getElementById('p-clientId').innerHTML = pOpts;
+  document.getElementById('ep-clientId').innerHTML = pOpts;
+  const fuCOpts = ['<option value="">— None —</option>', ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)].join('');
+  document.getElementById('fu-clientId').innerHTML = fuCOpts;
+  document.getElementById('efu-clientId').innerHTML = fuCOpts;
+  const fuSOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}">${s.siteName}</option>`)].join('');
+  document.getElementById('fu-siteId').innerHTML = fuSOpts;
+  document.getElementById('efu-siteId').innerHTML = fuSOpts;
+  const invCOpts = ['<option value="">— Select Customer —</option>', ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)].join('');
+  document.getElementById('inv-clientId').innerHTML = invCOpts;
+  document.getElementById('einv-clientId').innerHTML = invCOpts;
+  const invSOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}">${s.siteName}</option>`)].join('');
+  document.getElementById('inv-siteId').innerHTML = invSOpts;
+  document.getElementById('einv-siteId').innerHTML = invSOpts;
+}
+
+function fillClientName() {}
+function fillEditClientName() {}
+
+function togglePrompt(id) { document.getElementById('prompt-'+id).classList.toggle('open'); }
+function copyPrompt(id) {
+  const text = document.getElementById('prompt-'+id).innerText.replace('COPY TO CLAUDE','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copybtn-'+id);
+    btn.textContent = 'COPIED!';
+    setTimeout(() => btn.textContent = 'COPY TO CLAUDE', 1500);
+  });
+}
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function renderAll() {
+  const t1 = clients.filter(c => getTier(daysSince(c.lastContact)) === 1);
+  const t2 = clients.filter(c => getTier(daysSince(c.lastContact)) === 2);
+  const t3 = clients.filter(c => getTier(daysSince(c.lastContact)) === 3);
+  const activeSites = jobsites.filter(s => s.status === 'Active');
+  const totalRev = activeSites.reduce((sum,s) => sum + (parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0), 0);
+
+  // Header
+  setEl('hdr-active', `${t1.length} ACTIVE`);
+  setEl('hdr-warm', `${t2.length} WARM`);
+  setEl('hdr-cold', `${t3.length} COLD`);
+  setEl('hdr-sites', `${activeSites.length} SITES`);
+  setEl('hdr-revenue', `$${totalRev.toLocaleString()}/mo`);
+
+  // Dash cards
+  function setEl(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+  setEl('d-total', clients.length);
+  setEl('d-t1', t1.length);
+  setEl('d-t2', t2.length);
+  setEl('d-t3', t3.length);
+  setEl('d-sites', activeSites.length);
+  setEl('d-rev', '$' + totalRev.toLocaleString());
+  const activeProspects = prospects.filter(p => p.stage !== 'Won' && p.stage !== 'Lost');
+  const pipelineVal = activeProspects.reduce((sum,p) => sum + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
+  setEl('d-prospects', activeProspects.length);
+  setEl('d-pipeline-val', '$' + pipelineVal.toLocaleString());
+  setEl('cust-count', `${clients.length} customers`);
+  setEl('sites-count', `${jobsites.length} sites`);
+
+  // Dashboard attention
+  const attention = [...t3,...t2].slice(0,4);
+  document.getElementById('dash-attention').innerHTML = attention.length
+    ? attention.map(c => reengCard(c, getTier(daysSince(c.lastContact)))).join('')
+    : '<div class="empty-state"><div class="empty-icon">✅</div>All customers active.</div>';
+
+  // Dashboard sites
+  document.getElementById('dash-sites-list').innerHTML = activeSites.length
+    ? activeSites.slice(0,5).map(s => dashSiteCard(s)).join('')
+    : '<div class="empty-state"><div class="empty-icon">🏗</div>No active sites yet.</div>';
+
+  // Re-engagement
+  document.getElementById('re-t2').innerHTML = t2.length ? t2.map(c => reengCard(c,2)).join('') : '<div class="empty-state">None right now.</div>';
+  document.getElementById('re-t3').innerHTML = t3.length ? t3.map(c => reengCard(c,3)).join('') : '<div class="empty-state">None right now.</div>';
+
+  renderClientTable();
+  renderSiteTable();
+  renderProspects();
+  renderFollowUps();
+  renderAR();
+}
+
+function reengCard(c, tier) {
+  const days = daysSince(c.lastContact);
+  const color = tier===2?'var(--yellow)':'var(--red)';
+  const sites = clientSites(c.id);
+  const siteInfo = sites.length ? `${sites.filter(s=>s.status==='Active').length} active site(s)` : 'no sites';
+  return `<div class="reeng-card rc-t${tier}">
+    <div style="flex:1;min-width:160px">
+      <div class="reeng-name" onclick="openProfile('${c.id}')">${c.name}</div>
+      <div class="reeng-meta">${c.company} · ${siteInfo}</div>
+      <div class="reeng-meta" style="color:${color}">Silent ${days} days</div>
+      <div class="prompt-box" id="prompt-${c.id}">${buildPrompt(c,tier)}<br><button class="copy-btn" id="copybtn-${c.id}" onclick="copyPrompt('${c.id}')">COPY TO CLAUDE</button></div>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">
+      <button class="btn-small" onclick="openProfile('${c.id}')">👤 Profile</button>
+      <button class="btn-small" onclick="touchClient('${c.id}')">✓ Contacted</button>
+      <button class="btn-small" onclick="togglePrompt('${c.id}')">📋</button>
+    </div>
+  </div>`;
+}
+
+function dashSiteCard(s) {
+  const c = clients.find(c => c.id == s.clientId);
+  return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);padding:10px 13px;margin-bottom:6px">
+    <div style="font-weight:600;font-size:13px">${s.siteName}</div>
+    <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:2px">${c?c.name+' — ':''} ${s.city||''}</div>
+    ${s.equipOnSite?`<div style="font-family:var(--fm);font-size:10px;color:var(--blue);margin-top:2px">${s.equipOnSite}</div>`:''}
+    ${s.monthlyValue?`<div style="font-family:var(--fm);font-size:10px;color:var(--green);margin-top:2px">${s.monthlyValue}/mo</div>`:''}
+    ${s.lastCheckIn?`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:2px">Check-in: ${s.lastCheckIn}</div>`:`<div style="font-family:var(--fm);font-size:10px;color:var(--red);margin-top:2px">⚠ No check-in</div>`}
+  </div>`;
+}
+
+function renderClientTable() {
+  let data = [...clients];
+  if (cFilter !== 'all') data = data.filter(c => getTier(daysSince(c.lastContact)) === parseInt(cFilter));
+  if (cSearch) { const q = cSearch.toLowerCase(); data = data.filter(c => (c.name||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)); }
+  data.sort((a,b) => daysSince(b.lastContact) - daysSince(a.lastContact));
+
+  const tbody = document.getElementById('c-tbody');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-icon">👷</div>No customers found.</td></tr>'; return; }
+
+  tbody.innerHTML = data.map(c => {
+    const days = daysSince(c.lastContact);
+    const tier = getTier(days);
+    const sites = clientSites(c.id);
+    const rev = clientRevenue(c.id);
+    return `<tr>
+      <td>
+        <div class="cell-name" onclick="openProfile('${c.id}')">${c.name}</div>
+        <div class="cell-sub">${c.company}</div>
+        ${c.phone?`<div class="cell-sub">${c.phone}</div>`:''}
+      </td>
+      <td style="font-size:11px">${c.equip||'—'}</td>
+      <td style="font-family:var(--fm);font-size:11px">${c.lastContact||'—'}</td>
+      <td><span class="days-badge ${dClass(days)}">${days}d</span></td>
+      <td>${tierLabel(tier)}</td>
+      <td style="font-family:var(--fm);font-size:11px;text-align:center">
+        <span style="color:${sites.length?'var(--blue)':'var(--muted2)'}">${sites.length}</span>
+        ${sites.filter(s=>s.status==='Active').length?`<span style="color:var(--green);font-size:9px"> (${sites.filter(s=>s.status==='Active').length} active)</span>`:''}
+      </td>
+      <td style="font-family:var(--fm);font-size:11px;color:${rev>0?'var(--green)':'var(--muted2)'}">${rev>0?'$'+rev.toLocaleString()+'/mo':'—'}</td>
+      <td><div class="actions">
+        <button class="btn-small" onclick="openProfile('${c.id}')">👤 Profile</button>
+        <button class="btn-small" onclick="touchClient('${c.id}')">✓</button>
+        <button class="btn-small" onclick="openEditClient('${c.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteClient('${c.id}')">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSiteTable() {
+  let data = [...jobsites];
+  if (sFilter !== 'all') data = data.filter(s => s.status === sFilter);
+  if (sSearch) { const q = sSearch.toLowerCase(); data = data.filter(s => (s.siteName||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)); }
+
+  const tbody = document.getElementById('s-tbody');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-icon">🏗</div>No sites found.</td></tr>'; return; }
+
+  tbody.innerHTML = data.map(s => {
+    const c = clients.find(c => c.id == s.clientId);
+    return `<tr>
+      <td><div class="cell-name" style="cursor:default">${s.siteName}</div>${s.city?`<div class="cell-sub">${s.city}</div>`:''}</td>
+      <td>${c?`<div class="cell-name" onclick="openProfile('${c.id}')" style="font-size:12px">${c.name}</div><div class="cell-sub">${c.company}</div>`:`<span style="color:var(--muted2);font-size:11px">${s.client||'—'}</span>`}</td>
+      <td style="font-size:11px;font-family:var(--fm)">${s.address||'—'}</td>
+      <td><div style="font-size:12px;font-weight:500">${s.superintendent||'—'}</div>${s.supePhone?`<div class="cell-sub">${s.supePhone}</div>`:''}</td>
+      <td style="font-size:11px">${s.equipOnSite||'—'}</td>
+      <td style="font-family:var(--fm);font-size:11px">${s.zone||'—'}</td>
+      <td style="font-family:var(--fm);font-size:11px;color:${s.lastCheckIn?(daysSince(s.lastCheckIn)>30?'var(--red)':'var(--green)'):'var(--red)'}">${s.lastCheckIn||'⚠ None'}</td>
+      <td style="font-size:11px">${[s.superintendent,s.sub2name,s.sub3name,s.sub4name,s.sub5name,s.sub6name,s.sub7name,s.sub8name,s.sub9name,s.sub10name].filter(Boolean).join(', ')||'—'}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td style="font-family:var(--fm);font-size:11px;color:var(--green)">${s.monthlyValue||'—'}</td>
+      <td style="font-family:var(--fm);font-size:10px;white-space:nowrap">${s.startDate||'—'}${s.endDate?'<br>→ '+s.endDate:''}</td>
+      <td><div class="actions">
+        <button class="btn-small" onclick="openEditSite('${s.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteSite('${s.id}')">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+// showPanel defined in map section
+
+function filterC(f, btn) {
+  cFilter = f;
+  document.querySelectorAll('#panel-customers .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderClientTable();
+}
+
+function searchC(v) { cSearch = v; renderClientTable(); }
+
+function filterS(f, btn) {
+  sFilter = f;
+  document.querySelectorAll('#panel-jobsites .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSiteTable();
+}
+
+function searchS(v) { sSearch = v; renderSiteTable(); }
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+function toast(msg, err) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = err ? 'var(--red)' : 'var(--accent)';
+  el.style.color = err ? 'var(--red)' : 'var(--accent)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════════
+// PROSPECTS
+// ══════════════════════════════════════════════
+async function addProspect() {
+  const name = document.getElementById('p-name').value.trim();
+  const company = document.getElementById('p-company').value.trim();
+  if (!name || !company) { toast('Project Name and Company are required', true); return; }
+  const btn = document.getElementById('add-p-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    name, company,
+    contact: document.getElementById('p-contact').value.trim(),
+    phone: document.getElementById('p-phone').value.trim(),
+    address: document.getElementById('p-address').value.trim(),
+    city: document.getElementById('p-city').value.trim(),
+    zone: document.getElementById('p-zone').value.trim(),
+    startDate: document.getElementById('p-start').value,
+    value: document.getElementById('p-value').value.trim(),
+    equip: document.getElementById('p-equip').value.trim(),
+    stage: document.getElementById('p-stage').value,
+    source: document.getElementById('p-source').value,
+    clientId: document.getElementById('p-clientId').value,
+    lastFollowUp: document.getElementById('p-followup').value,
+    competitor: document.getElementById('p-competitor').value.trim(),
+    notes: document.getElementById('p-notes').value.trim()
+  };
+  const res = await api({ action:'add', type:'prospects', record });
+  btn.disabled = false; btn.textContent = 'ADD PROSPECT →';
+  if (res && res.success) {
+    toast('Prospect added ✓');
+    ['p-name','p-company','p-contact','p-phone','p-address','p-city','p-zone','p-start','p-value','p-equip','p-competitor','p-notes','p-followup'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('p-stage').value = 'Lead';
+    document.getElementById('p-source').value = 'Drive By';
+    document.getElementById('p-clientId').value = '';
+    await syncAll();
+    showPanel('prospects');
+  }
+}
+
+async function deleteProspect(id) {
+  if (!confirm('Remove this prospect?')) return;
+  const res = await api({ action:'delete', type:'prospects', id });
+  if (res && res.success) { toast('Prospect removed ✓'); await syncAll(); }
+}
+
+async function convertToSite(id) {
+  const p = prospects.find(p => p.id == id);
+  if (!p) return;
+  if (!confirm(`Convert "${p.name}" to an active Job Site?`)) return;
+  // Add as job site
+  const record = {
+    siteName: p.name,
+    clientId: p.clientId || '',
+    client: p.company,
+    address: p.address || '',
+    city: p.city || '',
+    zone: p.zone || '',
+    equipOnSite: p.equip || '',
+    monthlyValue: p.value || '',
+    startDate: p.startDate || '',
+    status: 'Active',
+    notes: p.notes || ''
+  };
+  const res = await api({ action:'add', type:'jobsites', record });
+  if (res && res.success) {
+    // Mark prospect as Won
+    await api({ action:'update', type:'prospects', record: { ...p, stage:'Won' } });
+    toast('Prospect converted to active Job Site ✓');
+    await syncAll();
+    showPanel('jobsites');
+  }
+}
+
+function openEditProspect(id) {
+  const p = prospects.find(p => p.id == id);
+  if (!p) return;
+  document.getElementById('ep-id').value = p.id || '';
+  document.getElementById('ep-name').value = p.name || '';
+  document.getElementById('ep-company').value = p.company || '';
+  document.getElementById('ep-contact').value = p.contact || '';
+  document.getElementById('ep-phone').value = p.phone || '';
+  document.getElementById('ep-address').value = p.address || '';
+  document.getElementById('ep-city').value = p.city || '';
+  document.getElementById('ep-zone').value = p.zone || '';
+  document.getElementById('ep-start').value = p.startDate || '';
+  document.getElementById('ep-value').value = p.value || '';
+  document.getElementById('ep-equip').value = p.equip || '';
+  document.getElementById('ep-stage').value = p.stage || 'Lead';
+  document.getElementById('ep-source').value = p.source || 'Drive By';
+  document.getElementById('ep-clientId').value = p.clientId || '';
+  document.getElementById('ep-followup').value = p.lastFollowUp || '';
+  document.getElementById('ep-competitor').value = p.competitor || '';
+  document.getElementById('ep-notes').value = p.notes || '';
+  // Populate client dropdown
+  const opts = ['<option value="">— None —</option>', ...clients.map(c => `<option value="${c.id}" ${c.id==p.clientId?'selected':''}>${c.name} — ${c.company}</option>`)].join('');
+  document.getElementById('ep-clientId').innerHTML = opts;
+  document.getElementById('ep-modal').classList.add('open');
+}
+
+async function saveProspectEdit() {
+  const id = document.getElementById('ep-id').value;
+  const btn = document.getElementById('ep-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    id,
+    name: document.getElementById('ep-name').value.trim(),
+    company: document.getElementById('ep-company').value.trim(),
+    contact: document.getElementById('ep-contact').value.trim(),
+    phone: document.getElementById('ep-phone').value.trim(),
+    address: document.getElementById('ep-address').value.trim(),
+    city: document.getElementById('ep-city').value.trim(),
+    zone: document.getElementById('ep-zone').value.trim(),
+    startDate: document.getElementById('ep-start').value,
+    value: document.getElementById('ep-value').value.trim(),
+    equip: document.getElementById('ep-equip').value.trim(),
+    stage: document.getElementById('ep-stage').value,
+    source: document.getElementById('ep-source').value,
+    clientId: document.getElementById('ep-clientId').value,
+    lastFollowUp: document.getElementById('ep-followup').value,
+    competitor: document.getElementById('ep-competitor').value.trim(),
+    notes: document.getElementById('ep-notes').value.trim()
+  };
+  const res = await api({ action:'update', type:'prospects', record });
+  btn.disabled = false; btn.textContent = 'SAVE →';
+  if (res && res.success) { toast('Prospect updated ✓'); closeModals(); await syncAll(); }
+}
+
+function renderProspects() {
+  const stages = ['Lead','Contacted','Quoted','Won','Lost'];
+  const stageKeys = ['lead','contacted','quoted','won','lost'];
+  const sourceClass = { 'Drive By':'src-drive', 'Referral':'src-referral', 'Permit':'src-permit', 'Other':'src-other' };
+  const sourceEmoji = { 'Drive By':'🚗', 'Referral':'🤝', 'Permit':'📋', 'Other':'📌' };
+
+  const totalVal = prospects.filter(p => p.stage !== 'Lost').reduce((sum,p) => sum + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
+  document.getElementById('pip-total-val').textContent = '$' + totalVal.toLocaleString();
+  stages.forEach((stage,i) => {
+    const count = prospects.filter(p => p.stage === stage).length;
+    document.getElementById(`pip-${stageKeys[i]}-count`).textContent = count;
+    document.getElementById(`col-${stageKeys[i]}-count`).textContent = count;
+  });
+
+  stages.forEach((stage, i) => {
+    const col = document.getElementById(`col-${stageKeys[i]}`);
+    const stageProspects = prospects.filter(p => p.stage === stage);
+    if (!stageProspects.length) {
+      col.innerHTML = '<div style="font-family:var(--fm);font-size:10px;color:var(--muted);text-align:center;padding:16px">Empty</div>';
+      return;
+    }
+    col.innerHTML = stageProspects.map(p => `
+      <div class="prospect-card" onclick="openEditProspect('${p.id}')">
+        <div class="prospect-card-name">${p.name}</div>
+        <div class="prospect-card-sub">${p.company}</div>
+        ${p.contact ? `<div class="prospect-card-sub">👤 ${p.contact}${p.phone?' · '+p.phone:''}</div>` : ''}
+        ${p.city ? `<div class="prospect-card-sub">📍 ${p.city}${p.zone?' · '+p.zone:''}</div>` : ''}
+        ${p.value ? `<div class="prospect-card-value">💰 ${p.value}/mo</div>` : ''}
+        ${p.startDate ? `<div class="prospect-card-date">🗓 Start: ${p.startDate}</div>` : ''}
+        ${p.equip ? `<div class="prospect-card-sub">🔧 ${p.equip}</div>` : ''}
+        ${p.competitor ? `<div class="prospect-card-sub"><span class="competitor-badge">⚔ vs ${p.competitor}</span></div>` : ''}
+        ${p.lastFollowUp ? `<div class="prospect-card-date">Last follow-up: ${p.lastFollowUp}</div>` : ''}
+        <div style="margin-top:6px"><span class="prospect-source ${sourceClass[p.source]||'src-other'}">${sourceEmoji[p.source]||'📌'} ${p.source||'Other'}</span></div>
+        <div style="display:flex;gap:5px;margin-top:8px" onclick="event.stopPropagation()">
+          <button class="btn-small" onclick="openEditProspect('${p.id}')">Edit</button>
+          ${p.stage !== 'Won' && p.stage !== 'Lost' ? `<button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="convertToSite('${p.id}')">→ Job Site</button>` : ''}
+          <button class="btn-danger" onclick="deleteProspect('${p.id}')">✕</button>
+        </div>
+      </div>`).join('');
+  });
+}
+
+// ══════════════════════════════════════════════
+// AR / INVOICES
+// ══════════════════════════════════════════════
+function daysSinceInvoice(inv) {
+  return parseInt(inv.dueDate) || 0;
+}
+
+function arBucket(days) {
+  if (days >= 90) return '60+';
+  if (days >= 60) return '60+';
+  if (days >= 30) return '30-60';
+  return 'current';
+}
+
+function parseAmount(str) {
+  return parseFloat((str||'').replace(/[^0-9.]/g,'')) || 0;
+}
+
+async function addInvoice() {
+  const clientId = document.getElementById('inv-clientId').value;
+  const amount   = document.getElementById('inv-amount').value.trim();
+  if (!clientId || !amount) { toast('Customer and Amount are required', true); return; }
+  const btn = document.getElementById('add-inv-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    clientId, amount,
+    dueDate:  document.getElementById('inv-due').value,
+    siteId:   document.getElementById('inv-siteId').value,
+    status:   document.getElementById('inv-status').value,
+    notes:    document.getElementById('inv-notes').value.trim(),
+    actions:  ''
+  };
+  const res = await api({ action:'add', type:'invoices', record });
+  btn.disabled = false; btn.textContent = 'ADD INVOICE →';
+  if (res && res.success) {
+    toast('Invoice added ✓');
+    ['inv-number','inv-amount','inv-date','inv-due','inv-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('inv-clientId').value = '';
+    document.getElementById('inv-siteId').value = '';
+    document.getElementById('inv-status').value = 'Open';
+    await syncAll();
+    showPanel('ar');
+  }
+}
+
+async function deleteInvoice(id) {
+  if (!confirm('Remove this invoice?')) return;
+  const res = await api({ action:'delete', type:'invoices', id });
+  if (res && res.success) { toast('Invoice removed ✓'); await syncAll(); }
+}
+
+async function markPaid(id) {
+  const inv = invoices.find(i => i.id == id);
+  if (!inv) return;
+  const res = await api({ action:'update', type:'invoices', record: { ...inv, status:'Paid' } });
+  if (res && res.success) { toast('Invoice marked as paid ✓'); await syncAll(); }
+}
+
+function openEditInvoice(id) {
+  const inv = invoices.find(i => i.id == id);
+  if (!inv) return;
+  document.getElementById('einv-id').value = inv.id || '';
+  document.getElementById('einv-number').value = inv.number || '';
+  document.getElementById('einv-amount').value = inv.amount || '';
+  document.getElementById('einv-date').value = inv.invoiceDate || '';
+  document.getElementById('einv-due').value = inv.dueDate || '';
+  document.getElementById('einv-status').value = inv.status || 'Open';
+  document.getElementById('einv-notes').value = inv.notes || '';
+  const cOpts = ['<option value="">— Select —</option>', ...clients.map(c => `<option value="${c.id}" ${c.id==inv.clientId?'selected':''}>${c.name} — ${c.company}</option>`)].join('');
+  document.getElementById('einv-clientId').innerHTML = cOpts;
+  const sOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}" ${s.id==inv.siteId?'selected':''}>${s.siteName}</option>`)].join('');
+  document.getElementById('einv-siteId').innerHTML = sOpts;
+  document.getElementById('einv-modal').classList.add('open');
+}
+
+async function saveInvoiceEdit() {
+  const id  = document.getElementById('einv-id').value;
+  const btn = document.getElementById('einv-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const inv = invoices.find(i => i.id == id);
+  const record = {
+    ...inv, id,
+    clientId:    document.getElementById('einv-clientId').value,
+    number:      document.getElementById('einv-number').value.trim(),
+    amount:      document.getElementById('einv-amount').value.trim(),
+    invoiceDate: document.getElementById('einv-date').value,
+    dueDate:     document.getElementById('einv-due').value,
+    siteId:      document.getElementById('einv-siteId').value,
+    status:      document.getElementById('einv-status').value,
+    notes:       document.getElementById('einv-notes').value.trim()
+  };
+  const res = await api({ action:'update', type:'invoices', record });
+  btn.disabled = false; btn.textContent = 'SAVE →';
+  if (res && res.success) { toast('Invoice updated ✓'); closeModals(); await syncAll(); }
+}
+
+function openARAction(id) {
+  document.getElementById('ar-action-inv-id').value = id;
+  document.getElementById('ar-action-date').value = today();
+  document.getElementById('ar-action-type').value = 'Called';
+  document.getElementById('ar-action-notes').value = '';
+  document.getElementById('ar-action-modal').classList.add('open');
+}
+
+async function saveARAction() {
+  const id  = document.getElementById('ar-action-inv-id').value;
+  const btn = document.getElementById('ar-action-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const inv = invoices.find(i => i.id == id);
+  if (!inv) return;
+  const actionDate  = document.getElementById('ar-action-date').value;
+  const actionType  = document.getElementById('ar-action-type').value;
+  const actionNotes = document.getElementById('ar-action-notes').value.trim();
+  const newAction   = `${actionDate}|${actionType}|${actionNotes}`;
+  const existing    = inv.actions ? inv.actions + ';;' + newAction : newAction;
+  const res = await api({ action:'update', type:'invoices', record: { ...inv, actions: existing } });
+  btn.disabled = false; btn.textContent = 'LOG ACTION →';
+  if (res && res.success) { toast('Action logged ✓'); closeModals(); await syncAll(); }
+}
+
+function parseActions(actionsStr) {
+  if (!actionsStr) return [];
+  return actionsStr.split(';;').filter(Boolean).map(a => {
+    const [date, type, notes] = a.split('|');
+    return { date, type, notes };
+  }).reverse();
+}
+
+function exportAR() {
+  const open = invoices.filter(i => i.status !== 'Paid');
+  const rows = [['Customer','Company','Amount','Days Outstanding','Status','Last Action','Notes']];
+  open.forEach(inv => {
+    const c = clients.find(c => c.id == inv.clientId);
+    const days = daysSinceInvoice(inv);
+    const actions = parseActions(inv.actions);
+    const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}: ${actions[0].notes}` : '—';
+    rows.push([c?c.name:'—', c?c.company:'—', inv.amount||'—', days, inv.status||'—', lastAction, inv.notes||'—']);
+  });
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `AR-Report-${today()}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('AR Report exported ✓');
+}
+
+function filterAR(f, btn) {
+  arFilter = f;
+  document.querySelectorAll('#panel-ar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAR();
+}
+
+function searchAR(v) { arSearch = v; renderAR(); }
+
+function renderAR() {
+  const open = invoices.filter(i => i.status !== 'Paid');
+  const allInv = invoices;
+
+  // Totals
+  const total60  = open.filter(i => daysSinceInvoice(i) >= 60).reduce((s,i) => s+parseAmount(i.amount), 0);
+  const total30  = open.filter(i => { const d=daysSinceInvoice(i); return d>=30&&d<60; }).reduce((s,i) => s+parseAmount(i.amount), 0);
+  const totalCur = open.filter(i => daysSinceInvoice(i) < 30).reduce((s,i) => s+parseAmount(i.amount), 0);
+  const totalAll = open.reduce((s,i) => s+parseAmount(i.amount), 0);
+  const count60  = open.filter(i => daysSinceInvoice(i) >= 60).length;
+
+  document.getElementById('ar-total').textContent   = '$'+totalAll.toLocaleString();
+  document.getElementById('ar-60').textContent      = '$'+total60.toLocaleString();
+  document.getElementById('ar-30').textContent      = '$'+total30.toLocaleString();
+  document.getElementById('ar-current').textContent = '$'+totalCur.toLocaleString();
+  document.getElementById('ar-60-count').textContent = count60;
+
+  // 60+ Day Alert Cards
+  const critical = open.filter(i => daysSinceInvoice(i) >= 60)
+    .sort((a,b) => daysSinceInvoice(b.invoiceDate) - daysSinceInvoice(a.invoiceDate));
+
+  document.getElementById('ar-60-list').innerHTML = critical.length ? critical.map(inv => {
+    const c = clients.find(c => c.id == inv.clientId);
+    const days = daysSinceInvoice(inv);
+    const actions = parseActions(inv.actions);
+    const s = jobsites.find(s => s.id == inv.siteId);
+    return `<div class="ar-card ar-critical">
+      <div style="flex:1;min-width:180px">
+        <div class="ar-name" onclick="${c?`openProfile('${c.id}')`:''}">
+          ${c?c.name:'Unknown'} ${c?`<span style="font-weight:300;font-size:12px">— ${c.company}</span>`:''}
+        </div>
+        ${s?`<div class="ar-meta">${s.siteName}</div>`:''}
+        <div class="ar-days ar-overdue">⚠ ${days}+ days past due</div>
+        ${actions.length ? `<div class="ar-action-log">
+          <div style="font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--accent);margin-bottom:6px">ACTION LOG</div>
+          ${actions.slice(0,3).map(a => `<div class="ar-action-item"><span class="ar-action-date">${a.date}</span><span class="ar-action-note">${a.type}${a.notes?' — '+a.notes:''}</span></div>`).join('')}
+        </div>` : '<div class="ar-meta" style="color:var(--red);margin-top:6px">⚠ No contact logged yet</div>'}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="ar-amount" style="color:var(--red)">${inv.amount||'—'}</div>
+        <span class="status-badge s-lost">${inv.status}</span>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="openARAction('${inv.id}')">+ Log Action</button>
+          <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="markPaid('${inv.id}')">✓ Paid</button>
+          <button class="btn-small" onclick="openEditInvoice('${inv.id}')">Edit</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty-state"><div class="empty-icon">✅</div>No invoices over 60 days.</div>';
+
+  // All Invoices Table
+  let filtered = arFilter === 'paid' ? invoices.filter(i => i.status === 'Paid') :
+                 arFilter === 'all'  ? invoices.filter(i => i.status !== 'Paid') :
+                 open.filter(i => {
+                   const d = daysSinceInvoice(i);
+                   if (arFilter === '60+')   return d >= 60;
+                   if (arFilter === '30-60') return d >= 30 && d < 60;
+                   if (arFilter === 'current') return d < 30;
+                   return true;
+                 });
+
+  if (arSearch) {
+    const q = arSearch.toLowerCase();
+    filtered = filtered.filter(i => {
+      const c = clients.find(c => c.id == i.clientId);
+      return (c&&(c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q))) || (i.number||'').toLowerCase().includes(q);
+    });
+  }
+
+  const tbody = document.getElementById('ar-tbody');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">💵</div>No invoices found.</td></tr>'; return; }
+
+  tbody.innerHTML = filtered.map(inv => {
+    const c = clients.find(c => c.id == inv.clientId);
+    const days = daysSinceInvoice(inv);
+    const bucket = arBucket(days);
+    const dColor = bucket==='60+'?'var(--red)':bucket==='30-60'?'var(--yellow)':'var(--green)';
+    const actions = parseActions(inv.actions);
+    const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}` : '—';
+    const statusMap = {Open:'s-active',Partial:'s-pending',Disputed:'s-lost',Paid:'s-complete'};
+    return `<tr>
+      <td>
+        <div class="cell-name" onclick="${c?`openProfile('${c.id}')`:''}">
+          ${c?c.name:'—'}
+        </div>
+        <div class="cell-sub">${c?c.company:''}</div>
+      </td>
+      <td style="font-family:var(--fh);font-size:18px;color:${dColor}">${inv.amount||'—'}</td>
+      <td><span style="font-family:var(--fm);font-size:12px;font-weight:600;color:${dColor}">${inv.status==='Paid'?'✓ Paid':days+'+ days'}</span></td>
+      <td><span class="status-badge ${statusMap[inv.status]||'s-complete'}">${inv.status}</span></td>
+      <td style="font-size:11px;font-family:var(--fm);color:var(--muted2)">${lastAction}</td>
+      <td><div class="actions">
+        <button class="btn-small" onclick="openARAction('${inv.id}')">+ Action</button>
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="markPaid('${inv.id}')">✓ Paid</button>
+        <button class="btn-small" onclick="openEditInvoice('${inv.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteInvoice('${inv.id}')">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  // Dashboard AR card
+  if (document.getElementById('dash-ar-60')) {
+    document.getElementById('dash-ar-60').textContent = '$'+total60.toLocaleString();
+    document.getElementById('dash-ar-60').style.color = total60 > 0 ? 'var(--red)' : 'var(--green)';
+  }
+}
+
+// ══════════════════════════════════════════════
+// FOLLOW-UPS
+// ══════════════════════════════════════════════
+async function addFollowUp() {
+  const title = document.getElementById('fu-title').value.trim();
+  const due   = document.getElementById('fu-due').value;
+  if (!title || !due) { toast('Title and Due Date are required', true); return; }
+  const btn = document.getElementById('add-fu-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    title,
+    dueDate: due,
+    clientId: document.getElementById('fu-clientId').value,
+    siteId: document.getElementById('fu-siteId').value,
+    type: document.getElementById('fu-type').value,
+    priority: document.getElementById('fu-priority').value,
+    status: 'Open',
+    notes: document.getElementById('fu-notes').value.trim()
+  };
+  const res = await api({ action:'add', type:'followups', record });
+  btn.disabled = false; btn.textContent = 'ADD FOLLOW-UP →';
+  if (res && res.success) {
+    toast('Follow-up added ✓');
+    ['fu-title','fu-due','fu-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fu-clientId').value = '';
+    document.getElementById('fu-siteId').value = '';
+    document.getElementById('fu-type').value = 'Call';
+    document.getElementById('fu-priority').value = 'High';
+    await syncAll();
+    showPanel('followups');
+  }
+}
+
+async function completeFollowUp(id) {
+  const fu = followups.find(f => f.id == id);
+  if (!fu) return;
+  const res = await api({ action:'update', type:'followups', record: { ...fu, status:'Done' } });
+  if (res && res.success) { toast('Follow-up marked done ✓'); await syncAll(); }
+}
+
+async function deleteFollowUp(id) {
+  if (!confirm('Remove this follow-up?')) return;
+  const res = await api({ action:'delete', type:'followups', id });
+  if (res && res.success) { toast('Follow-up removed ✓'); await syncAll(); }
+}
+
+function openEditFollowUp(id) {
+  const fu = followups.find(f => f.id == id);
+  if (!fu) return;
+  document.getElementById('efu-id').value = fu.id || '';
+  document.getElementById('efu-title').value = fu.title || '';
+  document.getElementById('efu-due').value = fu.dueDate || '';
+  document.getElementById('efu-type').value = fu.type || 'Call';
+  document.getElementById('efu-priority').value = fu.priority || 'High';
+  document.getElementById('efu-status').value = fu.status || 'Open';
+  document.getElementById('efu-notes').value = fu.notes || '';
+  const cOpts = ['<option value="">— None —</option>', ...clients.map(c => `<option value="${c.id}" ${c.id==fu.clientId?'selected':''}>${c.name} — ${c.company}</option>`)].join('');
+  document.getElementById('efu-clientId').innerHTML = cOpts;
+  const sOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}" ${s.id==fu.siteId?'selected':''}>${s.siteName}</option>`)].join('');
+  document.getElementById('efu-siteId').innerHTML = sOpts;
+  document.getElementById('efu-modal').classList.add('open');
+}
+
+async function saveFollowUpEdit() {
+  const id = document.getElementById('efu-id').value;
+  const btn = document.getElementById('efu-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const fu = followups.find(f => f.id == id);
+  const record = {
+    ...fu, id,
+    title: document.getElementById('efu-title').value.trim(),
+    dueDate: document.getElementById('efu-due').value,
+    clientId: document.getElementById('efu-clientId').value,
+    siteId: document.getElementById('efu-siteId').value,
+    type: document.getElementById('efu-type').value,
+    priority: document.getElementById('efu-priority').value,
+    status: document.getElementById('efu-status').value,
+    notes: document.getElementById('efu-notes').value.trim()
+  };
+  const res = await api({ action:'update', type:'followups', record });
+  btn.disabled = false; btn.textContent = 'SAVE →';
+  if (res && res.success) { toast('Follow-up updated ✓'); closeModals(); await syncAll(); }
+}
+
+function renderFollowUps() {
+  const todayStr = today();
+  const open = followups.filter(f => f.status !== 'Done');
+  const overdue  = open.filter(f => f.dueDate && f.dueDate < todayStr);
+  const dueToday = open.filter(f => f.dueDate === todayStr);
+  const upcoming = open.filter(f => f.dueDate > todayStr);
+
+  document.getElementById('fu-overdue').textContent = overdue.length;
+  document.getElementById('fu-today').textContent   = dueToday.length;
+  document.getElementById('fu-week').textContent    = upcoming.length;
+  document.getElementById('fu-total').textContent   = open.length;
+
+  const typeEmoji = { Call:'📞', Visit:'🚗', Email:'📧', Quote:'💰', Other:'📌' };
+  const priColor  = { High:'var(--red)', Medium:'var(--yellow)', Low:'var(--green)' };
+
+  function fuCard(fu, urgency) {
+    const c = fu.clientId ? clients.find(c => c.id == fu.clientId) : null;
+    const s = fu.siteId   ? jobsites.find(s => s.id == fu.siteId)  : null;
+    return `<div class="followup-card ${urgency}">
+      <div style="flex:1;min-width:180px">
+        <div class="followup-name" onclick="${c?`openProfile('${c.id}')`:''}">
+          ${typeEmoji[fu.type]||'📌'} ${fu.title}
+        </div>
+        ${c ? `<div class="followup-meta">👷 ${c.name} — ${c.company}</div>` : ''}
+        ${s ? `<div class="followup-meta">🏗 ${s.siteName}</div>` : ''}
+        ${fu.notes ? `<div class="followup-meta" style="margin-top:4px">${fu.notes}</div>` : ''}
+        <div class="followup-due ${urgency==='urgent'?'due-overdue':urgency==='today'?'due-today':'due-upcoming'}">
+          ${urgency==='urgent'?'⚠ OVERDUE — ':urgency==='today'?'📅 Due Today':'📆 Due: '}${fu.dueDate}
+        </div>
+        <div style="margin-top:4px"><span style="font-family:var(--fm);font-size:9px;color:${priColor[fu.priority]||'var(--muted2)'}">${fu.priority||''} priority</span></div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="completeFollowUp('${fu.id}')">✓ Done</button>
+        <button class="btn-small" onclick="openEditFollowUp('${fu.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteFollowUp('${fu.id}')">✕</button>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('fu-overdue-list').innerHTML  = overdue.length  ? overdue.map(f  => fuCard(f,'urgent')).join('')   : '<div class="empty-state">None overdue. ✅</div>';
+  document.getElementById('fu-today-list').innerHTML    = dueToday.length ? dueToday.map(f => fuCard(f,'today')).join('')    : '<div class="empty-state">Nothing due today.</div>';
+  document.getElementById('fu-upcoming-list').innerHTML = upcoming.length ? upcoming.map(f => fuCard(f,'upcoming')).join('') : '<div class="empty-state">Nothing upcoming.</div>';
+
+  // Dashboard follow-up badge
+  if (document.getElementById('dash-fu-count')) {
+    document.getElementById('dash-fu-count').textContent = overdue.length + dueToday.length;
+    document.getElementById('dash-fu-count').style.color = (overdue.length + dueToday.length) > 0 ? 'var(--red)' : 'var(--green)';
+  }
+}
+
+// ══════════════════════════════════════════════
+// MAP
+// ══════════════════════════════════════════════
+let mapFilter = 'all';
+let mapMarkers = [];
+let googleMap = null;
+let infoWindows = [];
+
+function setMapFilter(f, btn) {
+  mapFilter = f;
+  document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMap();
+}
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','map','prospects','add-prospect','followups','add-followup','ar','add-invoice'];
+  document.querySelectorAll('.nav-item').forEach((n,i) => {
+    n.classList.toggle('active', panels[i] === id);
+  });
+  if (id === 'map') renderMap();
+  if (id !== 'dashboard' && id !== 'customers' && id !== 'jobsites') closeProfile();
+}
+
+async function geocodeAddress(address) {
+  if (!address || address.trim() === '') return null;
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name };
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function renderMap() {
+  const container = document.getElementById('map-frame-container');
+  const infoBar = document.getElementById('map-info-bar');
+  infoBar.textContent = 'Building your territory map...';
+  container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--fm);font-size:12px;color:var(--muted2)"><span class="spinning" style="margin-right:8px">⟳</span> Geocoding addresses...</div>';
+
+  // Build location list
+  let locations = [];
+
+  if (mapFilter === 'all' || mapFilter === 'clients' || mapFilter === 'cold') {
+    for (const c of clients) {
+      const days = daysSince(c.lastContact);
+      const tier = getTier(days);
+      if (mapFilter === 'cold' && tier === 1) continue;
+      const addr = [c.company, c.city || ''].filter(Boolean).join(', ') || c.company;
+      if (addr) {
+        locations.push({ type:'client', id: c.id, name: c.name, company: c.company, address: addr, tier, days, data: c });
+      }
+    }
+  }
+
+  if (mapFilter === 'all' || mapFilter === 'prospects') {
+    for (const p of prospects) {
+      if (p.stage === 'Won' || p.stage === 'Lost') continue;
+      const addr = [p.address, p.city].filter(Boolean).join(', ');
+      if (addr) {
+        locations.push({ type:'prospect', id: p.id, name: p.name, company: p.company, address: addr, stage: p.stage, data: p });
+      }
+    }
+  }
+
+  if (mapFilter === 'all' || mapFilter === 'sites') {
+    for (const s of jobsites) {
+      if (s.status === 'Complete' || s.status === 'Lost') continue;
+      const addr = [s.address, s.city].filter(Boolean).join(', ');
+      if (addr) {
+        locations.push({ type:'site', id: s.id, name: s.siteName, company: s.client, address: addr, status: s.status, data: s });
+      }
+    }
+  }
+
+  if (locations.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🗺</div>No addresses found. Add city or address to your customers and job sites.</div>';
+    infoBar.textContent = 'Add addresses to your clients and job sites to see them on the map.';
+    return;
+  }
+
+  // Geocode all addresses
+  infoBar.textContent = `Geocoding ${locations.length} locations...`;
+  const geocoded = [];
+  for (const loc of locations) {
+    const coords = await geocodeAddress(loc.address);
+    if (coords) geocoded.push({ ...loc, lat: coords.lat, lng: coords.lng });
+    await new Promise(r => setTimeout(r, 200)); // rate limit
+  }
+
+  if (geocoded.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🗺</div>Could not find coordinates for any addresses. Try adding more specific addresses.</div>';
+    return;
+  }
+
+  // Build map using Leaflet
+  const centerLat = geocoded.reduce((s,l) => s+l.lat, 0) / geocoded.length;
+  const centerLng = geocoded.reduce((s,l) => s+l.lng, 0) / geocoded.length;
+
+  container.innerHTML = '<div id="leaflet-map" style="width:100%;height:100%"></div>';
+
+  // Load Leaflet if not loaded
+  if (!window.L) {
+    await loadLeaflet();
+  }
+
+  // Small delay to ensure DOM is ready
+  await new Promise(r => setTimeout(r, 100));
+
+  const map = window.L.map('leaflet-map').setView([centerLat, centerLng], 10);
+
+  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  geocoded.forEach(loc => {
+    let color, emoji;
+    if (loc.type === 'client') {
+      color = loc.tier === 1 ? '#e8a020' : loc.tier === 2 ? '#f39c12' : '#e74c3c';
+      emoji = '👷';
+    } else if (loc.type === 'prospect') {
+      color = '#9b59b6';
+      emoji = '🔍';
+    } else {
+      color = loc.status === 'Active' ? '#3498db' : '#2ecc71';
+      emoji = '🏗';
+    }
+
+    const markerHtml = `<div style="background:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer">${emoji}</div>`;
+    const icon = window.L.divIcon({ html: markerHtml, className: '', iconSize: [32,32], iconAnchor: [16,16] });
+
+    const marker = window.L.marker([loc.lat, loc.lng], { icon }).addTo(map);
+    marker.on('click', () => showMapPopup(loc));
+  });
+
+  infoBar.textContent = `Showing ${geocoded.length} of ${locations.length} locations on your territory map.`;
+}
+
+function loadLeaflet() {
+  return new Promise(resolve => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = resolve;
+    document.head.appendChild(script);
+  });
+}
+
+function showMapPopup(loc) {
+  const popup = document.getElementById('map-popup');
+  const overlay = document.getElementById('map-popup-overlay');
+
+  if (loc.type === 'client') {
+    const c = loc.data;
+    const days = daysSince(c.lastContact);
+    const tier = getTier(days);
+    const tierColors = {1:'var(--accent)', 2:'var(--yellow)', 3:'var(--red)'};
+    const tierNames = {1:'Active', 2:'Warm', 3:'Cold'};
+
+    popup.className = 'map-popup';
+    popup.style.borderTopColor = tierColors[tier];
+
+    document.getElementById('mp-title').textContent = c.name;
+    document.getElementById('mp-title').style.color = tierColors[tier];
+    document.getElementById('mp-sub').textContent = c.company;
+
+    document.getElementById('mp-grid').innerHTML = `
+      <div class="popup-field"><div class="popup-label">Status</div><div class="popup-val" style="color:${tierColors[tier]}">${tierNames[tier]} — ${days} days silent</div></div>
+      <div class="popup-field"><div class="popup-label">Phone</div><div class="popup-val">${c.phone||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Equipment</div><div class="popup-val">${c.equip||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Monthly Value</div><div class="popup-val" style="color:var(--green)">${c.value||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Last Contact</div><div class="popup-val">${c.lastContact||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Project Type</div><div class="popup-val">${c.project||'—'}</div></div>
+    `;
+
+    const sites = clientSites(c.id);
+    if (sites.length) {
+      document.getElementById('mp-subs').innerHTML = `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--blue);margin-bottom:8px">JOB SITES (${sites.length})</div>` +
+        sites.map(s => `<div class="popup-sub-item"><div class="popup-sub-name">${s.siteName}</div><div class="popup-sub-detail">${s.city||''} · ${s.status} · ${s.monthlyValue||'—'}/mo</div></div>`).join('');
+    } else {
+      document.getElementById('mp-subs').innerHTML = '';
+    }
+
+    if (c.notes) {
+      document.getElementById('mp-subs').innerHTML += `<div style="margin-top:10px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--accent);padding-left:10px">${c.notes}</div>`;
+    }
+
+  } else {
+    const s = loc.data;
+    const statusColors = {Active:'var(--blue)', Pending:'var(--yellow)', Complete:'var(--muted2)', Lost:'var(--red)'};
+    const color = statusColors[s.status] || 'var(--blue)';
+
+    popup.className = 'map-popup';
+    popup.style.borderTopColor = color;
+
+    document.getElementById('mp-title').textContent = s.siteName;
+    document.getElementById('mp-title').style.color = color;
+    document.getElementById('mp-sub').textContent = s.client || '—';
+
+    document.getElementById('mp-grid').innerHTML = `
+      <div class="popup-field"><div class="popup-label">Status</div><div class="popup-val" style="color:${color}">${s.status}</div></div>
+      <div class="popup-field"><div class="popup-label">Monthly Value</div><div class="popup-val" style="color:var(--green)">${s.monthlyValue||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Address</div><div class="popup-val">${s.address||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">City</div><div class="popup-val">${s.city||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Zone</div><div class="popup-val">${s.zone||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Equipment</div><div class="popup-val">${s.equipOnSite||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Last Check-In</div><div class="popup-val" style="color:${s.lastCheckIn?'var(--green)':'var(--red)'}">${s.lastCheckIn||'⚠ None'}</div></div>
+      <div class="popup-field"><div class="popup-label">Start Date</div><div class="popup-val">${s.startDate||'—'}</div></div>
+    `;
+
+    // Show all subs
+    let subsHtml = '';
+    const subFields = [
+      {name: s.superintendent, phone: s.supePhone, company: s.sub1company, label:'Sub 1'},
+    ];
+    for (let i = 2; i <= 10; i++) {
+      subFields.push({name: s['sub'+i+'name'], phone: s['sub'+i+'phone'], company: s['sub'+i+'company'], label:'Sub '+i});
+    }
+    const activeSubs = subFields.filter(sub => sub.name);
+    if (activeSubs.length) {
+      subsHtml = `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--muted2);margin-bottom:8px">SUPERINTENDENTS (${activeSubs.length})</div>`;
+      subsHtml += activeSubs.map(sub => `
+        <div class="popup-sub-item">
+          <div class="popup-sub-name">👤 ${sub.name}</div>
+          <div class="popup-sub-detail">${sub.phone||''}${sub.company?' · '+sub.company:''}</div>
+        </div>`).join('');
+    }
+
+    if (s.notes) {
+      subsHtml += `<div style="margin-top:10px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--blue);padding-left:10px">${s.notes}</div>`;
+    }
+
+    document.getElementById('mp-subs').innerHTML = subsHtml;
+  }
+
+  if (loc.type === 'prospect') {
+    const p = loc.data;
+    const stageColors = {'Lead':'var(--muted2)','Contacted':'var(--blue)','Quoted':'var(--yellow)','Won':'var(--green)','Lost':'var(--red)'};
+    const color = stageColors[p.stage] || 'var(--blue)';
+    popup.className = 'map-popup';
+    popup.style.borderTopColor = color;
+    document.getElementById('mp-title').textContent = p.name;
+    document.getElementById('mp-title').style.color = color;
+    document.getElementById('mp-sub').textContent = p.company + ' · ' + (p.stage||'');
+    document.getElementById('mp-grid').innerHTML = `
+      <div class="popup-field"><div class="popup-label">Stage</div><div class="popup-val" style="color:${color}">${p.stage}</div></div>
+      <div class="popup-field"><div class="popup-label">Est. Value</div><div class="popup-val" style="color:var(--green)">${p.value||'—'}/mo</div></div>
+      <div class="popup-field"><div class="popup-label">Contact</div><div class="popup-val">${p.contact||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Phone</div><div class="popup-val">${p.phone||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Equipment Needed</div><div class="popup-val">${p.equip||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Est. Start</div><div class="popup-val">${p.startDate||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Source</div><div class="popup-val">${p.source||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Last Follow-Up</div><div class="popup-val">${p.lastFollowUp||'—'}</div></div>
+    `;
+    document.getElementById('mp-subs').innerHTML = p.notes ? `<div style="font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid ${color};padding-left:10px">${p.notes}</div>` : '';
+    overlay.classList.add('open');
+    return;
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeMapPopup() {
+  document.getElementById('map-popup-overlay').classList.remove('open');
+}
+
+// ── PWA INSTALL ──
+window.addEventListener('load', function() {
+  // Show install banner on iOS if not already installed
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    setTimeout(() => {
+      const banner = document.getElementById('install-banner');
+      if (banner) banner.style.display = 'flex';
+    }, 3000);
+  }
+});
+</script>
+</body>
+</html>
