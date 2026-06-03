@@ -2704,36 +2704,67 @@ function showMapPopup(loc) {
     document.getElementById('mp-sub').textContent = s.client || '—';
 
     document.getElementById('mp-grid').innerHTML = `
-      <div class="popup-field"><div class="popup-label">Status</div><div class="popup-val" style="color:${color}">${s.status}</div></div>
+      <div class="popup-field"><div class="popup-label">Status</div><div class="popup-val" style="color:${color}">${s.status||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Monthly Value</div><div class="popup-val" style="color:var(--green)">${s.monthlyValue||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Address</div><div class="popup-val">${s.address||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">City</div><div class="popup-val">${s.city||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Zone</div><div class="popup-val">${s.zone||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Equipment</div><div class="popup-val">${s.equipOnSite||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Equipment on Site</div><div class="popup-val">${s.equipOnSite||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Last Check-In</div><div class="popup-val" style="color:${s.lastCheckIn?'var(--green)':'var(--red)'}">${s.lastCheckIn||'⚠ None'}</div></div>
+      <div class="popup-field"><div class="popup-label">Competitor</div><div class="popup-val" style="color:${s.competitor?'var(--red)':'var(--muted2)'}">${s.competitor||'None'}</div></div>
       <div class="popup-field"><div class="popup-label">Start Date</div><div class="popup-val">${s.startDate||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">End Date</div><div class="popup-val">${s.endDate||'—'}</div></div>
     `;
 
-    // Show all subs
+    // Show all subs + notes
     let subsHtml = '';
+
+    // Build complete sub list
     const subFields = [
       {name: s.superintendent, phone: s.supePhone, company: s.sub1company, label:'Sub 1'},
     ];
     for (let i = 2; i <= 10; i++) {
-      subFields.push({name: s['sub'+i+'name'], phone: s['sub'+i+'phone'], company: s['sub'+i+'company'], label:'Sub '+i});
+      subFields.push({
+        name: s['sub'+i+'name'], 
+        phone: s['sub'+i+'phone'], 
+        company: s['sub'+i+'company'], 
+        label:'Sub '+i
+      });
     }
     const activeSubs = subFields.filter(sub => sub.name);
+
     if (activeSubs.length) {
-      subsHtml = `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--muted2);margin-bottom:8px">SUPERINTENDENTS (${activeSubs.length})</div>`;
+      subsHtml += `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--muted2);margin-bottom:8px;margin-top:4px">SUPERINTENDENTS (${activeSubs.length})</div>`;
       subsHtml += activeSubs.map(sub => `
         <div class="popup-sub-item">
-          <div class="popup-sub-name">👤 ${sub.name}</div>
-          <div class="popup-sub-detail">${sub.phone||''}${sub.company?' · '+sub.company:''}</div>
+          <div class="popup-sub-name">👤 ${sub.label}: ${sub.name}</div>
+          <div class="popup-sub-detail">
+            ${sub.phone ? `📞 ${sub.phone}` : ''}
+            ${sub.company ? ` · 🏢 ${sub.company}` : ''}
+          </div>
         </div>`).join('');
+    } else {
+      subsHtml += '<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-top:8px">No superintendents added yet.</div>';
     }
 
+    // Linked customer info
+    const linkedClient = clients.find(c => c.id == s.clientId);
+    if (linkedClient) {
+      subsHtml += `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:8px;margin-top:14px">LINKED CUSTOMER</div>
+        <div class="popup-sub-item" onclick="closeMapPopup();openProfile('${linkedClient.id}')" style="cursor:pointer;border-left:3px solid var(--accent)">
+          <div class="popup-sub-name">👷 ${linkedClient.name}</div>
+          <div class="popup-sub-detail">${linkedClient.company} · ${linkedClient.phone||'—'}</div>
+        </div>`;
+    }
+
+    // Quick action buttons
+    subsHtml += `<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="closeMapPopup();openEditSite('${s.id}')">✏ Edit Site</button>
+      <button class="btn-small" onclick="closeMapPopup();touchClient('${s.clientId||''}')" ${!s.clientId?'disabled':''}>✓ Log Visit</button>
+    </div>`;
+
     if (s.notes) {
-      subsHtml += `<div style="margin-top:10px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--blue);padding-left:10px">${s.notes}</div>`;
+      subsHtml += `<div style="margin-top:12px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--blue);padding-left:10px;line-height:1.6">${s.notes}</div>`;
     }
 
     document.getElementById('mp-subs').innerHTML = subsHtml;
