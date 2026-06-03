@@ -207,7 +207,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .profile-prompt-box.open{display:block}
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:center;justify-content:center}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:10000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);padding:24px;width:90%;max-width:620px;max-height:90vh;overflow-y:auto}
 .modal-title{font-family:var(--fh);font-size:20px;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
@@ -223,6 +223,16 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .pulse{animation:pulse 2s infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinning{display:inline-block;animation:spin 1s linear infinite}
+
+/* TASKS */
+.task-row{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.task-row.done{opacity:.5;border-left-color:var(--green)}
+.task-row.week{border-left-color:var(--blue)}
+.task-check{width:22px;height:22px;border:2px solid var(--muted2);border-radius:4px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.task-check.checked{background:var(--green);border-color:var(--green);color:#000}
+.task-text{flex:1;font-size:14px}
+.task-text.done{text-decoration:line-through;color:var(--muted2)}
+.task-add-row{display:flex;gap:8px;margin-bottom:16px}
 
 /* AR */
 .ar-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid;padding:14px 18px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -289,6 +299,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .pip-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 
 /* MAP */
+.leaflet-pane,.leaflet-top,.leaflet-bottom{z-index:50 !important}
+.leaflet-container{z-index:1 !important}
 #map-container{width:100%;height:calc(100vh - 180px);min-height:500px;background:var(--surface2);border:1px solid var(--border);position:relative}
 #map-frame{width:100%;height:100%;border:none}
 .map-legend{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
@@ -363,6 +375,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="stat-pill"><div class="dot" style="background:var(--blue)"></div><span id="hdr-sites">0 SITES</span></div>
     <div class="stat-pill"><div class="dot" style="background:var(--accent)"></div><span id="hdr-revenue">$0/mo</span></div>
     <button class="icon-btn" onclick="syncAll()" id="sync-btn">⟳ SYNC</button>
+    <button class="icon-btn" onclick="setCreditLink()" style="font-size:9px">💳 Portal Link</button>
     <button class="icon-btn" onclick="resetUrl()" style="font-size:9px">⚙</button>
   </div>
 </header>
@@ -393,6 +406,13 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="nav-label">Daily</div>
     <div class="nav-item" onclick="showPanel('followups')">⏰ Follow-Ups</div>
     <div class="nav-item" onclick="showPanel('ar')">💵 AR / Invoices</div>
+    <div class="nav-item" onclick="showPanel('tasks')">✅ To-Do List</div>
+    <div class="nav-item" onclick="showPanel('revenue')">📈 Revenue</div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Intelligence</div>
+    <div class="nav-item" onclick="showPanel('relationships')">⭐ Top Relationships</div>
+    <div class="nav-item" onclick="showPanel('competitors')">⚔ Competitors</div>
+    <div class="nav-item" onclick="showPanel('lostrentals')">📉 Lost Rentals</div>
   </nav>
 
   <!-- MAIN CONTENT -->
@@ -544,11 +564,15 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="form-title g">ADD NEW JOB SITE</div>
         <div class="form-grid">
           <div class="form-group"><label>Site Name *</label><input type="text" id="s-name" placeholder="Downtown Hotel Project"></div>
-          <div class="form-group"><label>Customer * (select or type)</label>
+          <div class="form-group"><label>Customer *</label>
             <select id="s-clientId" onchange="fillClientName()">
               <option value="">— Select Customer —</option>
             </select>
+            <button type="button" class="btn-small" style="margin-top:6px" onclick="quickAddCustomer('site')">+ New Customer</button>
           </div>
+          <div class="form-group"><label>General Contractor</label><input type="text" id="s-gc" placeholder="GC Company"></div>
+          <div class="form-group"><label>GC Contact Name</label><input type="text" id="s-gcname" placeholder="John Smith"></div>
+          <div class="form-group"><label>GC Phone</label><input type="text" id="s-gcphone" placeholder="(555) 000-0000"></div>
           <div class="form-group"><label>Address</label><input type="text" id="s-address" placeholder="123 Main St"></div>
           <div class="form-group"><label>City</label><input type="text" id="s-city" placeholder="Houston, TX"></div>
           <div class="form-group"><label>Last Check-In Date</label><input type="date" id="s-checkin"></div>
@@ -597,6 +621,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           </div>
         </div>
         <div class="form-group" style="margin-bottom:14px"><label>Competitor on Site</label><input type="text" id="s-competitor" placeholder="e.g. Sunbelt, United, RSC..."></div>
+        <div class="form-group" style="margin-bottom:14px"><label>Quotes (one per line: amount | date | status | link)</label><textarea id="s-quotes" rows="3" placeholder="$5,000 | 2026-06-01 | Pending | drive.google.com/..."></textarea></div>
         <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="s-notes" rows="3" placeholder="Access details, equipment needs, key contacts..."></textarea></div>
         <button class="btn btn-green" id="add-s-btn" onclick="addSite()">ADD JOB SITE →</button>
       </div>
@@ -733,6 +758,9 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Linked Job Site</label>
             <select id="fu-siteId"><option value="">— None —</option></select>
           </div>
+          <div class="form-group"><label>Linked Prospect</label>
+            <select id="fu-prospectId"><option value="">— None —</option></select>
+          </div>
           <div class="form-group"><label>Type</label>
             <select id="fu-type">
               <option value="Call">📞 Call</option>
@@ -839,6 +867,99 @@ tr:hover td{background:rgba(255,255,255,.015)}
       </div>
     </div>
 
+  <!-- ══ TO-DO LIST ══ -->
+    <div class="panel" id="panel-tasks">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--accent)">✅ TO-DO LIST</div>
+      </div>
+      <div class="task-add-row">
+        <input type="text" id="task-input" placeholder="Add a task..." style="flex:1" onkeypress="if(event.key==='Enter')addTask()">
+        <select id="task-when" style="width:140px">
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+        </select>
+        <button class="btn btn-primary" onclick="addTask()">ADD</button>
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--accent);margin-bottom:10px">TODAY</div>
+        <div id="tasks-today"><div class="empty-state">No tasks for today.</div></div>
+      </div>
+      <div>
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--blue);margin-bottom:10px">THIS WEEK</div>
+        <div id="tasks-week"><div class="empty-state">No tasks this week.</div></div>
+      </div>
+    </div>
+
+  <!-- ══ REVENUE ══ -->
+    <div class="panel" id="panel-revenue">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--accent)">📈 MONTHLY REVENUE</div>
+      </div>
+      <div class="form-card" style="margin-bottom:20px">
+        <div class="form-title">ADD MONTHLY TOTAL</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Month</label>
+            <select id="rev-month">
+              <option value="01">January</option><option value="02">February</option>
+              <option value="03">March</option><option value="04">April</option>
+              <option value="05">May</option><option value="06">June</option>
+              <option value="07">July</option><option value="08">August</option>
+              <option value="09">September</option><option value="10">October</option>
+              <option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Year</label><input type="text" id="rev-year" placeholder="2026"></div>
+          <div class="form-group"><label>Revenue</label><input type="text" id="rev-amount" placeholder="$50,000"></div>
+        </div>
+        <button class="btn btn-primary" id="add-rev-btn" onclick="addRevenue()">ADD / UPDATE →</button>
+      </div>
+      <div id="revenue-list"></div>
+    </div>
+
+  <!-- ══ TOP RELATIONSHIPS ══ -->
+    <div class="panel" id="panel-relationships">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--accent)">⭐ TOP RELATIONSHIPS</div>
+      </div>
+      <div class="map-info-bar" style="margin-bottom:16px">Ranked by how often they appear across your job sites, prospects, and quotes. Your priority list builds itself.</div>
+      <div style="margin-bottom:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--green);margin-bottom:10px">🏢 GENERAL CONTRACTORS</div>
+        <div id="rel-gcs"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--blue);margin-bottom:10px">👤 SUPERINTENDENTS</div>
+        <div id="rel-supes"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div>
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--accent);margin-bottom:10px">👷 CUSTOMERS</div>
+        <div id="rel-customers"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+
+  <!-- ══ COMPETITORS ══ -->
+    <div class="panel" id="panel-competitors">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--red)">⚔ COMPETITOR INTELLIGENCE</div>
+      </div>
+      <div class="map-info-bar" style="margin-bottom:16px">Ranked by threat — total revenue taken plus how often they show up. Tap any competitor for the full breakdown.</div>
+      <div id="competitor-list"><div class="empty-state">Loading...</div></div>
+    </div>
+
+  <!-- ══ LOST RENTALS ══ -->
+    <div class="panel" id="panel-lostrentals">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--red)">📉 LOST RENTALS</div>
+      </div>
+      <div class="dash-grid" style="margin-bottom:20px">
+        <div class="dash-card c-red"><div class="dash-label">Total Revenue Lost</div><div class="dash-number" id="lr-total" style="font-size:26px;margin-top:4px">$0</div><div class="dash-sub">all lost quotes</div></div>
+        <div class="dash-card c-yellow"><div class="dash-label">Lost to Price</div><div class="dash-number" id="lr-price" style="font-size:26px;margin-top:4px">$0</div></div>
+        <div class="dash-card c-blue"><div class="dash-label">Lost to Availability</div><div class="dash-number" id="lr-avail" style="font-size:26px;margin-top:4px">$0</div></div>
+        <div class="dash-card c-blue"><div class="dash-label">Lost to Logistics</div><div class="dash-number" id="lr-logistics" style="font-size:26px;margin-top:4px">$0</div></div>
+      </div>
+      <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--red);margin-bottom:10px">LOST DEALS</div>
+      <div id="lostrentals-list"><div class="empty-state">No lost rentals logged yet. Mark a quote as Lost to track it here.</div></div>
+    </div>
+
   <!-- ══ MAP VIEW ══ -->
     <div class="panel" id="panel-map">
       <div class="section-head">
@@ -913,6 +1034,17 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Last Follow-Up</label><input type="date" id="ep-followup"></div>
     </div>
     <div class="form-group" style="margin-top:10px"><label>Competitor Quoting</label><input type="text" id="ep-competitor"></div>
+    <div class="form-group" style="margin-top:10px"><label>If Lost — Reason</label>
+      <select id="ep-lostreason">
+        <option value="">— N/A —</option>
+        <option value="Price">Price</option>
+        <option value="Availability">Availability (no equipment)</option>
+        <option value="Logistics">Logistics (couldn't deliver)</option>
+        <option value="Relationship">Relationship</option>
+        <option value="Timing">Timing</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
     <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="ep-notes" rows="3"></textarea></div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
@@ -934,6 +1066,9 @@ tr:hover td{background:rgba(255,255,255,.015)}
       </div>
       <div class="form-group"><label>Linked Job Site</label>
         <select id="efu-siteId"><option value="">— None —</option></select>
+      </div>
+      <div class="form-group"><label>Linked Prospect</label>
+        <select id="efu-prospectId"><option value="">— None —</option></select>
       </div>
       <div class="form-group"><label>Type</label>
         <select id="efu-type">
@@ -1027,6 +1162,50 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
       <button class="btn btn-primary" id="ar-action-save-btn" onclick="saveARAction()">LOG ACTION →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGE MODAL -->
+<div class="modal-overlay" id="message-modal">
+  <div class="modal" style="border-top-color:var(--accent)">
+    <div class="modal-title" id="msg-title">MESSAGE</div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Send To (name)</label>
+      <input type="text" id="msg-recipient-name" placeholder="Pick a contact or type a name">
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Email or Phone</label>
+      <input type="text" id="msg-recipient" placeholder="email@example.com or phone">
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Message</label>
+      <textarea id="msg-body" rows="10" style="font-family:var(--fm);font-size:12px"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CLOSE</button>
+      <button class="copy-btn" id="msg-copy-btn" onclick="copyMessage()" style="padding:10px 18px">COPY MESSAGE</button>
+      <button class="btn btn-primary" onclick="emailMessage()">OPEN EMAIL →</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD CUSTOMER MODAL -->
+<div class="modal-overlay" id="quickcust-modal">
+  <div class="modal" style="border-top-color:var(--green)">
+    <div class="modal-title" style="color:var(--green)">QUICK ADD CUSTOMER</div>
+    <input type="hidden" id="qc-return">
+    <div class="form-grid">
+      <div class="form-group"><label>Name *</label><input type="text" id="qc-name"></div>
+      <div class="form-group"><label>Company *</label><input type="text" id="qc-company"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="qc-phone"></div>
+      <div class="form-group"><label>Email</label><input type="text" id="qc-email"></div>
+      <div class="form-group"><label>Equipment</label><input type="text" id="qc-equip"></div>
+      <div class="form-group"><label>Monthly Value</label><input type="text" id="qc-value"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-green" id="qc-save-btn" onclick="saveQuickCustomer()">ADD & LINK →</button>
     </div>
   </div>
 </div>
@@ -1145,6 +1324,9 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <option value="">— Select Customer —</option>
         </select>
       </div>
+      <div class="form-group"><label>General Contractor</label><input type="text" id="es-gc"></div>
+      <div class="form-group"><label>GC Contact Name</label><input type="text" id="es-gcname"></div>
+      <div class="form-group"><label>GC Phone</label><input type="text" id="es-gcphone"></div>
       <div class="form-group"><label>Address</label><input type="text" id="es-address"></div>
       <div class="form-group"><label>City</label><input type="text" id="es-city"></div>
       <div class="form-group"><label>Last Check-In Date</label><input type="date" id="es-checkin"></div>
@@ -1210,6 +1392,8 @@ let jobsites  = [];
 let prospects = [];
 let followups = [];
 let invoices  = [];
+let tasks     = [];
+let revenue   = [];
 let arFilter  = 'all';
 let arSearch  = '';
 let cFilter   = 'all', cSearch = '';
@@ -1244,6 +1428,7 @@ function launch() {
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('f-date').value = today();
   document.getElementById('s-start').value = today();
+  var ry = document.getElementById('rev-year'); if(ry) ry.value = new Date().getFullYear();
   syncAll();
 }
 
@@ -1382,6 +1567,9 @@ async function addSite() {
   const record = {
     siteName: name, clientId,
     client: c ? `${c.name} — ${c.company}` : '',
+    gc: document.getElementById('s-gc').value.trim(),
+    gcName: document.getElementById('s-gcname').value.trim(),
+    gcPhone: document.getElementById('s-gcphone').value.trim(),
     address: document.getElementById('s-address').value.trim(),
     city: document.getElementById('s-city').value.trim(),
     lastCheckIn: document.getElementById('s-checkin').value,
@@ -1417,6 +1605,7 @@ async function addSite() {
     sub10company: document.getElementById('s-sub10company').value.trim(),
     equipOnSite: document.getElementById('s-equip').value.trim(),
     competitor: document.getElementById('s-competitor').value.trim(),
+    quotes: document.getElementById('s-quotes').value.trim(),
     monthlyValue: document.getElementById('s-value').value.trim(),
     zone: document.getElementById('s-zone').value.trim(),
     startDate: document.getElementById('s-start').value,
@@ -1428,9 +1617,10 @@ async function addSite() {
   btn.disabled = false; btn.textContent = 'ADD JOB SITE →';
   if (res && res.success) {
     toast('Job site added ✓');
-    ['s-name','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-competitor','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
+    ['s-name','s-gc','s-gcname','s-gcphone','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-competitor','s-quotes','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('s-clientId').value = '';
     document.getElementById('s-start').value = today();
+  var ry = document.getElementById('rev-year'); if(ry) ry.value = new Date().getFullYear();
     document.getElementById('s-status').value = 'Active';
     await syncAll();
     showPanel('jobsites');
@@ -1449,6 +1639,9 @@ function openEditSite(id) {
   document.getElementById('es-id').value = s.id || '';
   document.getElementById('es-name').value = s.siteName || '';
   document.getElementById('es-clientId').value = s.clientId || '';
+  document.getElementById('es-gc').value = s.gc || '';
+  document.getElementById('es-gcname').value = s.gcName || '';
+  document.getElementById('es-gcphone').value = s.gcPhone || '';
   document.getElementById('es-address').value = s.address || '';
   document.getElementById('es-city').value = s.city || '';
   document.getElementById('es-checkin').value = s.lastCheckIn || '';
@@ -1484,6 +1677,7 @@ function openEditSite(id) {
   document.getElementById('es-sub10company').value = s.sub10company || '';
   document.getElementById('es-equip').value = s.equipOnSite || '';
   document.getElementById('es-competitor').value = s.competitor || '';
+  document.getElementById('es-quotes').value = s.quotes || '';
   document.getElementById('es-value').value = s.monthlyValue || '';
   document.getElementById('es-zone').value = s.zone || '';
   document.getElementById('es-start').value = s.startDate || '';
@@ -1503,6 +1697,9 @@ async function saveSiteEdit() {
     id, clientId,
     client: c ? `${c.name} — ${c.company}` : document.getElementById('es-name').value,
     siteName: document.getElementById('es-name').value.trim(),
+    gc: document.getElementById('es-gc').value.trim(),
+    gcName: document.getElementById('es-gcname').value.trim(),
+    gcPhone: document.getElementById('es-gcphone').value.trim(),
     address: document.getElementById('es-address').value.trim(),
     city: document.getElementById('es-city').value.trim(),
     lastCheckIn: document.getElementById('es-checkin').value,
@@ -1538,6 +1735,7 @@ async function saveSiteEdit() {
     sub10company: document.getElementById('es-sub10company').value.trim(),
     equipOnSite: document.getElementById('es-equip').value.trim(),
     competitor: document.getElementById('es-competitor').value.trim(),
+    quotes: document.getElementById('es-quotes').value.trim(),
     monthlyValue: document.getElementById('es-value').value.trim(),
     zone: document.getElementById('es-zone').value.trim(),
     startDate: document.getElementById('es-start').value,
@@ -1719,6 +1917,9 @@ function populateClientDropdowns() {
   const fuSOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}">${s.siteName}</option>`)].join('');
   document.getElementById('fu-siteId').innerHTML = fuSOpts;
   document.getElementById('efu-siteId').innerHTML = fuSOpts;
+  const fuPOpts = ['<option value="">— None —</option>', ...prospects.map(p => `<option value="${p.id}">${p.name} — ${p.company}</option>`)].join('');
+  document.getElementById('fu-prospectId').innerHTML = fuPOpts;
+  document.getElementById('efu-prospectId').innerHTML = fuPOpts;
   const invCOpts = ['<option value="">— Select Customer —</option>', ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)].join('');
   document.getElementById('inv-clientId').innerHTML = invCOpts;
   document.getElementById('einv-clientId').innerHTML = invCOpts;
@@ -1792,6 +1993,11 @@ function renderAll() {
   renderProspects();
   renderFollowUps();
   renderAR();
+  renderTasks();
+  renderRevenue();
+  renderRelationships();
+  renderCompetitors();
+  renderLostRentals();
 }
 
 function reengCard(c, tier) {
@@ -1953,6 +2159,7 @@ async function addProspect() {
     clientId: document.getElementById('p-clientId').value,
     lastFollowUp: document.getElementById('p-followup').value,
     competitor: document.getElementById('p-competitor').value.trim(),
+    lostReason: document.getElementById('p-lostreason').value,
     notes: document.getElementById('p-notes').value.trim()
   };
   const res = await api({ action:'add', type:'prospects', record });
@@ -1977,29 +2184,52 @@ async function deleteProspect(id) {
 async function convertToSite(id) {
   const p = prospects.find(p => p.id == id);
   if (!p) return;
-  if (!confirm(`Convert "${p.name}" to an active Job Site?`)) return;
-  // Add as job site
-  const record = {
-    siteName: p.name,
-    clientId: p.clientId || '',
-    client: p.company,
-    address: p.address || '',
-    city: p.city || '',
-    zone: p.zone || '',
-    equipOnSite: p.equip || '',
-    monthlyValue: p.value || '',
-    startDate: p.startDate || '',
-    status: 'Active',
-    notes: p.notes || ''
-  };
-  const res = await api({ action:'add', type:'jobsites', record });
-  if (res && res.success) {
-    // Mark prospect as Won
-    await api({ action:'update', type:'prospects', record: { ...p, stage:'Won' } });
-    toast('Prospect converted to active Job Site ✓');
-    await syncAll();
-    showPanel('jobsites');
+  const choice = prompt(`Convert "${p.name}" to:\n\nType 1 = Customer only\nType 2 = Job Site only\nType 3 = Both Customer & Job Site\n\nEnter 1, 2, or 3:`);
+  if (!choice || !['1','2','3'].includes(choice.trim())) return;
+  const c = choice.trim();
+  let newClientId = p.clientId || '';
+
+  // Create customer if 1 or 3
+  if (c === '1' || c === '3') {
+    const custRec = {
+      name: p.contact || p.company,
+      company: p.company,
+      phone: p.phone || '',
+      email: '',
+      equip: p.equip || '',
+      lastContact: today(),
+      project: '',
+      value: p.value || '',
+      notes: 'Converted from prospect: ' + p.name
+    };
+    const custRes = await api({ action:'add', type:'clients', record: custRec });
+    if (custRes && custRes.success) newClientId = custRes.id;
   }
+
+  // Create job site if 2 or 3
+  if (c === '2' || c === '3') {
+    const siteRec = {
+      siteName: p.name,
+      clientId: newClientId,
+      client: p.company,
+      address: p.address || '',
+      city: p.city || '',
+      zone: p.zone || '',
+      equipOnSite: p.equip || '',
+      monthlyValue: p.value || '',
+      startDate: p.startDate || '',
+      status: 'Active',
+      competitor: p.competitor || '',
+      notes: p.notes || ''
+    };
+    await api({ action:'add', type:'jobsites', record: siteRec });
+  }
+
+  // Mark prospect Won but keep it
+  await api({ action:'update', type:'prospects', record: { ...p, stage:'Won' } });
+  toast('Prospect converted ✓ (marked Won, kept for history)');
+  await syncAll();
+  showPanel(c === '1' ? 'customers' : 'jobsites');
 }
 
 function openEditProspect(id) {
@@ -2021,6 +2251,7 @@ function openEditProspect(id) {
   document.getElementById('ep-clientId').value = p.clientId || '';
   document.getElementById('ep-followup').value = p.lastFollowUp || '';
   document.getElementById('ep-competitor').value = p.competitor || '';
+  document.getElementById('ep-lostreason').value = p.lostReason || '';
   document.getElementById('ep-notes').value = p.notes || '';
   // Populate client dropdown
   const opts = ['<option value="">— None —</option>', ...clients.map(c => `<option value="${c.id}" ${c.id==p.clientId?'selected':''}>${c.name} — ${c.company}</option>`)].join('');
@@ -2049,6 +2280,7 @@ async function saveProspectEdit() {
     clientId: document.getElementById('ep-clientId').value,
     lastFollowUp: document.getElementById('ep-followup').value,
     competitor: document.getElementById('ep-competitor').value.trim(),
+    lostReason: document.getElementById('ep-lostreason').value,
     notes: document.getElementById('ep-notes').value.trim()
   };
   const res = await api({ action:'update', type:'prospects', record });
@@ -2091,11 +2323,124 @@ function renderProspects() {
         <div style="margin-top:6px"><span class="prospect-source ${sourceClass[p.source]||'src-other'}">${sourceEmoji[p.source]||'📌'} ${p.source||'Other'}</span></div>
         <div style="display:flex;gap:5px;margin-top:8px" onclick="event.stopPropagation()">
           <button class="btn-small" onclick="openEditProspect('${p.id}')">Edit</button>
-          ${p.stage !== 'Won' && p.stage !== 'Lost' ? `<button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="convertToSite('${p.id}')">→ Job Site</button>` : ''}
-          <button class="btn-danger" onclick="deleteProspect('${p.id}')">✕</button>
+          ${p.stage !== 'Won' && p.stage !== 'Lost' ? `<button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="event.stopPropagation();convertToSite('${p.id}')">→ Convert</button>` : ''}
+          <button class="btn-small" onclick="event.stopPropagation();sendCreditApp('${p.id}')">💳 Credit App</button>
+          <button class="btn-small" onclick="event.stopPropagation();sendReEngagement('${p.id}')">📧 Re-Engage</button>
+          <button class="btn-danger" onclick="event.stopPropagation();deleteProspect('${p.id}')">✕</button>
         </div>
       </div>`).join('');
   });
+}
+
+// ══════════════════════════════════════════════
+// TASKS
+// ══════════════════════════════════════════════
+async function addTask() {
+  const text = document.getElementById('task-input').value.trim();
+  if (!text) return;
+  const when = document.getElementById('task-when').value;
+  const record = { text: text, when: when, status: 'open', created: today() };
+  const res = await api({ action:'add', type:'tasks', record });
+  if (res && res.success) {
+    document.getElementById('task-input').value = '';
+    await syncAll();
+  }
+}
+
+async function toggleTask(id) {
+  const t = tasks.find(t => t.id == id);
+  if (!t) return;
+  const res = await api({ action:'update', type:'tasks', record: { ...t, status: t.status==='done'?'open':'done' } });
+  if (res && res.success) await syncAll();
+}
+
+async function deleteTask(id) {
+  const res = await api({ action:'delete', type:'tasks', id });
+  if (res && res.success) await syncAll();
+}
+
+function renderTasks() {
+  const todayTasks = tasks.filter(t => t.when === 'today');
+  const weekTasks  = tasks.filter(t => t.when === 'week');
+
+  function taskRow(t) {
+    const done = t.status === 'done';
+    return `<div class="task-row ${done?'done':''} ${t.when==='week'?'week':''}">
+      <div class="task-check ${done?'checked':''}" onclick="toggleTask('${t.id}')">${done?'✓':''}</div>
+      <div class="task-text ${done?'done':''}">${t.text}</div>
+      <button class="btn-danger" onclick="deleteTask('${t.id}')">✕</button>
+    </div>`;
+  }
+
+  const te = document.getElementById('tasks-today');
+  const we = document.getElementById('tasks-week');
+  if (te) te.innerHTML = todayTasks.length ? todayTasks.map(taskRow).join('') : '<div class="empty-state">No tasks for today.</div>';
+  if (we) we.innerHTML = weekTasks.length ? weekTasks.map(taskRow).join('') : '<div class="empty-state">No tasks this week.</div>';
+}
+
+// ══════════════════════════════════════════════
+// REVENUE
+// ══════════════════════════════════════════════
+async function addRevenue() {
+  const month = document.getElementById('rev-month').value;
+  const year  = document.getElementById('rev-year').value.trim();
+  const amount = document.getElementById('rev-amount').value.trim();
+  if (!year || !amount) { toast('Year and Revenue are required', true); return; }
+  const key = year + '-' + month;
+  // Check if exists
+  const existing = revenue.find(r => r.period === key);
+  const btn = document.getElementById('add-rev-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  if (existing) {
+    await api({ action:'update', type:'revenue', record: { ...existing, amount: amount } });
+  } else {
+    await api({ action:'add', type:'revenue', record: { period: key, amount: amount } });
+  }
+  btn.disabled = false; btn.textContent = 'ADD / UPDATE →';
+  document.getElementById('rev-amount').value = '';
+  await syncAll();
+  toast('Revenue saved ✓');
+}
+
+async function deleteRevenue(id) {
+  const res = await api({ action:'delete', type:'revenue', id });
+  if (res && res.success) await syncAll();
+}
+
+function renderRevenue() {
+  const el = document.getElementById('revenue-list');
+  if (!el) return;
+  if (!revenue.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div>No revenue entered yet.</div>'; return; }
+
+  const sorted = [...revenue].sort((a,b) => (b.period||'').localeCompare(a.period||''));
+  const monthNames = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
+
+  el.innerHTML = sorted.map((r, i) => {
+    const amt = parseFloat((r.amount||'').replace(/[^0-9.]/g,''))||0;
+    const prev = sorted[i+1];
+    let change = '';
+    if (prev) {
+      const prevAmt = parseFloat((prev.amount||'').replace(/[^0-9.]/g,''))||0;
+      if (prevAmt > 0) {
+        const pct = ((amt - prevAmt) / prevAmt * 100);
+        const color = pct >= 0 ? 'var(--green)' : 'var(--red)';
+        const arrow = pct >= 0 ? '▲' : '▼';
+        change = `<span style="color:${color};font-family:var(--fm);font-size:13px">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
+      }
+    }
+    const parts = (r.period||'').split('-');
+    const label = parts[1] ? `${monthNames[parts[1]]} ${parts[0]}` : r.period;
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);padding:16px 20px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">${label}</div>
+        <div style="font-family:var(--fh);font-size:28px">${r.amount||'$0'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        ${change}
+        <button class="btn-danger" onclick="deleteRevenue('${r.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -2250,6 +2595,11 @@ function filterAR(f, btn) {
   document.querySelectorAll('#panel-ar .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderAR();
+  renderTasks();
+  renderRevenue();
+  renderRelationships();
+  renderCompetitors();
+  renderLostRentals();
 }
 
 function searchAR(v) { arSearch = v; renderAR(); }
@@ -2297,6 +2647,7 @@ function renderAR() {
         <span class="status-badge s-lost">${inv.status}</span>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
           <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="openARAction('${inv.id}')">+ Log Action</button>
+          <button class="btn-small" onclick="sendARReminder('${inv.id}')">📧 Friendly Reminder</button>
           <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="markPaid('${inv.id}')">✓ Paid</button>
           <button class="btn-small" onclick="openEditInvoice('${inv.id}')">Edit</button>
         </div>
@@ -2375,6 +2726,7 @@ async function addFollowUp() {
     dueDate: due,
     clientId: document.getElementById('fu-clientId').value,
     siteId: document.getElementById('fu-siteId').value,
+    prospectId: document.getElementById('fu-prospectId').value,
     type: document.getElementById('fu-type').value,
     priority: document.getElementById('fu-priority').value,
     status: 'Open',
@@ -2387,6 +2739,7 @@ async function addFollowUp() {
     ['fu-title','fu-due','fu-notes'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('fu-clientId').value = '';
     document.getElementById('fu-siteId').value = '';
+    document.getElementById('fu-prospectId').value = '';
     document.getElementById('fu-type').value = 'Call';
     document.getElementById('fu-priority').value = 'High';
     await syncAll();
@@ -2421,6 +2774,8 @@ function openEditFollowUp(id) {
   document.getElementById('efu-clientId').innerHTML = cOpts;
   const sOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}" ${s.id==fu.siteId?'selected':''}>${s.siteName}</option>`)].join('');
   document.getElementById('efu-siteId').innerHTML = sOpts;
+  const pOpts = ['<option value="">— None —</option>', ...prospects.map(p => `<option value="${p.id}" ${p.id==fu.prospectId?'selected':''}>${p.name} — ${p.company}</option>`)].join('');
+  document.getElementById('efu-prospectId').innerHTML = pOpts;
   document.getElementById('efu-modal').classList.add('open');
 }
 
@@ -2435,6 +2790,7 @@ async function saveFollowUpEdit() {
     dueDate: document.getElementById('efu-due').value,
     clientId: document.getElementById('efu-clientId').value,
     siteId: document.getElementById('efu-siteId').value,
+    prospectId: document.getElementById('efu-prospectId').value,
     type: document.getElementById('efu-type').value,
     priority: document.getElementById('efu-priority').value,
     status: document.getElementById('efu-status').value,
@@ -2463,6 +2819,7 @@ function renderFollowUps() {
   function fuCard(fu, urgency) {
     const c = fu.clientId ? clients.find(c => c.id == fu.clientId) : null;
     const s = fu.siteId   ? jobsites.find(s => s.id == fu.siteId)  : null;
+    const pr = fu.prospectId ? prospects.find(p => p.id == fu.prospectId) : null;
     return `<div class="followup-card ${urgency}">
       <div style="flex:1;min-width:180px">
         <div class="followup-name" onclick="${c?`openProfile('${c.id}')`:''}">
@@ -2470,6 +2827,7 @@ function renderFollowUps() {
         </div>
         ${c ? `<div class="followup-meta">👷 ${c.name} — ${c.company}</div>` : ''}
         ${s ? `<div class="followup-meta">🏗 ${s.siteName}</div>` : ''}
+        ${pr ? `<div class="followup-meta">🔍 ${pr.name} — ${pr.company}</div>` : ''}
         ${fu.notes ? `<div class="followup-meta" style="margin-top:4px">${fu.notes}</div>` : ''}
         <div class="followup-due ${urgency==='urgent'?'due-overdue':urgency==='today'?'due-today':'due-upcoming'}">
           ${urgency==='urgent'?'⚠ OVERDUE — ':urgency==='today'?'📅 Due Today':'📆 Due: '}${fu.dueDate}
@@ -2495,6 +2853,283 @@ function renderFollowUps() {
   }
 }
 
+function setCreditLink() {
+  const current = localStorage.getItem('creditPortalLink') || '';
+  const link = prompt('Paste your credit application portal link.\nThis will be used in all credit app messages:', current);
+  if (link !== null) {
+    localStorage.setItem('creditPortalLink', link.trim());
+    toast('Credit portal link saved ✓');
+  }
+}
+
+// ══════════════════════════════════════════════
+// MESSAGE ENGINES (credit app / re-engagement / AR)
+// ══════════════════════════════════════════════
+function showMessage(title, body, recipientName, recipientContact) {
+  const modal = document.getElementById('message-modal');
+  document.getElementById('msg-title').textContent = title;
+  document.getElementById('msg-recipient').value = recipientContact || '';
+  document.getElementById('msg-recipient-name').value = recipientName || '';
+  document.getElementById('msg-body').value = body;
+  modal.classList.add('open');
+}
+
+function copyMessage() {
+  const text = document.getElementById('msg-body').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('msg-copy-btn');
+    btn.textContent = 'COPIED!';
+    setTimeout(() => btn.textContent = 'COPY MESSAGE', 1500);
+  });
+}
+
+function emailMessage() {
+  const to = document.getElementById('msg-recipient').value;
+  const subject = document.getElementById('msg-title').value || document.getElementById('msg-title').textContent;
+  const body = encodeURIComponent(document.getElementById('msg-body').value);
+  window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${body}`;
+}
+
+// Credit App — prospects only
+function sendCreditApp(prospectId) {
+  const p = prospects.find(p => p.id == prospectId);
+  if (!p) return;
+  const portalLink = localStorage.getItem('creditPortalLink') || '[YOUR CREDIT PORTAL LINK]';
+  const recipient = p.contact || p.company;
+  const body = `Hi ${p.contact||'there'},
+
+Great connecting on ${p.name||'your project'}. To get your account set up with us, here's our quick credit application — it only takes about 5 minutes:
+
+${portalLink}
+
+Once that's approved we'll have you ready to rent. Let me know if you have any questions.
+
+Thanks,
+Brad Hanna`;
+  showMessage('Credit Application', body, recipient, p.phone||'');
+}
+
+// Sales re-engagement — prospects + leads
+function sendReEngagement(prospectId) {
+  const p = prospects.find(p => p.id == prospectId);
+  if (!p) return;
+  const recipient = p.contact || p.company;
+  const body = `Hi ${p.contact||'there'},
+
+Wanted to circle back on ${p.name||'your project'}. I know things move fast out there — just checking where you're at on equipment needs and whether I can help get you taken care of.
+
+Happy to swing by the site or jump on a quick call whenever works.
+
+Thanks,
+Brad Hanna`;
+  showMessage('Re-Engagement', body, recipient, p.phone||'');
+}
+
+// AR re-engagement — friendly collection
+function sendARReminder(invId) {
+  const inv = invoices.find(i => i.id == invId);
+  if (!inv) return;
+  const c = clients.find(c => c.id == inv.clientId);
+  const recipient = c ? c.name : 'there';
+  const body = `Hi ${c?c.name:'there'},
+
+Hope all's going well! Just a friendly heads up that we've got an open balance of ${inv.amount||''} on the account that's gotten a little aged. No worries at all — just wanted to make sure it didn't slip through the cracks.
+
+Could you let me know when we might expect payment? Happy to help if there's anything you need from our end.
+
+Appreciate you,
+Brad Hanna`;
+  showMessage('Payment Reminder', body, recipient, c?c.phone:'');
+}
+
+// ══════════════════════════════════════════════
+// QUICK ADD CUSTOMER (from job site / prospect)
+// ══════════════════════════════════════════════
+function quickAddCustomer(returnTo) {
+  document.getElementById('qc-return').value = returnTo;
+  ['qc-name','qc-company','qc-phone','qc-email','qc-equip','qc-value'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('quickcust-modal').classList.add('open');
+}
+
+async function saveQuickCustomer() {
+  const name = document.getElementById('qc-name').value.trim();
+  const company = document.getElementById('qc-company').value.trim();
+  if (!name || !company) { toast('Name and Company required', true); return; }
+  const btn = document.getElementById('qc-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    name, company,
+    phone: document.getElementById('qc-phone').value.trim(),
+    email: document.getElementById('qc-email').value.trim(),
+    equip: document.getElementById('qc-equip').value.trim(),
+    lastContact: today(),
+    project: '', value: document.getElementById('qc-value').value.trim(), notes: 'Added via quick-add'
+  };
+  const res = await api({ action:'add', type:'clients', record });
+  btn.disabled = false; btn.textContent = 'ADD & LINK →';
+  if (res && res.success) {
+    toast('Customer added & linked ✓');
+    closeModals();
+    await syncAll();
+    // Auto-select the new customer in whichever dropdown we came from
+    const returnTo = document.getElementById('qc-return').value;
+    if (returnTo === 'site') {
+      document.getElementById('s-clientId').value = res.id;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// TOP RELATIONSHIPS
+// ══════════════════════════════════════════════
+function renderRelationships() {
+  // Count GCs across job sites
+  const gcCount = {};
+  jobsites.forEach(s => {
+    if (s.gc) {
+      if (!gcCount[s.gc]) gcCount[s.gc] = { name: s.gc, sites: [], value: 0 };
+      gcCount[s.gc].sites.push(s.siteName);
+      gcCount[s.gc].value += parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0;
+    }
+    // Also count client field as GC-like
+    if (s.client && !s.gc) {
+      if (!gcCount[s.client]) gcCount[s.client] = { name: s.client, sites: [], value: 0 };
+      gcCount[s.client].sites.push(s.siteName);
+      gcCount[s.client].value += parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0;
+    }
+  });
+  // Add prospect GCs
+  prospects.forEach(p => {
+    if (p.company) {
+      if (!gcCount[p.company]) gcCount[p.company] = { name: p.company, sites: [], value: 0, prospects: 0 };
+      gcCount[p.company].prospects = (gcCount[p.company].prospects||0) + 1;
+    }
+  });
+
+  const gcs = Object.values(gcCount).filter(g => g.sites.length + (g.prospects||0) > 1)
+    .sort((a,b) => (b.sites.length + (b.prospects||0)) - (a.sites.length + (a.prospects||0)));
+
+  document.getElementById('rel-gcs').innerHTML = gcs.length ? gcs.map(g => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--green);padding:13px 16px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:600;font-size:14px">${g.name}</div>
+        <div style="font-family:var(--fm);font-size:12px;color:var(--green)">${g.sites.length} sites${g.prospects?' · '+g.prospects+' prospects':''}</div>
+      </div>
+      ${g.value>0?`<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-top:3px">$${g.value.toLocaleString()}/mo across sites</div>`:''}
+      ${g.prospects&&g.sites.length?`<div style="font-family:var(--fm);font-size:10px;color:var(--accent);margin-top:3px">⭐ Growing — active sites AND prospects</div>`:''}
+    </div>`).join('') : '<div class="empty-state">No GC appears more than once yet.</div>';
+
+  // Superintendents across all subs
+  const supeCount = {};
+  jobsites.forEach(s => {
+    const subs = [s.superintendent, s.sub2name, s.sub3name, s.sub4name, s.sub5name, s.sub6name, s.sub7name, s.sub8name, s.sub9name, s.sub10name];
+    subs.forEach(name => {
+      if (name) {
+        if (!supeCount[name]) supeCount[name] = { name: name, sites: [] };
+        supeCount[name].sites.push(s.siteName);
+      }
+    });
+  });
+  const supes = Object.values(supeCount).filter(s => s.sites.length > 1).sort((a,b) => b.sites.length - a.sites.length);
+  document.getElementById('rel-supes').innerHTML = supes.length ? supes.map(s => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blue);padding:13px 16px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:600;font-size:14px">${s.name}</div>
+        <div style="font-family:var(--fm);font-size:12px;color:var(--blue)">${s.sites.length} sites</div>
+      </div>
+      <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:3px">${s.sites.slice(0,3).join(', ')}${s.sites.length>3?'...':''}</div>
+    </div>`).join('') : '<div class="empty-state">No superintendent appears more than once yet.</div>';
+
+  // Customers by site count + value
+  const custData = clients.map(c => {
+    const sites = jobsites.filter(s => s.clientId == c.id);
+    const value = sites.reduce((sum,s) => sum + (parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0), 0);
+    return { name: c.name, company: c.company, id: c.id, siteCount: sites.length, value: value };
+  }).filter(c => c.siteCount > 0).sort((a,b) => b.siteCount - a.siteCount || b.value - a.value);
+
+  document.getElementById('rel-customers').innerHTML = custData.length ? custData.map(c => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);padding:13px 16px;margin-bottom:8px;cursor:pointer" onclick="openProfile('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:600;font-size:14px">${c.name}</div><div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${c.company}</div></div>
+        <div style="text-align:right"><div style="font-family:var(--fm);font-size:12px;color:var(--accent)">${c.siteCount} sites</div>${c.value>0?`<div style="font-family:var(--fm);font-size:11px;color:var(--green)">$${c.value.toLocaleString()}/mo</div>`:''}</div>
+      </div>
+    </div>`).join('') : '<div class="empty-state">No customers linked to multiple sites yet.</div>';
+}
+
+// ══════════════════════════════════════════════
+// COMPETITOR INTELLIGENCE
+// ══════════════════════════════════════════════
+function renderCompetitors() {
+  const comp = {};
+  // From job sites
+  jobsites.forEach(s => {
+    if (s.competitor && s.competitor.toLowerCase() !== 'none' && s.competitor.toLowerCase() !== "hasn't started") {
+      const key = s.competitor.trim();
+      if (!comp[key]) comp[key] = { name: key, sites: [], prospects: [], lost: [], revenueLost: 0 };
+      comp[key].sites.push(s.siteName);
+    }
+  });
+  // From prospects
+  prospects.forEach(p => {
+    if (p.competitor && p.competitor.toLowerCase() !== 'none') {
+      const key = p.competitor.trim();
+      if (!comp[key]) comp[key] = { name: key, sites: [], prospects: [], lost: [], revenueLost: 0 };
+      comp[key].prospects.push(p.name);
+    }
+  });
+  // From lost quotes (stored in quotes - will wire when quotes built; for now from prospects marked Lost)
+  prospects.filter(p => p.stage === 'Lost' && p.competitor).forEach(p => {
+    const key = p.competitor.trim();
+    if (!comp[key]) comp[key] = { name: key, sites: [], prospects: [], lost: [], revenueLost: 0 };
+    comp[key].lost.push(p.name);
+    comp[key].revenueLost += parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0;
+  });
+
+  const list = Object.values(comp).sort((a,b) => b.revenueLost - a.revenueLost || (b.sites.length+b.prospects.length) - (a.sites.length+a.prospects.length));
+
+  document.getElementById('competitor-list').innerHTML = list.length ? list.map((c,i) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);padding:14px 18px;margin-bottom:8px;cursor:pointer" onclick="document.getElementById('comp-detail-${i}').style.display=document.getElementById('comp-detail-${i}').style.display==='none'?'block':'none'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:600;font-size:15px">⚔ ${c.name}</div>
+        <div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">${c.sites.length} sites · ${c.prospects.length} bidding${c.revenueLost>0?' · $'+c.revenueLost.toLocaleString()+' lost':''}</div>
+      </div>
+      <div id="comp-detail-${i}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        ${c.sites.length?`<div style="font-family:var(--fm);font-size:11px;color:var(--blue);margin-bottom:4px">On these sites: ${c.sites.join(', ')}</div>`:''}
+        ${c.prospects.length?`<div style="font-family:var(--fm);font-size:11px;color:var(--yellow);margin-bottom:4px">Bidding against you: ${c.prospects.join(', ')}</div>`:''}
+        ${c.lost.length?`<div style="font-family:var(--fm);font-size:11px;color:var(--red);margin-bottom:4px">Beat you on: ${c.lost.join(', ')}</div>`:''}
+        ${c.revenueLost>0?`<div style="font-family:var(--fm);font-size:12px;color:var(--red);margin-top:6px">Total revenue taken: $${c.revenueLost.toLocaleString()}</div>`:''}
+      </div>
+    </div>`).join('') : '<div class="empty-state"><div class="empty-icon">⚔</div>No competitors logged yet. Add competitor names to your job sites and prospects.</div>';
+}
+
+// ══════════════════════════════════════════════
+// LOST RENTALS
+// ══════════════════════════════════════════════
+function renderLostRentals() {
+  // Lost prospects + any quotes marked lost
+  const lost = prospects.filter(p => p.stage === 'Lost');
+
+  const total = lost.reduce((s,p) => s + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
+  // Reason buckets pulled from notes/lostReason field if present
+  function reasonVal(reason) {
+    return lost.filter(p => (p.lostReason||'').toLowerCase().includes(reason)).reduce((s,p) => s + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
+  }
+  document.getElementById('lr-total').textContent = '$'+total.toLocaleString();
+  document.getElementById('lr-price').textContent = '$'+reasonVal('price').toLocaleString();
+  document.getElementById('lr-avail').textContent = '$'+reasonVal('availab').toLocaleString();
+  document.getElementById('lr-logistics').textContent = '$'+reasonVal('logist').toLocaleString();
+
+  document.getElementById('lostrentals-list').innerHTML = lost.length ? lost.map(p => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);padding:13px 16px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-weight:600;font-size:14px">${p.name}</div><div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${p.company}</div></div>
+        <div style="font-family:var(--fh);font-size:20px;color:var(--red)">${p.value||'—'}</div>
+      </div>
+      ${p.competitor?`<div style="font-family:var(--fm);font-size:11px;color:var(--red);margin-top:4px">⚔ Lost to ${p.competitor}</div>`:''}
+      ${p.lostReason?`<div style="font-family:var(--fm);font-size:11px;color:var(--yellow);margin-top:2px">Reason: ${p.lostReason}</div>`:''}
+    </div>`).join('') : '<div class="empty-state">No lost rentals logged yet.</div>';
+}
+
 // ══════════════════════════════════════════════
 // MAP
 // ══════════════════════════════════════════════
@@ -2513,7 +3148,7 @@ function setMapFilter(f, btn) {
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','map','prospects','add-prospect','followups','add-followup','ar','add-invoice'];
+  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice'];
   document.querySelectorAll('.nav-item').forEach((n,i) => {
     n.classList.toggle('active', panels[i] === id);
   });
@@ -2712,12 +3347,22 @@ function showMapPopup(loc) {
       <div class="popup-field"><div class="popup-label">Equipment on Site</div><div class="popup-val">${s.equipOnSite||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Last Check-In</div><div class="popup-val" style="color:${s.lastCheckIn?'var(--green)':'var(--red)'}">${s.lastCheckIn||'⚠ None'}</div></div>
       <div class="popup-field"><div class="popup-label">Competitor</div><div class="popup-val" style="color:${s.competitor?'var(--red)':'var(--muted2)'}">${s.competitor||'None'}</div></div>
+      ${s.quotes?`<div class="popup-field" style="grid-column:1/-1"><div class="popup-label">Quotes</div><div class="popup-val" style="font-size:11px;white-space:pre-line">${s.quotes}</div></div>`:''}
       <div class="popup-field"><div class="popup-label">Start Date</div><div class="popup-val">${s.startDate||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">End Date</div><div class="popup-val">${s.endDate||'—'}</div></div>
     `;
 
     // Show all subs + notes
     let subsHtml = '';
+
+    // General Contractor section
+    if (s.gc || s.gcName || s.gcPhone) {
+      subsHtml += `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:8px;margin-top:4px">GENERAL CONTRACTOR</div>
+        <div class="popup-sub-item" style="border-left:3px solid var(--accent)">
+          <div class="popup-sub-name">🏢 ${s.gc||'—'}</div>
+          <div class="popup-sub-detail">${s.gcName?'👤 '+s.gcName:''}${s.gcPhone?' · 📞 '+s.gcPhone:''}</div>
+        </div>`;
+    }
 
     // Build complete sub list
     const subFields = [
@@ -2759,7 +3404,7 @@ function showMapPopup(loc) {
 
     // Quick action buttons
     subsHtml += `<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-      <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="closeMapPopup();openEditSite('${s.id}')">✏ Edit Site</button>
+      <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="closeMapPopup();setTimeout(function(){openEditSite('${s.id}')},100)">✏ Edit Site</button>
       <button class="btn-small" onclick="closeMapPopup();touchClient('${s.clientId||''}')" ${!s.clientId?'disabled':''}>✓ Log Visit</button>
     </div>`;
 
