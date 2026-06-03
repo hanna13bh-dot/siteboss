@@ -224,6 +224,13 @@ tr:hover td{background:rgba(255,255,255,.015)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinning{display:inline-block;animation:spin 1s linear infinite}
 
+/* LOST RENT LOG */
+.lostrent-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);padding:13px 16px;margin-bottom:8px}
+.lostrent-type{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:2px;display:inline-block;margin-bottom:6px}
+.lt-prospect{background:rgba(155,89,182,.15);color:#9b59b6;border:1px solid rgba(155,89,182,.3)}
+.lt-customer{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3)}
+.lt-availability{background:rgba(52,152,219,.15);color:var(--blue);border:1px solid rgba(52,152,219,.3)}
+
 /* TASKS */
 .task-row{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
 .task-row.done{opacity:.5;border-left-color:var(--green)}
@@ -450,6 +457,11 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="dash-label">Monthly Revenue</div>
           <div class="dash-number" id="d-rev" style="font-size:28px;margin-top:4px">$0</div>
           <div class="dash-sub">active sites total</div>
+        </div>
+        <div class="dash-card c-red" onclick="openLogLostRent('standalone','')" style="cursor:pointer">
+          <div class="dash-label">📉 Log Lost Rent</div>
+          <div class="dash-number" style="font-size:22px;margin-top:6px">+ Quick Log</div>
+          <div class="dash-sub">availability or customer loss</div>
         </div>
       </div>
 
@@ -1210,6 +1222,56 @@ tr:hover td{background:rgba(255,255,255,.015)}
   </div>
 </div>
 
+<!-- LOG LOST RENT MODAL -->
+<div class="modal-overlay" id="lostrent-modal">
+  <div class="modal" style="border-top-color:var(--red)">
+    <div class="modal-title" style="color:var(--red)">📉 LOG LOST RENT</div>
+    <input type="hidden" id="lr-source-type">
+    <input type="hidden" id="lr-source-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Loss Type</label>
+        <select id="lr-type" onchange="updateLRType()">
+          <option value="customer">Customer lost a rental</option>
+          <option value="availability">Availability loss (didn't have equipment)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date</label><input type="date" id="lr-date"></div>
+      <div class="form-group"><label>Customer</label>
+        <select id="lr-clientId" onchange="toggleLRCustomerText()">
+          <option value="">— Select Customer —</option>
+          <option value="__manual__">+ Type manually</option>
+        </select>
+        <input type="text" id="lr-clientName-manual" placeholder="Type customer name..." style="margin-top:6px;display:none">
+      </div>
+      <div class="form-group"><label>Job Site</label>
+        <select id="lr-siteId" onchange="toggleLRSiteText()">
+          <option value="">— Select Job Site —</option>
+          <option value="__manual__">+ Type manually</option>
+        </select>
+        <input type="text" id="lr-siteName-manual" placeholder="Type job site name..." style="margin-top:6px;display:none">
+      </div>
+      <div class="form-group"><label>Equipment</label><input type="text" id="lr-equip" placeholder="Scissor lift, excavator..."></div>
+      <div class="form-group"><label>Est. Monthly Value Lost</label><input type="text" id="lr-value" placeholder="$3,000"></div>
+      <div class="form-group" id="lr-competitor-group"><label>Competitor They Went To</label><input type="text" id="lr-competitor" placeholder="Sunbelt, United..."></div>
+      <div class="form-group"><label>Reason</label>
+        <select id="lr-reason">
+          <option value="Availability">Availability (no equipment)</option>
+          <option value="Logistics">Logistics (couldn't deliver)</option>
+          <option value="Price">Price</option>
+          <option value="Relationship">Relationship</option>
+          <option value="Timing">Timing</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="lr-notes" rows="2" placeholder="What happened?"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" style="background:var(--red)" id="lr-save-btn" onclick="saveLostRent()">LOG LOST RENT →</button>
+    </div>
+  </div>
+</div>
+
 <!-- MAP POPUP -->
 <div class="map-popup-overlay" id="map-popup-overlay">
   <div class="map-popup" id="map-popup">
@@ -1394,6 +1456,7 @@ let followups = [];
 let invoices  = [];
 let tasks     = [];
 let revenue   = [];
+let lostRents = [];
 let arFilter  = 'all';
 let arSearch  = '';
 let cFilter   = 'all', cSearch = '';
@@ -1926,6 +1989,7 @@ function populateClientDropdowns() {
   const invSOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}">${s.siteName}</option>`)].join('');
   document.getElementById('inv-siteId').innerHTML = invSOpts;
   document.getElementById('einv-siteId').innerHTML = invSOpts;
+  // Lost rent dropdowns populated dynamically in openLogLostRent
 }
 
 function fillClientName() {}
@@ -2976,6 +3040,183 @@ async function saveQuickCustomer() {
     if (returnTo === 'site') {
       document.getElementById('s-clientId').value = res.id;
     }
+  }
+}
+
+// ══════════════════════════════════════════════
+// LOST RENT LOG
+// ══════════════════════════════════════════════
+function toggleLRCustomerText() {
+  const sel = document.getElementById('lr-clientId');
+  const txt = document.getElementById('lr-clientName-manual');
+  txt.style.display = sel.value === '__manual__' ? 'block' : 'none';
+}
+
+function toggleLRSiteText() {
+  const sel = document.getElementById('lr-siteId');
+  const txt = document.getElementById('lr-siteName-manual');
+  txt.style.display = sel.value === '__manual__' ? 'block' : 'none';
+}
+
+function openLogLostRent(sourceType, sourceId) {
+  document.getElementById('lr-source-type').value = sourceType;
+  document.getElementById('lr-source-id').value = sourceId;
+  document.getElementById('lr-date').value = today();
+  document.getElementById('lr-type').value = 'customer';
+  document.getElementById('lr-equip').value = '';
+  document.getElementById('lr-value').value = '';
+  document.getElementById('lr-competitor').value = '';
+  document.getElementById('lr-reason').value = 'Availability';
+  document.getElementById('lr-notes').value = '';
+
+  // Populate customer dropdown
+  const cOpts = ['<option value="">— Select Customer —</option>',
+    ...clients.map(c => `<option value="${c.id}" ${c.id==sourceId&&sourceType==='customer'?'selected':''}>${c.name} — ${c.company}</option>`),
+    '<option value="__manual__">+ Type manually</option>'
+  ].join('');
+  document.getElementById('lr-clientId').innerHTML = cOpts;
+  document.getElementById('lr-clientName-manual').style.display = 'none';
+  document.getElementById('lr-clientName-manual').value = '';
+
+  // Populate site dropdown
+  const sOpts = ['<option value="">— Select Job Site —</option>',
+    ...jobsites.map(s => `<option value="${s.id}" ${s.id==sourceId&&sourceType==='site'?'selected':''}>${s.siteName}${s.client?' ('+s.client+')':''}</option>`),
+    '<option value="__manual__">+ Type manually</option>'
+  ].join('');
+  document.getElementById('lr-siteId').innerHTML = sOpts;
+  document.getElementById('lr-siteName-manual').style.display = 'none';
+  document.getElementById('lr-siteName-manual').value = '';
+
+  // If coming from a site, auto-select the linked customer too
+  if (sourceType === 'site') {
+    const site = jobsites.find(s => s.id == sourceId);
+    if (site && site.clientId) document.getElementById('lr-clientId').value = site.clientId;
+  }
+
+  document.getElementById('lostrent-modal').classList.add('open');
+}
+
+function updateLRType() {
+  const type = document.getElementById('lr-type').value;
+  const compGroup = document.getElementById('lr-competitor-group');
+  if (type === 'availability') {
+    compGroup.style.opacity = '0.5';
+    document.getElementById('lr-reason').value = 'Availability';
+  } else {
+    compGroup.style.opacity = '1';
+  }
+}
+
+async function saveLostRent() {
+  const btn = document.getElementById('lr-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const sourceType = document.getElementById('lr-source-type').value;
+  const sourceId   = document.getElementById('lr-source-id').value;
+  const type       = document.getElementById('lr-type').value;
+
+  // Get linked names
+  const selClientId = document.getElementById('lr-clientId').value;
+  const selSiteId   = document.getElementById('lr-siteId').value;
+  const c = clients.find(c => c.id == selClientId);
+  const s = jobsites.find(s => s.id == selSiteId);
+  const manualClient = document.getElementById('lr-clientName-manual').value.trim();
+  const manualSite   = document.getElementById('lr-siteName-manual').value.trim();
+  const clientName = selClientId === '__manual__' ? manualClient : (c ? c.name + ' — ' + c.company : '');
+  const siteName   = selSiteId === '__manual__' ? manualSite : (s ? s.siteName : '');
+
+  const record = {
+    sourceType, sourceId,
+    lossType:   type,
+    clientId:   selClientId,
+    siteId:     selSiteId,
+    clientName, siteName,
+    date:       document.getElementById('lr-date').value,
+    equip:      document.getElementById('lr-equip').value.trim(),
+    value:      document.getElementById('lr-value').value.trim(),
+    competitor: document.getElementById('lr-competitor').value.trim(),
+    reason:     document.getElementById('lr-reason').value,
+    notes:      document.getElementById('lr-notes').value.trim()
+  };
+
+  const res = await api({ action:'add', type:'lostRents', record });
+  btn.disabled = false; btn.textContent = 'LOG LOST RENT →';
+  if (res && res.success) {
+    toast('Lost rent logged ✓');
+    closeModals();
+    await syncAll();
+  }
+}
+
+async function deleteLostRent(id) {
+  if (!confirm('Remove this entry?')) return;
+  const res = await api({ action:'delete', type:'lostRents', id });
+  if (res && res.success) { toast('Removed ✓'); await syncAll(); }
+}
+
+function renderLostRentals() {
+  // Combine: lost prospects + lostRents log
+  const lostProspects = prospects.filter(p => p.stage === 'Lost');
+  
+  function parseAmt(str) { return parseFloat((str||'').replace(/[^0-9.]/g,''))||0; }
+
+  // Totals from both sources
+  const allLost = [
+    ...lostProspects.map(p => ({ reason: p.lostReason||'', value: parseAmt(p.value), source: 'prospect' })),
+    ...lostRents.map(r => ({ reason: r.reason||'', value: parseAmt(r.value), source: r.lossType }))
+  ];
+
+  const total    = allLost.reduce((s,l) => s+l.value, 0);
+  const priceAmt = allLost.filter(l => l.reason==='Price').reduce((s,l) => s+l.value, 0);
+  const availAmt = allLost.filter(l => l.reason==='Availability'||l.source==='availability').reduce((s,l) => s+l.value, 0);
+  const logAmt   = allLost.filter(l => l.reason==='Logistics').reduce((s,l) => s+l.value, 0);
+
+  const setEl = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setEl('lr-total',    '$'+total.toLocaleString());
+  setEl('lr-price',    '$'+priceAmt.toLocaleString());
+  setEl('lr-avail',    '$'+availAmt.toLocaleString());
+  setEl('lr-logistics','$'+logAmt.toLocaleString());
+
+  // Render lost rent log entries
+  const logEntries = [...lostRents].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const typeClass  = { customer:'lt-customer', availability:'lt-availability' };
+  const typeLabel  = { customer:'Customer Loss', availability:'⚠ Availability Loss' };
+
+  const logHtml = logEntries.length ? logEntries.map(r => `
+    <div class="lostrent-card">
+      <span class="lostrent-type ${typeClass[r.lossType]||'lt-customer'}">${typeLabel[r.lossType]||r.lossType}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:600;font-size:14px">${r.equip||'—'}</div>
+          <div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">${r.clientName||r.siteName||'—'} · ${r.date||'—'}</div>
+          ${r.competitor?`<div style="font-family:var(--fm);font-size:11px;color:var(--red);margin-top:2px">⚔ Went to ${r.competitor}</div>`:''}
+          <div style="font-family:var(--fm);font-size:11px;color:var(--yellow);margin-top:2px">Reason: ${r.reason||'—'}</div>
+          ${r.notes?`<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-top:2px">${r.notes}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div style="font-family:var(--fh);font-size:22px;color:var(--red)">${r.value||'—'}</div>
+          <button class="btn-danger" onclick="deleteLostRent('${r.id}')">✕</button>
+        </div>
+      </div>
+    </div>`) .join('') : '';
+
+  // Render lost prospects
+  const prospectHtml = lostProspects.length ? lostProspects.map(p => `
+    <div class="lostrent-card">
+      <span class="lostrent-type lt-prospect">Lost Prospect</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:600;font-size:14px">${p.name}</div>
+          <div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">${p.company}</div>
+          ${p.competitor?`<div style="font-family:var(--fm);font-size:11px;color:var(--red);margin-top:2px">⚔ Lost to ${p.competitor}</div>`:''}
+          ${p.lostReason?`<div style="font-family:var(--fm);font-size:11px;color:var(--yellow);margin-top:2px">Reason: ${p.lostReason}</div>`:''}
+        </div>
+        <div style="font-family:var(--fh);font-size:22px;color:var(--red)">${p.value||'—'}</div>
+      </div>
+    </div>`).join('') : '';
+
+  const listEl = document.getElementById('lostrentals-list');
+  if (listEl) {
+    listEl.innerHTML = (logHtml + prospectHtml) || '<div class="empty-state">No lost rentals logged yet.</div>';
   }
 }
 
