@@ -542,6 +542,64 @@ tr:hover td{background:rgba(255,255,255,.015)}
         </div>
       </div>
 
+      <!-- FOLLOW-UP SUMMARY -->
+      <div style="margin-top:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          ⏰ FOLLOW-UPS
+          <button class="btn-small" onclick="showPanel('followups')" style="font-size:10px">View All →</button>
+        </div>
+        <div class="dash-grid" style="margin-bottom:12px">
+          <div class="dash-card c-red" onclick="showPanel('followups')" style="cursor:pointer"><div class="dash-label">⚠ Overdue</div><div class="dash-number" id="dash-fu-overdue">0</div></div>
+          <div class="dash-card c-yellow" onclick="showPanel('followups')" style="cursor:pointer"><div class="dash-label">📅 Due Today</div><div class="dash-number" id="dash-fu-today">0</div></div>
+          <div class="dash-card c-blue" onclick="showPanel('followups')" style="cursor:pointer"><div class="dash-label">📆 This Week</div><div class="dash-number" id="dash-fu-upcoming">0</div></div>
+          <div class="dash-card" onclick="showPanel('add-followup')" style="cursor:pointer;border-top:3px solid var(--accent)"><div class="dash-label">+ Add Follow-Up</div><div class="dash-number" style="font-size:18px;margin-top:6px">→</div></div>
+        </div>
+        <div id="dash-fu-list"></div>
+      </div>
+
+      <!-- AR SUMMARY -->
+      <div style="margin-top:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--red);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          💵 ACCOUNTS RECEIVABLE
+          <button class="btn-small" onclick="showPanel('ar')" style="font-size:10px">View All →</button>
+        </div>
+        <div class="dash-grid" style="margin-bottom:12px">
+          <div class="dash-card c-red" onclick="showPanel('ar')" style="cursor:pointer"><div class="dash-label">⚠ 60+ Days</div><div class="dash-number" id="dash-ar-60plus" style="font-size:24px;margin-top:4px">$0</div></div>
+          <div class="dash-card c-yellow" onclick="showPanel('ar')" style="cursor:pointer"><div class="dash-label">30–60 Days</div><div class="dash-number" id="dash-ar-30plus" style="font-size:24px;margin-top:4px">$0</div></div>
+          <div class="dash-card c-accent" onclick="showPanel('ar')" style="cursor:pointer"><div class="dash-label">Total Outstanding</div><div class="dash-number" id="dash-ar-total" style="font-size:22px;margin-top:4px">$0</div></div>
+          <div class="dash-card" onclick="showPanel('add-invoice')" style="cursor:pointer;border-top:3px solid var(--accent)"><div class="dash-label">+ Add Invoice</div><div class="dash-number" style="font-size:18px;margin-top:6px">→</div></div>
+        </div>
+        <div id="dash-ar-list"></div>
+      </div>
+
+      <!-- TO-DO SUMMARY -->
+      <div style="margin-top:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          ✅ TO-DO TODAY
+          <button class="btn-small" onclick="showPanel('tasks')" style="font-size:10px">View All →</button>
+        </div>
+        <div class="dash-grid" style="margin-bottom:12px">
+          <div class="dash-card c-accent" onclick="showPanel('tasks')" style="cursor:pointer"><div class="dash-label">Today</div><div class="dash-number" id="dash-tasks-today">0</div></div>
+          <div class="dash-card c-blue" onclick="showPanel('tasks')" style="cursor:pointer"><div class="dash-label">This Week</div><div class="dash-number" id="dash-tasks-week">0</div></div>
+          <div class="dash-card" onclick="showPanel('tasks')" style="cursor:pointer;border-top:3px solid var(--accent)"><div class="dash-label">+ Add Task</div><div class="dash-number" style="font-size:18px;margin-top:6px">→</div></div>
+        </div>
+        <div id="dash-tasks-list"></div>
+      </div>
+
+      <!-- VISIT SCHEDULE SUMMARY -->
+      <div style="margin-top:24px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          🚗 VISIT SCHEDULE
+          <button class="btn-small" onclick="showPanel('visits')" style="font-size:10px">View All →</button>
+        </div>
+        <div class="dash-grid" style="margin-bottom:12px">
+          <div class="dash-card c-red" onclick="showPanel('visits')" style="cursor:pointer"><div class="dash-label">⚠ Overdue</div><div class="dash-number" id="dash-vs-overdue">0</div></div>
+          <div class="dash-card c-yellow" onclick="showPanel('visits')" style="cursor:pointer"><div class="dash-label">This Week</div><div class="dash-number" id="dash-vs-week">0</div></div>
+          <div class="dash-card" onclick="showPanel('add-visit')" style="cursor:pointer;border-top:3px solid var(--blue)"><div class="dash-label">+ Schedule Visit</div><div class="dash-number" style="font-size:18px;margin-top:6px">→</div></div>
+        </div>
+        <div id="dash-visits-list"></div>
+      </div>
+
       <!-- PROSPECT PIPELINE SUMMARY -->
       <div style="margin-top:24px">
         <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:#9b59b6;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
@@ -2664,8 +2722,25 @@ async function deleteTask(id) {
 }
 
 function renderTasks() {
-  const todayTasks = tasks.filter(t => t.when === 'today');
-  const weekTasks  = tasks.filter(t => t.when === 'week');
+  const todayTasks = tasks.filter(t => t.when === 'today' && t.status !== 'done');
+  const weekTasks  = tasks.filter(t => t.when === 'week' && t.status !== 'done');
+
+  // Dashboard cards
+  const dtEl = document.getElementById('dash-tasks-today');
+  const dwEl = document.getElementById('dash-tasks-week');
+  if (dtEl) dtEl.textContent = todayTasks.length;
+  if (dwEl) dwEl.textContent = weekTasks.length;
+
+  // Dashboard task list — show today's open tasks
+  const dashTaskList = document.getElementById('dash-tasks-list');
+  if (dashTaskList) {
+    dashTaskList.innerHTML = todayTasks.length ? todayTasks.slice(0,4).map(t => `
+      <div class="task-row" style="margin-bottom:6px">
+        <div class="task-check ${t.status==='done'?'checked':''}" onclick="toggleTask('${t.id}')">${t.status==='done'?'✓':''}</div>
+        <div class="task-text">${t.text}</div>
+        <button class="btn-danger" onclick="deleteTask('${t.id}')">✕</button>
+      </div>`).join('') : '<div style="font-family:var(--fm);font-size:11px;color:var(--green);padding:8px">✅ No tasks for today.</div>';
+  }
 
   function taskRow(t) {
     const done = t.status === 'done';
@@ -3074,6 +3149,29 @@ function renderAR() {
   // Dashboard AR card
   const arDash = document.getElementById('dash-ar-60');
   if (arDash) { arDash.textContent = '$'+total60.toLocaleString(); arDash.style.color = total60 > 0 ? 'var(--red)' : 'var(--green)'; }
+  // Dashboard AR cards
+  const dashAr60 = document.getElementById('dash-ar-60plus');
+  const dashAr30 = document.getElementById('dash-ar-30plus');
+  const dashArTot = document.getElementById('dash-ar-total');
+  if (dashAr60) dashAr60.textContent = '$'+total60.toLocaleString();
+  if (dashAr30) dashAr30.textContent = '$'+total30.toLocaleString();
+  if (dashArTot) dashArTot.textContent = '$'+totalAll.toLocaleString();
+  // Show top 3 critical AR on dashboard
+  const dashArList = document.getElementById('dash-ar-list');
+  if (dashArList) {
+    const critical = open.filter(i => daysSinceInvoice(i) >= 60).sort((a,b) => daysSinceInvoice(b)-daysSinceInvoice(a)).slice(0,3);
+    dashArList.innerHTML = critical.length ? critical.map(inv => {
+      const c = clients.find(c => c.id == inv.clientId);
+      const days = daysSinceInvoice(inv);
+      return `<div class="ar-card ar-critical" style="margin-bottom:6px">
+        <div style="flex:1">
+          <div class="ar-name">${c?c.name:'—'} ${c?'<span style="font-weight:300;font-size:11px">— '+c.company+'</span>':''}</div>
+          <div class="ar-days ar-overdue">⚠ ${days}+ days past due</div>
+        </div>
+        <div style="font-family:var(--fh);font-size:20px;color:var(--red)">${inv.amount||'—'}</div>
+      </div>`;
+    }).join('') : '<div style="font-family:var(--fm);font-size:11px;color:var(--green);padding:8px">✅ No invoices over 60 days.</div>';
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -3430,9 +3528,32 @@ function renderVisits() {
   if (wkEl) wkEl.textContent = thisWeek.length;
   if (ttEl) ttEl.textContent = open.length;
 
-  // Dashboard card
+  // Dashboard cards
   const dvEl = document.getElementById('dash-visits-due');
   if (dvEl) dvEl.textContent = overdue.length + thisWeek.length;
+  const dvsOv = document.getElementById('dash-vs-overdue');
+  const dvsWk = document.getElementById('dash-vs-week');
+  if (dvsOv) dvsOv.textContent = overdue.length;
+  if (dvsWk) dvsWk.textContent = thisWeek.length;
+
+  // Dashboard visit list — show overdue + this week
+  const dashVList = document.getElementById('dash-visits-list');
+  if (dashVList) {
+    const topV = [...overdue, ...thisWeek].slice(0,3);
+    dashVList.innerHTML = topV.length ? topV.map(v => {
+      const c = v.clientId ? clients.find(c => c.id == v.clientId) : null;
+      const name = c ? c.name + ' — ' + c.company : v.customerName || '—';
+      const isOverdue = v.date && v.date < today();
+      return `<div class="followup-card ${isOverdue?'urgent':'today'}" style="margin-bottom:6px">
+        <div style="flex:1">
+          <div class="followup-name">${v.type||'Visit'} · ${name}</div>
+          ${v.zone?`<div class="followup-meta">📍 ${v.zone}</div>`:''}
+          <div class="followup-due ${isOverdue?'due-overdue':'due-today'}">${isOverdue?'⚠ OVERDUE':'📅 Due'}: ${v.date}</div>
+        </div>
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="completeVisit('${v.id}')">✓</button>
+      </div>`;
+    }).join('') : '<div style="font-family:var(--fm);font-size:11px;color:var(--green);padding:8px">✅ No visits due.</div>';
+  }
 
   const priColor = { High:'var(--red)', Medium:'var(--yellow)', Low:'var(--green)' };
 
