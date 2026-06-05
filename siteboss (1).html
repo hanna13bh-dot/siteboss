@@ -69,7 +69,7 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
 .nav-item.green-nav.active{color:var(--green);border-left-color:var(--green)}
 .nav-item.blue-nav.active{color:var(--blue);border-left-color:var(--blue)}
 .nav-divider{height:1px;background:var(--border);margin:10px 20px}
-.nav-label{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--muted);padding:8px 20px 4px;text-transform:uppercase}
+.nav-label{font-family:var(--fm);font-size:11px;letter-spacing:2px;color:var(--muted);padding:10px 20px 4px;text-transform:uppercase}
 
 /* MAIN CONTENT */
 .main-content{flex:1;overflow-y:auto;padding:24px}
@@ -224,6 +224,21 @@ tr:hover td{background:rgba(255,255,255,.015)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinning{display:inline-block;animation:spin 1s linear infinite}
 
+/* PIN SCREEN */
+#pin-screen{position:fixed;inset:0;background:#0a0a0a;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.pin-box{background:var(--surface);border:1px solid var(--border);padding:40px;text-align:center;max-width:320px;width:90%}
+.pin-logo{font-family:var(--fh);font-size:36px;letter-spacing:4px;color:var(--accent);margin-bottom:6px}
+.pin-sub{font-family:var(--fm);font-size:11px;color:var(--muted2);letter-spacing:2px;margin-bottom:30px}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--border);transition:all .2s}
+.pin-dot.filled{background:var(--accent)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.pin-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--fh);font-size:22px;padding:16px;cursor:pointer;transition:all .2s}
+.pin-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pin-btn:active{background:var(--accent);color:#000}
+.pin-error{font-family:var(--fm);font-size:11px;color:var(--red);height:16px;margin-top:4px}
+.pin-clear{font-family:var(--fm);font-size:10px;color:var(--muted2);cursor:pointer;margin-top:12px;text-decoration:underline}
+
 /* LOST RENT LOG */
 .lostrent-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);padding:13px 16px;margin-bottom:8px}
 .lostrent-type{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:2px;display:inline-block;margin-bottom:6px}
@@ -371,6 +386,36 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </div>
 
 <!-- ═══════ MAIN APP ═══════ -->
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <div class="pin-box">
+    <div class="pin-logo">🏗 SITE BOSS</div>
+    <div class="pin-sub">FIELD SALES INTELLIGENCE</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" onclick="pinClear()" style="font-size:14px">⌫</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn" onclick="pinSubmit()" style="color:var(--accent);font-size:14px">→</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-clear" onclick="pinReset()">Forgot PIN? Reset</div>
+  </div>
+</div>
+
 <div id="main-app" style="display:none">
 
 <header>
@@ -382,6 +427,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="stat-pill"><div class="dot" style="background:var(--blue)"></div><span id="hdr-sites">0 SITES</span></div>
     <div class="stat-pill"><div class="dot" style="background:var(--accent)"></div><span id="hdr-revenue">$0/mo</span></div>
     <button class="icon-btn" onclick="syncAll()" id="sync-btn">⟳ SYNC</button>
+    <button class="icon-btn" onclick="changePin()" style="font-size:9px">🔒 PIN</button>
     <button class="icon-btn" onclick="setCreditLink()" style="font-size:9px">💳 Portal Link</button>
     <button class="icon-btn" onclick="resetUrl()" style="font-size:9px">⚙</button>
   </div>
@@ -414,6 +460,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="nav-item" onclick="showPanel('followups')">⏰ Follow-Ups</div>
     <div class="nav-item" onclick="showPanel('ar')">💵 AR / Invoices</div>
     <div class="nav-item" onclick="showPanel('tasks')">✅ To-Do List</div>
+    <div class="nav-item" onclick="showPanel('visits')">🚗 Visit Schedule</div>
     <div class="nav-item" onclick="showPanel('revenue')">📈 Revenue</div>
     <div class="nav-divider"></div>
     <div class="nav-label">Intelligence</div>
@@ -472,6 +519,11 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="dash-label">📉 Log Lost Rent</div>
           <div class="dash-number" style="font-size:22px;margin-top:6px">+ Quick Log</div>
           <div class="dash-sub">availability or customer loss</div>
+        </div>
+        <div class="dash-card c-blue" onclick="showPanel('visits')" style="cursor:pointer">
+          <div class="dash-label">🚗 Visits Due</div>
+          <div class="dash-number" id="dash-visits-due">0</div>
+          <div class="dash-sub">this week + overdue</div>
         </div>
       </div>
 
@@ -659,6 +711,23 @@ tr:hover td{background:rgba(255,255,255,.015)}
             </select>
           </div>
         </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Type of Work</label>
+          <select id="s-worktype">
+            <option value="">— Select —</option>
+            <option value="Concrete">Concrete</option>
+            <option value="Steel">Steel</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Framing">Framing</option>
+            <option value="Roofing">Roofing</option>
+            <option value="Excavation">Excavation</option>
+            <option value="Masonry">Masonry</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="HVAC">HVAC</option>
+            <option value="General">General Construction</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
         <div class="form-group" style="margin-bottom:14px"><label>Competitor on Site</label><input type="text" id="s-competitor" placeholder="e.g. Sunbelt, United, RSC..."></div>
         <div class="form-group" style="margin-bottom:14px"><label>Quotes (one per line: amount | date | status | link)</label><textarea id="s-quotes" rows="3" placeholder="$5,000 | 2026-06-01 | Pending | drive.google.com/..."></textarea></div>
         <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="s-notes" rows="3" placeholder="Access details, equipment needs, key contacts..."></textarea></div>
@@ -738,9 +807,16 @@ tr:hover td{background:rgba(255,255,255,.015)}
               <option value="Drive By">🚗 Drive By</option>
               <option value="Referral">🤝 Referral</option>
               <option value="Permit">📋 Permit Filing</option>
+              <option value="LinkedIn">💼 LinkedIn</option>
+              <option value="AGC">🏗 AGC Directory</option>
+              <option value="Google Maps">🗺 Google Maps</option>
+              <option value="ODOT">🛣 ODOT Project</option>
+              <option value="City Bid">🏛 City Bid Posting</option>
+              <option value="Business Card">📇 Business Card</option>
               <option value="Other">Other</option>
             </select>
           </div>
+          <div class="form-group"><label>Referred By</label><input type="text" id="p-referredby" placeholder="Who referred this prospect?"></div>
           <div class="form-group"><label>Linked Customer</label>
             <select id="p-clientId">
               <option value="">— None —</option>
@@ -804,6 +880,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
             <select id="fu-type">
               <option value="Call">📞 Call</option>
               <option value="Visit">🚗 Site Visit</option>
+              <option value="Office Visit">🏢 Office Visit</option>
               <option value="Email">📧 Email</option>
               <option value="Quote">💰 Send Quote</option>
               <option value="Other">Other</option>
@@ -999,6 +1076,69 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div id="lostrentals-list"><div class="empty-state">No lost rentals logged yet. Mark a quote as Lost to track it here.</div></div>
     </div>
 
+  <!-- ══ VISIT SCHEDULE ══ -->
+    <div class="panel" id="panel-visits">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--blue)">🚗 VISIT SCHEDULE</div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="showPanel('add-visit')">+ Add Visit</button>
+        </div>
+      </div>
+      <div class="dash-grid" style="margin-bottom:20px">
+        <div class="dash-card c-red"><div class="dash-label">⚠ Overdue</div><div class="dash-number" id="vs-overdue">0</div></div>
+        <div class="dash-card c-yellow"><div class="dash-label">Due This Week</div><div class="dash-number" id="vs-week">0</div></div>
+        <div class="dash-card c-blue"><div class="dash-label">Total Scheduled</div><div class="dash-number" id="vs-total">0</div></div>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--red);margin-bottom:10px">⚠ OVERDUE VISITS</div>
+        <div id="vs-overdue-list"><div class="empty-state">None overdue.</div></div>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--yellow);margin-bottom:10px">📅 THIS WEEK</div>
+        <div id="vs-week-list"><div class="empty-state">Nothing this week.</div></div>
+      </div>
+      <div>
+        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--blue);margin-bottom:10px">📆 UPCOMING</div>
+        <div id="vs-upcoming-list"><div class="empty-state">Nothing upcoming.</div></div>
+      </div>
+    </div>
+
+  <!-- ══ ADD VISIT ══ -->
+    <div class="panel" id="panel-add-visit">
+      <div class="form-card" style="border-top-color:var(--blue)">
+        <div class="form-title" style="color:var(--blue)">ADD VISIT</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Customer / Contact *</label>
+            <select id="v-clientId" onchange="prefillVisitCustomer()">
+              <option value="">— Select Customer —</option>
+              <option value="__manual__">+ Type manually</option>
+            </select>
+            <input type="text" id="v-customername" placeholder="Or type name..." style="margin-top:6px;display:none">
+          </div>
+          <div class="form-group"><label>Visit Date *</label><input type="date" id="v-date"></div>
+          <div class="form-group"><label>Zone / Territory</label><input type="text" id="v-zone" placeholder="North, South, Tulsa..."></div>
+          <div class="form-group"><label>Priority</label>
+            <select id="v-priority">
+              <option value="High">🔴 High</option>
+              <option value="Medium">🟡 Medium</option>
+              <option value="Low">🟢 Low</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Visit Type</label>
+            <select id="v-type">
+              <option value="Office Visit">🏢 Office Visit</option>
+              <option value="Site Visit">🏗 Site Visit</option>
+              <option value="Lunch">🍽 Lunch</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Last Visit Date</label><input type="date" id="v-lastvisit"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Notes / Purpose</label><textarea id="v-notes" rows="3" placeholder="What do you need to discuss or accomplish on this visit?"></textarea></div>
+        <button class="btn btn-primary" id="add-v-btn" onclick="addVisit()">ADD VISIT →</button>
+      </div>
+    </div>
+
   <!-- ══ MAP VIEW ══ -->
     <div class="panel" id="panel-map">
       <div class="section-head">
@@ -1064,9 +1204,16 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <option value="Drive By">🚗 Drive By</option>
           <option value="Referral">🤝 Referral</option>
           <option value="Permit">📋 Permit Filing</option>
+          <option value="LinkedIn">💼 LinkedIn</option>
+          <option value="AGC">🏗 AGC Directory</option>
+          <option value="Google Maps">🗺 Google Maps</option>
+          <option value="ODOT">🛣 ODOT Project</option>
+          <option value="City Bid">🏛 City Bid Posting</option>
+          <option value="Business Card">📇 Business Card</option>
           <option value="Other">Other</option>
         </select>
       </div>
+      <div class="form-group"><label>Referred By</label><input type="text" id="ep-referredby"></div>
       <div class="form-group"><label>Linked Customer</label>
         <select id="ep-clientId"><option value="">— None —</option></select>
       </div>
@@ -1113,6 +1260,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <select id="efu-type">
           <option value="Call">📞 Call</option>
           <option value="Visit">🚗 Site Visit</option>
+          <option value="Office Visit">🏢 Office Visit</option>
           <option value="Email">📧 Email</option>
           <option value="Quote">💰 Send Quote</option>
           <option value="Other">Other</option>
@@ -1484,6 +1632,7 @@ let invoices  = [];
 let tasks     = [];
 let revenue   = [];
 let lostRents = [];
+let visits    = [];
 let arFilter  = 'all';
 let arSearch  = '';
 let cFilter   = 'all', cSearch = '';
@@ -1498,7 +1647,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const app = document.getElementById('main-app');
   if (app) app.style.display = 'block';
 });
-launch(); // Auto-launch with baked in URL
+// Launch handled by PIN screen
 
 // ══════════════════════════════════════════════
 // SETUP
@@ -1560,7 +1709,8 @@ async function syncAll() {
     api({ action:'getAll', type:'invoices' }),
     api({ action:'getAll', type:'tasks' }),
     api({ action:'getAll', type:'revenue' }),
-    api({ action:'getAll', type:'lostRents' })
+    api({ action:'getAll', type:'lostRents' }),
+    api({ action:'getAll', type:'visits' })
   ]);
   btn.innerHTML = '⟳ SYNC';
   if (cd  && cd.records)  clients   = cd.records.filter(r => r.id || r.name);
@@ -1571,10 +1721,12 @@ async function syncAll() {
   if (td  && td.records)  tasks     = td.records.filter(r => r.id);
   if (rd  && rd.records)  revenue   = rd.records.filter(r => r.id);
   if (lrd && lrd.records) lostRents = lrd.records.filter(r => r.id || r.equip || r.clientName || r.siteName);
+  const vd = arguments[0] && arguments[0][8]; // visits from Promise.all
+  const vr = await api({action:'getAll',type:'visits'}); if(vr&&vr.records) visits=vr.records.filter(r=>r.id||r.customerName);
   populateClientDropdowns();
   renderAll();
   if (activeProfileId) openProfile(activeProfileId);
-  toast(`${clients.length} customers · ${jobsites.length} sites · ${prospects.length} prospects · ${lostRents.length} lost rents`);
+  toast(`${clients.length} customers · ${jobsites.length} sites · ${prospects.length} prospects`);
 }
 
 // ══════════════════════════════════════════════
@@ -1706,6 +1858,7 @@ async function addSite() {
     sub10phone: document.getElementById('s-sub10phone').value.trim(),
     sub10company: document.getElementById('s-sub10company').value.trim(),
     equipOnSite: document.getElementById('s-equip').value.trim(),
+    workType: document.getElementById('s-worktype').value,
     competitor: document.getElementById('s-competitor').value.trim(),
     quotes: document.getElementById('s-quotes').value.trim(),
     monthlyValue: document.getElementById('s-value').value.trim(),
@@ -1719,7 +1872,7 @@ async function addSite() {
   btn.disabled = false; btn.textContent = 'ADD JOB SITE →';
   if (res && res.success) {
     toast('Job site added ✓');
-    ['s-name','s-gc','s-gcname','s-gcphone','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-competitor','s-quotes','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
+    ['s-name','s-gc','s-gcname','s-gcphone','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-worktype','s-competitor','s-quotes','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('s-clientId').value = '';
     document.getElementById('s-start').value = today();
   var ry = document.getElementById('rev-year'); if(ry) ry.value = new Date().getFullYear();
@@ -1778,6 +1931,7 @@ function openEditSite(id) {
   document.getElementById('es-sub10phone').value = s.sub10phone || '';
   document.getElementById('es-sub10company').value = s.sub10company || '';
   document.getElementById('es-equip').value = s.equipOnSite || '';
+  document.getElementById('es-worktype').value = s.workType || '';
   document.getElementById('es-competitor').value = s.competitor || '';
   document.getElementById('es-quotes').value = s.quotes || '';
   document.getElementById('es-value').value = s.monthlyValue || '';
@@ -1836,6 +1990,7 @@ async function saveSiteEdit() {
     sub10phone: document.getElementById('es-sub10phone').value.trim(),
     sub10company: document.getElementById('es-sub10company').value.trim(),
     equipOnSite: document.getElementById('es-equip').value.trim(),
+    workType: document.getElementById('es-worktype').value,
     competitor: document.getElementById('es-competitor').value.trim(),
     quotes: document.getElementById('es-quotes').value.trim(),
     monthlyValue: document.getElementById('es-value').value.trim(),
@@ -2029,6 +2184,12 @@ function populateClientDropdowns() {
   document.getElementById('inv-siteId').innerHTML = invSOpts;
   document.getElementById('einv-siteId').innerHTML = invSOpts;
   // Lost rent dropdowns populated dynamically in openLogLostRent
+  const vCOpts = ['<option value="">— Select Customer —</option>',
+    ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`),
+    '<option value="__manual__">+ Type manually</option>'
+  ].join('');
+  const vSel = document.getElementById('v-clientId');
+  if (vSel) vSel.innerHTML = vCOpts;
 }
 
 function fillClientName() {}
@@ -2102,6 +2263,7 @@ function renderAll() {
   renderCompetitors();
   renderLostRentals();
   renderDashProspects();
+  renderVisits();
 }
 
 function renderDashProspects() {
@@ -2296,6 +2458,7 @@ async function addProspect() {
     source: document.getElementById('p-source').value,
     clientId: document.getElementById('p-clientId').value,
     lastFollowUp: document.getElementById('p-followup').value,
+    referredBy: document.getElementById('p-referredby').value.trim(),
     competitor: document.getElementById('p-competitor').value.trim(),
     lostReason: document.getElementById('p-lostreason').value,
     notes: document.getElementById('p-notes').value.trim()
@@ -2304,7 +2467,7 @@ async function addProspect() {
   btn.disabled = false; btn.textContent = 'ADD PROSPECT →';
   if (res && res.success) {
     toast('Prospect added ✓');
-    ['p-name','p-company','p-contact','p-phone','p-address','p-city','p-zone','p-start','p-value','p-equip','p-competitor','p-notes','p-followup'].forEach(id => document.getElementById(id).value = '');
+    ['p-name','p-company','p-contact','p-phone','p-address','p-city','p-zone','p-start','p-value','p-equip','p-referredby','p-competitor','p-notes','p-followup'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('p-stage').value = 'Lead';
     document.getElementById('p-source').value = 'Drive By';
     document.getElementById('p-clientId').value = '';
@@ -2388,6 +2551,7 @@ function openEditProspect(id) {
   document.getElementById('ep-source').value = p.source || 'Drive By';
   document.getElementById('ep-clientId').value = p.clientId || '';
   document.getElementById('ep-followup').value = p.lastFollowUp || '';
+  document.getElementById('ep-referredby').value = p.referredBy || '';
   document.getElementById('ep-competitor').value = p.competitor || '';
   document.getElementById('ep-lostreason').value = p.lostReason || '';
   document.getElementById('ep-notes').value = p.notes || '';
@@ -2417,6 +2581,7 @@ async function saveProspectEdit() {
     source: document.getElementById('ep-source').value,
     clientId: document.getElementById('ep-clientId').value,
     lastFollowUp: document.getElementById('ep-followup').value,
+    referredBy: document.getElementById('ep-referredby').value.trim(),
     competitor: document.getElementById('ep-competitor').value.trim(),
     lostReason: document.getElementById('ep-lostreason').value,
     notes: document.getElementById('ep-notes').value.trim()
@@ -2456,6 +2621,7 @@ function renderProspects() {
         ${p.value ? `<div class="prospect-card-value">💰 ${p.value}/mo</div>` : ''}
         ${p.startDate ? `<div class="prospect-card-date">🗓 Start: ${p.startDate}</div>` : ''}
         ${p.equip ? `<div class="prospect-card-sub">🔧 ${p.equip}</div>` : ''}
+        ${p.referredBy ? `<div class="prospect-card-sub">🤝 Referred by: ${p.referredBy}</div>` : ''}
         ${p.competitor ? `<div class="prospect-card-sub"><span class="competitor-badge">⚔ vs ${p.competitor}</span></div>` : ''}
         ${p.lastFollowUp ? `<div class="prospect-card-date">Last follow-up: ${p.lastFollowUp}</div>` : ''}
         <div style="margin-top:6px"><span class="prospect-source ${sourceClass[p.source]||'src-other'}">${sourceEmoji[p.source]||'📌'} ${p.source||'Other'}</span></div>
@@ -2764,6 +2930,7 @@ function filterAR(f, btn) {
   renderCompetitors();
   renderLostRentals();
   renderDashProspects();
+  renderVisits();
 }
 
 function renderDashProspects() {
@@ -3011,7 +3178,7 @@ function renderFollowUps() {
   document.getElementById('fu-week').textContent    = upcoming.length;
   document.getElementById('fu-total').textContent   = open.length;
 
-  const typeEmoji = { Call:'📞', Visit:'🚗', Email:'📧', Quote:'💰', Other:'📌' };
+  const typeEmoji = { Call:'📞', Visit:'🚗', 'Office Visit':'🏢', Email:'📧', Quote:'💰', Other:'📌' };
   const priColor  = { High:'var(--red)', Medium:'var(--yellow)', Low:'var(--green)' };
 
   function fuCard(fu, urgency) {
@@ -3049,6 +3216,19 @@ function renderFollowUps() {
     document.getElementById('dash-fu-count').textContent = overdue.length + dueToday.length;
     document.getElementById('dash-fu-count').style.color = (overdue.length + dueToday.length) > 0 ? 'var(--red)' : 'var(--green)';
   }
+}
+
+function changePin() {
+  const current = prompt('Enter your current PIN:');
+  if (!current) return;
+  const savedPin = localStorage.getItem('siteboss_pin') || '1234';
+  if (current !== savedPin) { toast('Incorrect current PIN', true); return; }
+  const newPin = prompt('Enter your new 4-digit PIN:');
+  if (!newPin || newPin.length !== 4 || isNaN(newPin)) { toast('PIN must be exactly 4 digits', true); return; }
+  const confirm2 = prompt('Confirm new PIN:');
+  if (newPin !== confirm2) { toast('PINs do not match', true); return; }
+  localStorage.setItem('siteboss_pin', newPin);
+  toast('PIN updated ✓');
 }
 
 function setCreditLink() {
@@ -3175,6 +3355,113 @@ async function saveQuickCustomer() {
       document.getElementById('s-clientId').value = res.id;
     }
   }
+}
+
+// ══════════════════════════════════════════════
+// VISIT SCHEDULE
+// ══════════════════════════════════════════════
+function prefillVisitCustomer() {
+  const sel = document.getElementById('v-clientId');
+  const txt = document.getElementById('v-customername');
+  txt.style.display = sel.value === '__manual__' ? 'block' : 'none';
+}
+
+async function addVisit() {
+  const clientId = document.getElementById('v-clientId').value;
+  const manualName = document.getElementById('v-customername').value.trim();
+  const date = document.getElementById('v-date').value;
+  if (!date) { toast('Visit date is required', true); return; }
+  if (!clientId && !manualName) { toast('Customer is required', true); return; }
+  const c = clients.find(c => c.id == clientId);
+  const customerName = clientId === '__manual__' ? manualName : (c ? c.name + ' — ' + c.company : '');
+  const btn = document.getElementById('add-v-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const record = {
+    clientId: clientId === '__manual__' ? '' : clientId,
+    customerName,
+    date,
+    zone: document.getElementById('v-zone').value.trim(),
+    priority: document.getElementById('v-priority').value,
+    type: document.getElementById('v-type').value,
+    lastVisit: document.getElementById('v-lastvisit').value,
+    notes: document.getElementById('v-notes').value.trim(),
+    status: 'Scheduled'
+  };
+  const res = await api({ action:'add', type:'visits', record });
+  btn.disabled = false; btn.textContent = 'ADD VISIT →';
+  if (res && res.success) {
+    toast('Visit scheduled ✓');
+    ['v-date','v-zone','v-lastvisit','v-notes','v-customername'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('v-clientId').value = '';
+    document.getElementById('v-customername').style.display = 'none';
+    await syncAll();
+    showPanel('visits');
+  }
+}
+
+async function completeVisit(id) {
+  const v = visits.find(v => v.id == id);
+  if (!v) return;
+  const res = await api({ action:'update', type:'visits', record: { ...v, status:'Done', lastVisit: today() } });
+  if (res && res.success) { toast('Visit marked done ✓'); await syncAll(); }
+}
+
+async function deleteVisit(id) {
+  if (!confirm('Remove this visit?')) return;
+  const res = await api({ action:'delete', type:'visits', id });
+  if (res && res.success) { toast('Visit removed ✓'); await syncAll(); }
+}
+
+function renderVisits() {
+  const open = visits.filter(v => v.status !== 'Done');
+  const todayStr = today();
+  const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekEndStr = weekEnd.toISOString().split('T')[0];
+
+  const overdue  = open.filter(v => v.date && v.date < todayStr);
+  const thisWeek = open.filter(v => v.date >= todayStr && v.date <= weekEndStr);
+  const upcoming = open.filter(v => v.date > weekEndStr);
+
+  const ovEl = document.getElementById('vs-overdue');
+  const wkEl = document.getElementById('vs-week');
+  const ttEl = document.getElementById('vs-total');
+  if (ovEl) ovEl.textContent = overdue.length;
+  if (wkEl) wkEl.textContent = thisWeek.length;
+  if (ttEl) ttEl.textContent = open.length;
+
+  // Dashboard card
+  const dvEl = document.getElementById('dash-visits-due');
+  if (dvEl) dvEl.textContent = overdue.length + thisWeek.length;
+
+  const priColor = { High:'var(--red)', Medium:'var(--yellow)', Low:'var(--green)' };
+
+  function visitCard(v, urgency) {
+    const c = v.clientId ? clients.find(c => c.id == v.clientId) : null;
+    const name = c ? c.name + ' — ' + c.company : v.customerName || '—';
+    return `<div class="followup-card ${urgency}">
+      <div style="flex:1">
+        <div class="followup-name">${v.type||'Visit'} · ${name}</div>
+        ${v.zone?`<div class="followup-meta">📍 ${v.zone}</div>`:''}
+        ${v.lastVisit?`<div class="followup-meta">Last visit: ${v.lastVisit}</div>`:''}
+        ${v.notes?`<div class="followup-meta">${v.notes}</div>`:''}
+        <div class="followup-due ${urgency==='urgent'?'due-overdue':urgency==='today'?'due-today':'due-upcoming'}">
+          ${urgency==='urgent'?'⚠ OVERDUE — ':'📅 '}${v.date}
+        </div>
+        <div style="margin-top:4px"><span style="font-family:var(--fm);font-size:9px;color:${priColor[v.priority]||'var(--muted2)'}">${v.priority||''} priority</span></div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="completeVisit('${v.id}')">✓ Done</button>
+        <button class="btn-danger" onclick="deleteVisit('${v.id}')">✕</button>
+      </div>
+    </div>`;
+  }
+
+  const ovList = document.getElementById('vs-overdue-list');
+  const wkList = document.getElementById('vs-week-list');
+  const upList = document.getElementById('vs-upcoming-list');
+  if (ovList) ovList.innerHTML = overdue.length ? overdue.map(v => visitCard(v,'urgent')).join('') : '<div class="empty-state">None overdue.</div>';
+  if (wkList) wkList.innerHTML = thisWeek.length ? thisWeek.map(v => visitCard(v,'today')).join('') : '<div class="empty-state">Nothing this week.</div>';
+  if (upList) upList.innerHTML = upcoming.length ? upcoming.map(v => visitCard(v,'upcoming')).join('') : '<div class="empty-state">Nothing upcoming.</div>';
 }
 
 // ══════════════════════════════════════════════
@@ -3538,7 +3825,7 @@ function setMapFilter(f, btn) {
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice'];
+  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice'];
   document.querySelectorAll('.nav-item').forEach((n,i) => {
     n.classList.toggle('active', panels[i] === id);
   });
@@ -3835,6 +4122,69 @@ function showMapPopup(loc) {
 function closeMapPopup() {
   document.getElementById('map-popup-overlay').classList.remove('open');
 }
+
+// ── PIN SECURITY ──
+const DEFAULT_PIN = '1234';
+let pinEntry = '';
+
+function pinPress(digit) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += digit;
+  updatePinDots();
+  if (pinEntry.length === 4) {
+    setTimeout(pinSubmit, 150);
+  }
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot-' + i);
+    if (dot) dot.classList.toggle('filled', i < pinEntry.length);
+  }
+}
+
+function pinClear() {
+  pinEntry = pinEntry.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+}
+
+function pinSubmit() {
+  const savedPin = localStorage.getItem('siteboss_pin') || DEFAULT_PIN;
+  if (pinEntry === savedPin) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    launch();
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
+    pinEntry = '';
+    updatePinDots();
+    // Shake animation
+    const box = document.querySelector('.pin-box');
+    box.style.transform = 'translateX(-8px)';
+    setTimeout(() => box.style.transform = 'translateX(8px)', 100);
+    setTimeout(() => box.style.transform = 'translateX(0)', 200);
+  }
+}
+
+function pinReset() {
+  if (confirm('Reset your PIN? You will need to set a new one.')) {
+    localStorage.removeItem('siteboss_pin');
+    alert('PIN reset. Default PIN is 1234. Change it in settings after logging in.');
+    pinEntry = '';
+    updatePinDots();
+    document.getElementById('pin-error').textContent = '';
+  }
+}
+
+// Allow Enter key on desktop
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('pin-screen').style.display !== 'none') {
+    if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+    if (e.key === 'Backspace') pinClear();
+    if (e.key === 'Enter') pinSubmit();
+  }
+});
 
 // ── PWA INSTALL ──
 window.addEventListener('load', function() {
