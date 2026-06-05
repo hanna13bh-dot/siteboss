@@ -2598,11 +2598,11 @@ function renderProspects() {
   const sourceEmoji = { 'Drive By':'🚗', 'Referral':'🤝', 'Permit':'📋', 'Other':'📌' };
 
   const totalVal = prospects.filter(p => p.stage !== 'Lost').reduce((sum,p) => sum + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
-  document.getElementById('pip-total-val').textContent = '$' + totalVal.toLocaleString();
+  const pipTot = document.getElementById('pip-total-val'); if(pipTot) pipTot.textContent = '$' + totalVal.toLocaleString();
   stages.forEach((stage,i) => {
     const count = prospects.filter(p => p.stage === stage).length;
-    document.getElementById(`pip-${stageKeys[i]}-count`).textContent = count;
-    document.getElementById(`col-${stageKeys[i]}-count`).textContent = count;
+    const pc = document.getElementById(`pip-${stageKeys[i]}-count`); if(pc) pc.textContent = count;
+    const cc = document.getElementById(`col-${stageKeys[i]}-count`); if(cc) cc.textContent = count;
   });
 
   stages.forEach((stage, i) => {
@@ -2980,11 +2980,12 @@ function renderAR() {
   const totalAll = open.reduce((s,i) => s+parseAmount(i.amount), 0);
   const count60  = open.filter(i => daysSinceInvoice(i) >= 60).length;
 
-  document.getElementById('ar-total').textContent   = '$'+totalAll.toLocaleString();
-  document.getElementById('ar-60').textContent      = '$'+total60.toLocaleString();
-  document.getElementById('ar-30').textContent      = '$'+total30.toLocaleString();
-  document.getElementById('ar-current').textContent = '$'+totalCur.toLocaleString();
-  document.getElementById('ar-60-count').textContent = count60;
+  function setArEl(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+  setArEl('ar-total','$'+totalAll.toLocaleString());
+  setArEl('ar-60','$'+total60.toLocaleString());
+  setArEl('ar-30','$'+total30.toLocaleString());
+  setArEl('ar-current','$'+totalCur.toLocaleString());
+  setArEl('ar-60-count',count60);
 
   // 60+ Day Alert Cards
   const critical = open.filter(i => daysSinceInvoice(i) >= 60)
@@ -3071,10 +3072,8 @@ function renderAR() {
   }).join('');
 
   // Dashboard AR card
-  if (document.getElementById('dash-ar-60')) {
-    document.getElementById('dash-ar-60').textContent = '$'+total60.toLocaleString();
-    document.getElementById('dash-ar-60').style.color = total60 > 0 ? 'var(--red)' : 'var(--green)';
-  }
+  const arDash = document.getElementById('dash-ar-60');
+  if (arDash) { arDash.textContent = '$'+total60.toLocaleString(); arDash.style.color = total60 > 0 ? 'var(--red)' : 'var(--green)'; }
 }
 
 // ══════════════════════════════════════════════
@@ -3173,10 +3172,11 @@ function renderFollowUps() {
   const dueToday = open.filter(f => f.dueDate === todayStr);
   const upcoming = open.filter(f => f.dueDate > todayStr);
 
-  document.getElementById('fu-overdue').textContent = overdue.length;
-  document.getElementById('fu-today').textContent   = dueToday.length;
-  document.getElementById('fu-week').textContent    = upcoming.length;
-  document.getElementById('fu-total').textContent   = open.length;
+  function setFuEl(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+  setFuEl('fu-overdue',overdue.length);
+  setFuEl('fu-today',dueToday.length);
+  setFuEl('fu-week',upcoming.length);
+  setFuEl('fu-total',open.length);
 
   const typeEmoji = { Call:'📞', Visit:'🚗', 'Office Visit':'🏢', Email:'📧', Quote:'💰', Other:'📌' };
   const priColor  = { High:'var(--red)', Medium:'var(--yellow)', Low:'var(--green)' };
@@ -3195,7 +3195,7 @@ function renderFollowUps() {
         ${pr ? `<div class="followup-meta">🔍 ${pr.name} — ${pr.company}</div>` : ''}
         ${fu.notes ? `<div class="followup-meta" style="margin-top:4px">${fu.notes}</div>` : ''}
         <div class="followup-due ${urgency==='urgent'?'due-overdue':urgency==='today'?'due-today':'due-upcoming'}">
-          ${urgency==='urgent'?'⚠ OVERDUE — ':urgency==='today'?'📅 Due Today':'📆 Due: '}${fu.dueDate}
+          ${urgency==='urgent'?'⚠ OVERDUE — ':urgency==='today'?'📅 Due Today':'📆 Due: '}${fuDateStr(fu.dueDate)}
         </div>
         <div style="margin-top:4px"><span style="font-family:var(--fm);font-size:9px;color:${priColor[fu.priority]||'var(--muted2)'}">${fu.priority||''} priority</span></div>
       </div>
@@ -3212,6 +3212,7 @@ function renderFollowUps() {
   document.getElementById('fu-upcoming-list').innerHTML = upcoming.length ? upcoming.map(f => fuCard(f,'upcoming')).join('') : '<div class="empty-state">Nothing upcoming.</div>';
 
   // Dashboard follow-up badge
+  const fuDateStr2 = (d) => d && d.includes('T') ? d.split('T')[0] : d||'';
   if (document.getElementById('dash-fu-count')) {
     document.getElementById('dash-fu-count').textContent = overdue.length + dueToday.length;
     document.getElementById('dash-fu-count').style.color = (overdue.length + dueToday.length) > 0 ? 'var(--red)' : 'var(--green)';
