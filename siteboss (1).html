@@ -1257,19 +1257,19 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-card" style="margin-bottom:20px">
         <div class="form-title">ADD BRANCH CONTACT</div>
         <div class="form-grid">
-          <div class="form-group"><label>Contact Name *</label><input type="text" id="bc-name" placeholder="John Smith — Service Manager"></div>
+          <div class="form-group"><label>Contact Name</label><input type="text" id="bc-name" placeholder="John Smith — Service Manager (optional)"></div>
           <div class="form-group"><label>Branch / Location</label><input type="text" id="bc-location" placeholder="OKC North, Yukon, Edmond..."></div>
           <div class="form-group"><label>Service Call Email</label><input type="text" id="bc-svc-email" placeholder="service@equipmentshare.com"></div>
           <div class="form-group"><label>Call Off Email</label><input type="text" id="bc-co-email" placeholder="logistics@equipmentshare.com"></div>
         </div>
         <div class="form-group" style="margin-bottom:14px">
           <label>Used For</label>
-          <div style="display:flex;gap:16px;margin-top:6px">
-            <label style="display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:12px;cursor:pointer">
-              <input type="checkbox" id="bc-type-svc" checked> 🔧 Service Calls
+          <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:13px;cursor:pointer;line-height:1">
+              <input type="checkbox" id="bc-type-svc" checked style="width:16px;height:16px;margin:0;vertical-align:middle"> <span style="vertical-align:middle">🔧 Service Calls</span>
             </label>
-            <label style="display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:12px;cursor:pointer">
-              <input type="checkbox" id="bc-type-co" checked> 📞 Call Offs
+            <label style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:13px;cursor:pointer;line-height:1">
+              <input type="checkbox" id="bc-type-co" checked style="width:16px;height:16px;margin:0;vertical-align:middle"> <span style="vertical-align:middle">📞 Call Offs</span>
             </label>
           </div>
         </div>
@@ -4005,12 +4005,12 @@ function addBranchContact() {
   const location = document.getElementById('bc-location').value.trim();
   const svcEmail = document.getElementById('bc-svc-email').value.trim();
   const coEmail = document.getElementById('bc-co-email').value.trim();
-  if (!name) { toast('Contact name is required', true); return; }
+  if (!name && !location && !svcEmail && !coEmail) { toast('Please enter at least a name, location, or email', true); return; }
   const types = [];
   if (document.getElementById('bc-type-svc').checked) types.push('service');
   if (document.getElementById('bc-type-co').checked) types.push('calloff');
   const contacts = getBranchContacts();
-  contacts.push({ name, location, svcEmail, coEmail, types });
+  contacts.push({ name: name || location || svcEmail || coEmail, location, svcEmail, coEmail, types });
   saveBranchContacts(contacts);
   ['bc-name','bc-location','bc-svc-email','bc-co-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('bc-type-svc').checked = true;
