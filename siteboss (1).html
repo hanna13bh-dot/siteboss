@@ -4320,6 +4320,26 @@ function fillSvcBranch() {
   if (c && c.svcEmail) document.getElementById('svc-to-email').value = c.svcEmail;
 }
 
+function fillCoEquipMulti() {
+  const sel = document.getElementById('co-equip-pick');
+  if (!sel) return;
+  const selected = Array.from(sel.selectedOptions);
+  if (!selected.length) return;
+  if (selected.length === 1) {
+    const e = equipment.find(e => e.id == selected[0].value);
+    if (e) {
+      document.getElementById('co-equipclass').value = e.equipClass || '— Select Class —';
+      document.getElementById('co-unitnum').value = e.unitNum || '';
+    }
+  } else {
+    document.getElementById('co-equipclass').value = '— Multiple Selected —';
+    document.getElementById('co-unitnum').value = selected.map(o => {
+      const e = equipment.find(eq => eq.id == o.value);
+      return e ? (e.unitNum || '') : '';
+    }).filter(Boolean).join(', ');
+  }
+}
+
 function fillCoBranch() {
   const pick = document.getElementById('co-branch-pick');
   const val = pick.value;
