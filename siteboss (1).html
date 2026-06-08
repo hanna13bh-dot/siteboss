@@ -2901,7 +2901,6 @@ function renderAll() {
   setEl('hdr-revenue', `$${totalRev.toLocaleString()}/mo`);
 
   // Dash cards
-  function setEl(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
   setEl('d-total', clients.length);
   setEl('d-t1', t1.length);
   setEl('d-t2', t2.length);
@@ -3688,7 +3687,6 @@ function renderAR() {
   const totalAll = open.reduce((s,i) => s+parseAmount(i.amount), 0);
   const count60  = open.filter(i => daysSinceInvoice(i) >= 60).length;
 
-  function setArEl(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
   setArEl('ar-total','$'+totalAll.toLocaleString());
   setArEl('ar-60','$'+total60.toLocaleString());
   setArEl('ar-30','$'+total30.toLocaleString());
@@ -3807,6 +3805,10 @@ function renderAR() {
   }
 }
 
+function setEl(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function setArEl(id,v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+function setFuEl(id,v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
 function fuDateStr(d) {
   if (!d) return '';
   const s = d.toString();
@@ -3910,7 +3912,6 @@ function renderFollowUps() {
   const dueToday = open.filter(f => f.dueDate === todayStr);
   const upcoming = open.filter(f => f.dueDate > todayStr);
 
-  function setFuEl(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
   setFuEl('fu-overdue',overdue.length);
   setFuEl('fu-today',dueToday.length);
   setFuEl('fu-week',upcoming.length);
