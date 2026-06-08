@@ -1042,6 +1042,12 @@ tr:hover td{background:rgba(255,255,255,.015)}
             <option value="Other">Other</option>
           </select>
         </div>
+        <div class="form-group" style="margin-bottom:14px"><label>Project Completion %</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="s-projpct" min="0" max="100" value="0" style="flex:1" oninput="document.getElementById('s-projpct-val').textContent=this.value+'%'">
+            <span id="s-projpct-val" style="font-family:var(--fh);font-size:18px;min-width:50px">0%</span>
+          </div>
+        </div>
         <div class="form-group" style="margin-bottom:14px"><label>Competitor on Site</label><input type="text" id="s-competitor" placeholder="e.g. Sunbelt, United, RSC..."></div>
         <div class="form-group" style="margin-bottom:14px"><label>Quotes (one per line: amount | date | status | link)</label><textarea id="s-quotes" rows="3" placeholder="$5,000 | 2026-06-01 | Pending | drive.google.com/..."></textarea></div>
         <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="s-notes" rows="3" placeholder="Access details, equipment needs, key contacts..."></textarea></div>
@@ -2751,6 +2757,7 @@ async function addSite() {
     equipClass: document.getElementById('s-equipclass').value,
     unitNum: document.getElementById('s-unitnum').value.trim(),
     workType: document.getElementById('s-worktype').value,
+    projPct: document.getElementById('s-projpct').value,
     competitor: document.getElementById('s-competitor').value.trim(),
     quotes: document.getElementById('s-quotes').value.trim(),
     monthlyValue: document.getElementById('s-value').value.trim(),
@@ -2764,7 +2771,7 @@ async function addSite() {
   btn.disabled = false; btn.textContent = 'ADD JOB SITE →';
   if (res && res.success) {
     toast('Job site added ✓');
-    ['s-name','s-gc','s-gcname','s-gcphone','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-equipclass','s-unitnum','s-worktype','s-competitor','s-quotes','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
+    ['s-name','s-gc','s-gcname','s-gcphone','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-equipclass','s-unitnum','s-worktype','s-competitor','s-quotes','s-quotes','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('s-clientId').value = '';
     document.getElementById('s-start').value = today();
   var ry = document.getElementById('rev-year'); if(ry) ry.value = new Date().getFullYear();
@@ -2849,6 +2856,9 @@ function openEditSite(id) {
   document.getElementById('es-equipclass').value = s.equipClass || '';
   document.getElementById('es-unitnum').value = s.unitNum || '';
   document.getElementById('es-worktype').value = s.workType || '';
+  const projPct = s.projPct || '0';
+  document.getElementById('es-projpct').value = projPct;
+  document.getElementById('es-projpct-val').textContent = projPct + '%';
   document.getElementById('es-competitor').value = s.competitor || '';
   document.getElementById('es-quotes').value = s.quotes || '';
   document.getElementById('es-value').value = s.monthlyValue || '';
@@ -2922,6 +2932,7 @@ async function saveSiteEdit() {
     equipClass: document.getElementById('es-equipclass').value,
     unitNum: document.getElementById('es-unitnum').value.trim(),
     workType: document.getElementById('es-worktype').value,
+    projPct: document.getElementById('es-projpct').value,
     competitor: document.getElementById('es-competitor').value.trim(),
     quotes: document.getElementById('es-quotes').value.trim(),
     monthlyValue: document.getElementById('es-value').value.trim(),
@@ -3304,6 +3315,15 @@ function renderClientTable() {
       </div></td>
     </tr>`;
   }).join('');
+}
+
+function calcSiteCompleteness(s) {
+  const fields = [
+    s.siteName, s.clientId, s.address, s.city, s.superintendent,
+    s.equipOnSite, s.monthlyValue, s.status, s.zone, s.lastCheckIn
+  ];
+  const filled = fields.filter(f => f && f.toString().trim()).length;
+  return Math.round((filled / fields.length) * 100);
 }
 
 function renderSiteTable() {
@@ -6635,6 +6655,15 @@ function showMapPopup(loc) {
       ${s.quotes?`<div class="popup-field" style="grid-column:1/-1"><div class="popup-label">Quotes</div><div class="popup-val" style="font-size:11px;white-space:pre-line">${s.quotes}</div></div>`:''}
       <div class="popup-field"><div class="popup-label">Start Date</div><div class="popup-val">${s.startDate||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">End Date</div><div class="popup-val">${s.endDate||'—'}</div></div>
+      ${s.projPct&&s.projPct!=='0'?`<div class="popup-field" style="grid-column:1/-1">
+        <div class="popup-label">Project Completion</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <div style="flex:1;background:var(--border);height:8px;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${s.projPct}%;background:var(--blue);border-radius:4px"></div>
+          </div>
+          <span style="font-family:var(--fh);font-size:16px;color:var(--blue)">${s.projPct}%</span>
+        </div>
+      </div>`:''}
     `;
 
     // Show all subs + notes
