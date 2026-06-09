@@ -2785,75 +2785,45 @@ async function deleteSite(id) {
 function openEditSite(id) {
   const s = jobsites.find(s => s.id == id);
   if (!s) return;
-  document.getElementById('es-id').value = s.id || '';
-  document.getElementById('es-name').value = s.siteName || '';
-  document.getElementById('es-clientId').value = s.clientId || '';
-  document.getElementById('es-gc').value = s.gc || '';
-  document.getElementById('es-gcname').value = s.gcName || '';
-  document.getElementById('es-gcphone').value = s.gcPhone || '';
-  document.getElementById('es-address').value = s.address || '';
-  document.getElementById('es-city').value = s.city || '';
-  document.getElementById('es-checkin').value = s.lastCheckIn || '';
-  document.getElementById('es-supe').value = s.superintendent || '';
-  document.getElementById('es-supephone').value = s.supePhone || '';
-  document.getElementById('es-sub1company').value = s.sub1company || '';
-  document.getElementById('es-sub2name').value = s.sub2name || '';
-  document.getElementById('es-sub2phone').value = s.sub2phone || '';
-  document.getElementById('es-sub2company').value = s.sub2company || '';
-  document.getElementById('es-sub3name').value = s.sub3name || '';
-  document.getElementById('es-sub3phone').value = s.sub3phone || '';
-  document.getElementById('es-sub3company').value = s.sub3company || '';
-  document.getElementById('es-sub4name').value = s.sub4name || '';
-  document.getElementById('es-sub4phone').value = s.sub4phone || '';
-  document.getElementById('es-sub4company').value = s.sub4company || '';
-  document.getElementById('es-sub5name').value = s.sub5name || '';
-  document.getElementById('es-sub5phone').value = s.sub5phone || '';
-  document.getElementById('es-sub5company').value = s.sub5company || '';
-  document.getElementById('es-sub6name').value = s.sub6name || '';
-  document.getElementById('es-sub6phone').value = s.sub6phone || '';
-  document.getElementById('es-sub6company').value = s.sub6company || '';
-  document.getElementById('es-sub7name').value = s.sub7name || '';
-  document.getElementById('es-sub7phone').value = s.sub7phone || '';
-  document.getElementById('es-sub7company').value = s.sub7company || '';
-  document.getElementById('es-sub8name').value = s.sub8name || '';
-  document.getElementById('es-sub8phone').value = s.sub8phone || '';
-  document.getElementById('es-sub8company').value = s.sub8company || '';
-  document.getElementById('es-sub9name').value = s.sub9name || '';
-  document.getElementById('es-sub9phone').value = s.sub9phone || '';
-  document.getElementById('es-sub9company').value = s.sub9company || '';
-  document.getElementById('es-sub10name').value = s.sub10name || '';
-  document.getElementById('es-sub10phone').value = s.sub10phone || '';
-  document.getElementById('es-sub10company').value = s.sub10company || '';
-  document.getElementById('es-sub14name').value = s.sub14name || '';
-  document.getElementById('es-sub14phone').value = s.sub14phone || '';
-  document.getElementById('es-sub14company').value = s.sub14company || '';
-  document.getElementById('es-sub13name').value = s.sub13name || '';
-  document.getElementById('es-sub13phone').value = s.sub13phone || '';
-  document.getElementById('es-sub13company').value = s.sub13company || '';
-  document.getElementById('es-sub12name').value = s.sub12name || '';
-  document.getElementById('es-sub12phone').value = s.sub12phone || '';
-  document.getElementById('es-sub12company').value = s.sub12company || '';
-  document.getElementById('es-sub11name').value = s.sub11name || '';
-  document.getElementById('es-sub11phone').value = s.sub11phone || '';
-  document.getElementById('es-sub11company').value = s.sub11company || '';
-  document.getElementById('es-equip').value = s.equipOnSite || '';
-  // Parse equipOnSite back into category + unit
-  
-  document.getElementById('es-equipclass').value = s.equipClass || '';
-  document.getElementById('es-unitnum').value = s.unitNum || '';
-  document.getElementById('es-worktype').value = s.workType || '';
+  const set = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+  set('es-id', s.id);
+  set('es-name', s.siteName);
+  set('es-clientId', s.clientId);
+  set('es-gc', s.gc);
+  set('es-gcname', s.gcName);
+  set('es-gcphone', s.gcPhone);
+  set('es-address', s.address);
+  set('es-city', s.city);
+  set('es-checkin', s.lastCheckIn);
+  set('es-supe', s.superintendent);
+  set('es-supephone', s.supePhone);
+  set('es-sub1company', s.sub1company);
+  for (let i = 2; i <= 14; i++) {
+    set('es-sub'+i+'name', s['sub'+i+'name']);
+    set('es-sub'+i+'phone', s['sub'+i+'phone']);
+    set('es-sub'+i+'company', s['sub'+i+'company']);
+  }
+  set('es-equip', s.equipOnSite);
+  set('es-equipclass', s.equipClass);
+  set('es-unitnum', s.unitNum);
+  set('es-worktype', s.workType);
   const projPct = s.projPct || '0';
-  document.getElementById('es-projpct').value = projPct;
-  document.getElementById('es-projpct-val').textContent = projPct + '%';
-  document.getElementById('es-competitor').value = s.competitor || '';
-  document.getElementById('es-quotes').value = s.quotes || '';
-  document.getElementById('es-value').value = s.monthlyValue || '';
-  document.getElementById('es-zone').value = s.zone || '';
-  document.getElementById('es-start').value = s.startDate || '';
-  document.getElementById('es-end').value = s.endDate || '';
-  document.getElementById('es-status').value = s.status || 'Active';
-  document.getElementById('es-notes').value = s.notes || '';
+  const pp = document.getElementById('es-projpct'); if (pp) pp.value = projPct;
+  const ppv = document.getElementById('es-projpct-val'); if (ppv) ppv.textContent = projPct + '%';
+  set('es-competitor', s.competitor);
+  set('es-quotes', s.quotes);
+  set('es-value', s.monthlyValue);
+  set('es-zone', s.zone);
+  set('es-start', s.startDate);
+  set('es-end', s.endDate);
+  set('es-status', s.status || 'Active');
+  set('es-notes', s.notes);
   document.getElementById('es-modal').classList.add('open');
+}
+This version uses a safe helper that skips any field that doesn't exist, so nothing can crash — no es-equip-cat, no undefined parts, no missing-brace risk. It also handles all 14 subs.
+After you paste it: save → delete the old file on GitHub first, then drag-and-drop the new one → on your iPad/Mac clear Safari History and Website Data → reopen.
+To confirm the new code actually went live (this is the step that catches truncated uploads): open the live site, Cmd+Option+J, and in the console type openEditSite then Enter. If it prints the new function with for (let i = 2; i <= 14, the upload worked. If it shows the old version or errors, the upload truncated and that's the real problem to fix.
+Tell me what the console shows and we keep going from there.Opus 4.8 High
 }
 
 async function saveSiteEdit() {
