@@ -2842,10 +2842,10 @@ function openEditSite(id) {
   if (esEquip.includes(' — Unit #')) {
     const parts = esEquip.split(' — Unit #');
     document.getElementById('es-equip-cat').value = parts[0] || '';
-    document.getElementById('es-equip-unit').value = parts[1] || '';
+   if(document.getElementById('es-equip-unit')) document.getElementById('es-equip-unit').value = parts[1] || '';
   } else {
-    document.getElementById('es-equip-cat').value = esEquip;
-    document.getElementById('es-equip-unit').value = '';
+   if(document.getElementById('es-equip-cat')) document.getElementById('es-equip-cat').value = parts[0] || '';
+if(document.getElementById('es-equip-unit')) document.getElementById('es-equip-unit').value = parts[1] || '';
   }
   document.getElementById('es-equip').value = esEquip;
   document.getElementById('es-equipclass').value = s.equipClass || '';
@@ -3411,7 +3411,7 @@ async function addProspect() {
     lastFollowUp: document.getElementById('p-followup').value,
     referredBy: document.getElementById('p-referredby').value.trim(),
     competitor: document.getElementById('p-competitor').value.trim(),
-    lostReason: document.getElementById('p-lostreason').value,
+    lostReason: document.getElementById('p-lostreason') ? document.getElementById('p-lostreason').value : '',
     notes: document.getElementById('p-notes').value.trim()
   };
   const res = await api({ action:'add', type:'prospects', record });
