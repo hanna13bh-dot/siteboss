@@ -3756,7 +3756,7 @@ function arBucket(days) {
 }
 
 function parseAmount(str) {
-  return parseFloat((str||'').replace(/[^0-9.]/g,'')) || 0;
+  return parseFloat((String(str || "")).replace(/[^0-9.-]/g, ""));
 }
 
 async function addInvoice() {
