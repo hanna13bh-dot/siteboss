@@ -2838,16 +2838,7 @@ function openEditSite(id) {
   document.getElementById('es-sub11company').value = s.sub11company || '';
   document.getElementById('es-equip').value = s.equipOnSite || '';
   // Parse equipOnSite back into category + unit
-  const esEquip = s.equipOnSite || '';
-  if (esEquip.includes(' — Unit #')) {
-    const parts = esEquip.split(' — Unit #');
-    document.getElementById('es-equip-cat').value = parts[0] || '';
-   if(document.getElementById('es-equip-unit')) document.getElementById('es-equip-unit').value = parts[1] || '';
-  } else {
-   if(document.getElementById('es-equip-cat')) document.getElementById('es-equip-cat').value = parts[0] || '';
-if(document.getElementById('es-equip-unit')) document.getElementById('es-equip-unit').value = parts[1] || '';
-  }
-  document.getElementById('es-equip').value = esEquip;
+  
   document.getElementById('es-equipclass').value = s.equipClass || '';
   document.getElementById('es-unitnum').value = s.unitNum || '';
   document.getElementById('es-worktype').value = s.workType || '';
