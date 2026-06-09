@@ -2583,7 +2583,6 @@ async function syncAll() {
   if (td  && td.records)  tasks     = td.records.filter(r => r.id);
   if (rd  && rd.records)  revenue   = rd.records.filter(r => r.id);
   if (lrd && lrd.records) lostRents = lrd.records.filter(r => r.id || r.equip || r.clientName || r.siteName);
-  const vd = arguments[0] && arguments[0][8]; // visits from Promise.all
   const vr = await api({action:'getAll',type:'visits'}); if(vr&&vr.records) visits=vr.records.filter(r=>r.id||r.customerName);
   const qr = await api({action:'getAll',type:'custQuotes'}); if(qr&&qr.records) custQuotes=qr.records.filter(r=>r.id||r.project);
   const er = await api({action:'getAll',type:'equipment'}); if(er&&er.records) equipment=er.records.filter(r=>r.id||r.equip);
@@ -3086,6 +3085,11 @@ function populateClientDropdowns() {
   ].join('');
   const vSel = document.getElementById('v-clientId');
   if (vSel) vSel.innerHTML = vCOpts;
+  // Add Equipment dropdowns
+  const eqCOpts = ['<option value="">— Select Customer —</option>', ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)].join('');
+  const eqClientSel = document.getElementById('eq-clientId'); if (eqClientSel) eqClientSel.innerHTML = eqCOpts;
+  const eqSOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}">${s.siteName}</option>`)].join('');
+  const eqSiteSel = document.getElementById('eq-siteId'); if (eqSiteSel) eqSiteSel.innerHTML = eqSOpts;
 }
 
 function fillClientName() {}
