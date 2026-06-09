@@ -5505,9 +5505,9 @@ async function importEquipmentCSV(input) {
 // EQUIPMENT ON RENT
 // ══════════════════════════════════════════════
 async function addEquipment() {
-  const equipClass = document.getElementById('eq-class').value;
+  const equipClass = document.getElementById('eq-equip-cat').value;
   const equip = document.getElementById('eq-equip').value.trim() || equipClass;
-  const unitNum = document.getElementById('eq-unitnum').value.trim();
+  const unitNum = document.getElementById('eq-equip-unit').value.trim();
   const clientId = document.getElementById('eq-clientId').value;
   if (!equipClass || equipClass === '— Select Class —') { toast('Please select an equipment class', true); return; }
   if (!clientId) { toast('Customer is required', true); return; }
