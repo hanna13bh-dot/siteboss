@@ -2731,23 +2731,23 @@ async function addSite() {
     sub10name: document.getElementById('s-sub10name').value.trim(),
     sub10phone: document.getElementById('s-sub10phone').value.trim(),
     sub10company: document.getElementById('s-sub10company').value.trim(),
-    sub10worktype: document.getElementById('s-sub10worktype').value,
-    sub14name: document.getElementById('s-sub14name').value.trim(),
-    sub14phone: document.getElementById('s-sub14phone').value.trim(),
-    sub14company: document.getElementById('s-sub14company').value.trim(),
-    sub14worktype: document.getElementById('s-sub14worktype').value,
-    sub13name: document.getElementById('s-sub13name').value.trim(),
-    sub13phone: document.getElementById('s-sub13phone').value.trim(),
-    sub13company: document.getElementById('s-sub13company').value.trim(),
-    sub13worktype: document.getElementById('s-sub13worktype').value,
-    sub12name: document.getElementById('s-sub12name').value.trim(),
-    sub12phone: document.getElementById('s-sub12phone').value.trim(),
-    sub12company: document.getElementById('s-sub12company').value.trim(),
-    sub12worktype: document.getElementById('s-sub12worktype').value,
-    sub11name: document.getElementById('s-sub11name').value.trim(),
-    sub11phone: document.getElementById('s-sub11phone').value.trim(),
-    sub11company: document.getElementById('s-sub11company').value.trim(),
-    sub11worktype: document.getElementById('s-sub11worktype').value,
+    sub10worktype: gval('s-sub10worktype',''),
+    sub14name: gval('s-sub14name','').trim(),
+    sub14phone: gval('s-sub14phone','').trim(),
+    sub14company: gval('s-sub14company','').trim(),
+    sub14worktype: gval('s-sub14worktype',''),
+    sub13name: gval('s-sub13name','').trim(),
+    sub13phone: gval('s-sub13phone','').trim(),
+    sub13company: gval('s-sub13company','').trim(),
+    sub13worktype: gval('s-sub13worktype',''),
+    sub12name: gval('s-sub12name','').trim(),
+    sub12phone: gval('s-sub12phone','').trim(),
+    sub12company: gval('s-sub12company','').trim(),
+    sub12worktype: gval('s-sub12worktype',''),
+    sub11name: gval('s-sub11name','').trim(),
+    sub11phone: gval('s-sub11phone','').trim(),
+    sub11company: gval('s-sub11company','').trim(),
+    sub11worktype: gval('s-sub11worktype',''),
     equipOnSite: document.getElementById('s-equip').value.trim(),
     equipClass: document.getElementById('s-equipclass').value,
     unitNum: document.getElementById('s-unitnum').value.trim(),
@@ -2785,49 +2785,45 @@ async function deleteSite(id) {
 function openEditSite(id) {
   const s = jobsites.find(s => s.id == id);
   if (!s) return;
-  const set = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val || ''; };
-  set('es-id', s.id);
-  set('es-name', s.siteName);
-  set('es-clientId', s.clientId);
-  set('es-gc', s.gc);
-  set('es-gcname', s.gcName);
-  set('es-gcphone', s.gcPhone);
-  set('es-address', s.address);
-  set('es-city', s.city);
-  set('es-checkin', s.lastCheckIn);
-  set('es-supe', s.superintendent);
-  set('es-supephone', s.supePhone);
-  set('es-sub1company', s.sub1company);
+  const sv = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = (val==null?'':val); };
+  sv('es-id', s.id);
+  sv('es-name', s.siteName);
+  sv('es-clientId', s.clientId);
+  sv('es-gc', s.gc);
+  sv('es-gcname', s.gcName);
+  sv('es-gcphone', s.gcPhone);
+  sv('es-address', s.address);
+  sv('es-city', s.city);
+  sv('es-checkin', s.lastCheckIn);
+  sv('es-supe', s.superintendent);
+  sv('es-supephone', s.supePhone);
+  sv('es-sub1company', s.sub1company);
   for (let i = 2; i <= 14; i++) {
-    set('es-sub'+i+'name', s['sub'+i+'name']);
-    set('es-sub'+i+'phone', s['sub'+i+'phone']);
-    set('es-sub'+i+'company', s['sub'+i+'company']);
+    sv('es-sub'+i+'name', s['sub'+i+'name']);
+    sv('es-sub'+i+'phone', s['sub'+i+'phone']);
+    sv('es-sub'+i+'company', s['sub'+i+'company']);
   }
-  set('es-equip', s.equipOnSite);
-  set('es-equipclass', s.equipClass);
-  set('es-unitnum', s.unitNum);
-  set('es-worktype', s.workType);
+  sv('es-equip', s.equipOnSite);
+  sv('es-equipclass', s.equipClass);
+  sv('es-unitnum', s.unitNum);
+  sv('es-worktype', s.workType);
   const projPct = s.projPct || '0';
-  const pp = document.getElementById('es-projpct'); if (pp) pp.value = projPct;
+  sv('es-projpct', projPct);
   const ppv = document.getElementById('es-projpct-val'); if (ppv) ppv.textContent = projPct + '%';
-  set('es-competitor', s.competitor);
-  set('es-quotes', s.quotes);
-  set('es-value', s.monthlyValue);
-  set('es-zone', s.zone);
-  set('es-start', s.startDate);
-  set('es-end', s.endDate);
-  set('es-status', s.status || 'Active');
-  set('es-notes', s.notes);
+  sv('es-competitor', s.competitor);
+  sv('es-quotes', s.quotes);
+  sv('es-value', s.monthlyValue);
+  sv('es-zone', s.zone);
+  sv('es-start', s.startDate);
+  sv('es-end', s.endDate);
+  sv('es-status', s.status || 'Active');
+  sv('es-notes', s.notes);
   document.getElementById('es-modal').classList.add('open');
-}
-This version uses a safe helper that skips any field that doesn't exist, so nothing can crash — no es-equip-cat, no undefined parts, no missing-brace risk. It also handles all 14 subs.
-After you paste it: save → delete the old file on GitHub first, then drag-and-drop the new one → on your iPad/Mac clear Safari History and Website Data → reopen.
-To confirm the new code actually went live (this is the step that catches truncated uploads): open the live site, Cmd+Option+J, and in the console type openEditSite then Enter. If it prints the new function with for (let i = 2; i <= 14, the upload worked. If it shows the old version or errors, the upload truncated and that's the real problem to fix.
-Tell me what the console shows and we keep going from there.Opus 4.8 High
 }
 
 async function saveSiteEdit() {
   const id = document.getElementById('es-id').value;
+  const prev = jobsites.find(x => x.id == id) || {};
   const clientId = document.getElementById('es-clientId').value;
   const c = clients.find(c => c.id == clientId);
   const btn = document.getElementById('es-save-btn');
@@ -2885,12 +2881,12 @@ async function saveSiteEdit() {
     sub11phone: document.getElementById('es-sub11phone').value.trim(),
     sub11company: document.getElementById('es-sub11company').value.trim(),
     equipOnSite: document.getElementById('es-equip').value.trim(),
-    equipClass: document.getElementById('es-equipclass').value,
-    unitNum: document.getElementById('es-unitnum').value.trim(),
-    workType: document.getElementById('es-worktype').value,
-    projPct: document.getElementById('es-projpct').value,
+    equipClass: gval('es-equipclass', prev.equipClass),
+    unitNum: gval('es-unitnum', prev.unitNum).trim(),
+    workType: gval('es-worktype', prev.workType),
+    projPct: gval('es-projpct', prev.projPct),
     competitor: document.getElementById('es-competitor').value.trim(),
-    quotes: document.getElementById('es-quotes').value.trim(),
+    quotes: gval('es-quotes', prev.quotes).trim(),
     monthlyValue: document.getElementById('es-value').value.trim(),
     zone: document.getElementById('es-zone').value.trim(),
     startDate: document.getElementById('es-start').value,
@@ -2920,7 +2916,7 @@ function openProfile(id) {
   const sites = jobsites.filter(s => s.clientId == id);
   const activeSites = sites.filter(s => s.status === 'Active');
   const totalRev = sites.filter(s => s.status === 'Active').reduce((sum, s) => {
-    const v = parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,'')) || 0;
+    const v = parseFloat((String(s.monthlyValue||'')).replace(/[^0-9.]/g,'')) || 0;
     return sum + v;
   }, 0);
 
@@ -3041,7 +3037,7 @@ function clientSites(id)  { return jobsites.filter(s => s.clientId == id); }
 function clientRevenue(id) {
   return clientSites(id)
     .filter(s => s.status === 'Active')
-    .reduce((sum,s) => sum + (parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0), 0);
+    .reduce((sum,s) => sum + (parseFloat((String(s.monthlyValue||'')).replace(/[^0-9.]/g,''))||0), 0);
 }
 
 function buildPrompt(c, tier) {
@@ -3111,7 +3107,7 @@ function renderAll() {
   const t2 = clients.filter(c => getTier(daysSince(c.lastContact)) === 2);
   const t3 = clients.filter(c => getTier(daysSince(c.lastContact)) === 3);
   const activeSites = jobsites.filter(s => s.status === 'Active');
-  const totalRev = activeSites.reduce((sum,s) => sum + (parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0), 0);
+  const totalRev = activeSites.reduce((sum,s) => sum + (parseFloat((String(s.monthlyValue||'')).replace(/[^0-9.]/g,''))||0), 0);
 
   // Header
   setEl('hdr-active', `${t1.length} ACTIVE`);
@@ -3128,7 +3124,7 @@ function renderAll() {
   setEl('d-sites', activeSites.length);
   setEl('d-rev', '$' + totalRev.toLocaleString());
   const activeProspects = prospects.filter(p => p.stage !== 'Won' && p.stage !== 'Lost');
-  const pipelineVal = activeProspects.reduce((sum,p) => sum + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
+  const pipelineVal = activeProspects.reduce((sum,p) => sum + (parseFloat((String(p.value||'')).replace(/[^0-9.]/g,''))||0), 0);
   setEl('d-prospects', activeProspects.length);
   setEl('d-pipeline-val', '$' + pipelineVal.toLocaleString());
   setEl('cust-count', `${clients.length} customers`);
@@ -3176,13 +3172,13 @@ function renderDashProspects() {
     const el = document.getElementById('dash-p-' + stage.toLowerCase());
     if (el) el.textContent = prospects.filter(p => p.stage === stage).length;
   });
-  const pipeVal = active.reduce((s,p) => s + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
+  const pipeVal = active.reduce((s,p) => s + (parseFloat((String(p.value||'')).replace(/[^0-9.]/g,''))||0), 0);
   const pvEl = document.getElementById('dash-p-value');
   if (pvEl) pvEl.textContent = '$' + pipeVal.toLocaleString();
 
   // Show top 5 by value — hottest prospects
   const top3 = [...active]
-    .sort((a,b) => (parseFloat((b.value||'').replace(/[^0-9.]/g,''))||0) - (parseFloat((a.value||'').replace(/[^0-9.]/g,''))||0))
+    .sort((a,b) => (parseFloat((String(b.value||'')).replace(/[^0-9.]/g,''))||0) - (parseFloat((String(a.value||'')).replace(/[^0-9.]/g,''))||0))
     .slice(0,5);
 
   const stageColor = { Lead:'var(--muted2)', Contacted:'var(--blue)', Quoted:'var(--yellow)', Won:'var(--green)', Lost:'var(--red)' };
@@ -3372,7 +3368,7 @@ async function addProspect() {
     lastFollowUp: document.getElementById('p-followup').value,
     referredBy: document.getElementById('p-referredby').value.trim(),
     competitor: document.getElementById('p-competitor').value.trim(),
-    lostReason: document.getElementById('p-lostreason') ? document.getElementById('p-lostreason').value : '',
+    lostReason: gval('p-lostreason',''),
     notes: document.getElementById('p-notes').value.trim()
   };
   const res = await api({ action:'add', type:'prospects', record });
@@ -3509,7 +3505,7 @@ function renderProspects() {
   const sourceClass = { 'Drive By':'src-drive', 'Referral':'src-referral', 'Permit':'src-permit', 'Other':'src-other' };
   const sourceEmoji = { 'Drive By':'🚗', 'Referral':'🤝', 'Permit':'📋', 'Other':'📌' };
 
-  const totalVal = prospects.filter(p => p.stage !== 'Lost').reduce((sum,p) => sum + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
+  const totalVal = prospects.filter(p => p.stage !== 'Lost').reduce((sum,p) => sum + (parseFloat((String(p.value||'')).replace(/[^0-9.]/g,''))||0), 0);
   const pipTot = document.getElementById('pip-total-val'); if(pipTot) pipTot.textContent = '$' + totalVal.toLocaleString();
   stages.forEach((stage,i) => {
     const count = prospects.filter(p => p.stage === stage).length;
@@ -3675,11 +3671,11 @@ function renderRevenue() {
   const monthNames = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
 
   el.innerHTML = sorted.map((r, i) => {
-    const amt = parseFloat((r.amount||'').replace(/[^0-9.]/g,''))||0;
+    const amt = parseFloat((String(r.amount||'')).replace(/[^0-9.]/g,''))||0;
     const prev = sorted[i+1];
     let change = '';
     if (prev) {
-      const prevAmt = parseFloat((prev.amount||'').replace(/[^0-9.]/g,''))||0;
+      const prevAmt = parseFloat((String(prev.amount||'')).replace(/[^0-9.]/g,''))||0;
       if (prevAmt > 0) {
         const pct = ((amt - prevAmt) / prevAmt * 100);
         const color = pct >= 0 ? 'var(--green)' : 'var(--red)';
@@ -3717,7 +3713,7 @@ function arBucket(days) {
 }
 
 function parseAmount(str) {
-  return parseFloat((String(str || "")).replace(/[^0-9.-]/g, ""));
+  return parseFloat((String(str==null?'':str)).replace(/[^0-9.]/g,'')) || 0;
 }
 
 async function addInvoice() {
@@ -3764,9 +3760,9 @@ function openEditInvoice(id) {
   const inv = invoices.find(i => i.id == id);
   if (!inv) return;
   document.getElementById('einv-id').value = inv.id || '';
-  document.getElementById('einv-number').value = inv.number || '';
+  sval('einv-number', inv.number);
   document.getElementById('einv-amount').value = inv.amount || '';
-  document.getElementById('einv-date').value = inv.invoiceDate || '';
+  sval('einv-date', inv.invoiceDate);
   document.getElementById('einv-due').value = inv.dueDate || '';
   document.getElementById('einv-status').value = inv.status || 'Open';
   document.getElementById('einv-notes').value = inv.notes || '';
@@ -3785,9 +3781,9 @@ async function saveInvoiceEdit() {
   const record = {
     ...inv, id,
     clientId:    document.getElementById('einv-clientId').value,
-    number:      document.getElementById('einv-number').value.trim(),
+    number:      gval('einv-number', inv?inv.number:'').trim(),
     amount:      document.getElementById('einv-amount').value.trim(),
-    invoiceDate: document.getElementById('einv-date').value,
+    invoiceDate: gval('einv-date', inv?inv.invoiceDate:''),
     dueDate:     document.getElementById('einv-due').value,
     siteId:      document.getElementById('einv-siteId').value,
     status:      document.getElementById('einv-status').value,
@@ -3869,39 +3865,7 @@ function filterAR(f, btn) {
   renderHealthScoreInProfile(activeProfileId);
 }
 
-function renderDashProspects() {
-  const active = prospects.filter(p => p.stage !== 'Won' && p.stage !== 'Lost');
-  const stages = ['Lead','Contacted','Quoted','Won'];
-  stages.forEach(stage => {
-    const el = document.getElementById('dash-p-' + stage.toLowerCase());
-    if (el) el.textContent = prospects.filter(p => p.stage === stage).length;
-  });
-  const pipeVal = active.reduce((s,p) => s + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
-  const pvEl = document.getElementById('dash-p-value');
-  if (pvEl) pvEl.textContent = '$' + pipeVal.toLocaleString();
 
-  // Show top 5 by value — hottest prospects
-  const top3 = [...active]
-    .sort((a,b) => (parseFloat((b.value||'').replace(/[^0-9.]/g,''))||0) - (parseFloat((a.value||'').replace(/[^0-9.]/g,''))||0))
-    .slice(0,5);
-
-  const stageColor = { Lead:'var(--muted2)', Contacted:'var(--blue)', Quoted:'var(--yellow)', Won:'var(--green)', Lost:'var(--red)' };
-  const el = document.getElementById('dash-prospects-list');
-  if (!el) return;
-  el.innerHTML = top3.length ? top3.map(p => `
-    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid #9b59b6;padding:12px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="showPanel('prospects')">
-      <div>
-        <div style="font-weight:600;font-size:13px">${p.name}</div>
-        <div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${p.company}${p.city?' · '+p.city:''}</div>
-        ${p.equip?`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">🔧 ${p.equip}</div>`:''}
-      </div>
-      <div style="text-align:right">
-        <div style="font-family:var(--fh);font-size:20px;color:var(--green)">${p.value||'—'}</div>
-        <div style="font-family:var(--fm);font-size:11px;font-weight:600;color:${stageColor[p.stage]||'var(--muted2)'}">● ${p.stage}</div>
-        ${p.lastFollowUp?`<div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">Last: ${p.lastFollowUp}</div>`:''}
-      </div>
-    </div>`).join('') : "<div class=\"empty-state\">No active prospects. <span style=\"cursor:pointer;color:var(--accent)\" onclick=\"showPanel('add-prospect')\">+ Add one →</span></div>";
-}
 
 function searchAR(v) { arSearch = v; renderAR(); }
 
@@ -4035,6 +3999,8 @@ function renderAR() {
 }
 
 function setEl(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function sval(id,val){ var el=document.getElementById(id); if(el) el.value=(val==null?'':val); }
+function gval(id,fb){ var el=document.getElementById(id); return el ? el.value : (fb==null?'':fb); }
 function setArEl(id,v) { const el = document.getElementById(id); if (el) el.textContent = v; }
 function setFuEl(id,v) { const el = document.getElementById(id); if (el) el.textContent = v; }
 
@@ -4304,12 +4270,12 @@ function fillCoEquipMulti() {
   if (selected.length === 1) {
     const e = equipment.find(e => e.id == selected[0].value);
     if (e) {
-      document.getElementById('co-equipclass').value = e.equipClass || '— Select Class —';
-      document.getElementById('co-unitnum').value = e.unitNum || '';
+      document.getElementById('co-equip-cat').value = e.equipClass || '— Select Class —';
+      document.getElementById('co-equip-unit').value = e.unitNum || '';
     }
   } else {
-    document.getElementById('co-equipclass').value = '— Multiple Selected —';
-    document.getElementById('co-unitnum').value = selected.map(o => {
+    document.getElementById('co-equip-cat').value = '— Multiple Selected —';
+    document.getElementById('co-equip-unit').value = selected.map(o => {
       const e = equipment.find(eq => eq.id == o.value);
       return e ? (e.unitNum || '') : '';
     }).filter(Boolean).join(', ');
@@ -4329,8 +4295,8 @@ function openServiceCall(siteId) {
   const sOpts = ['<option value="">— Select Site —</option>', ...jobsites.map(s => `<option value="${s.id}" ${s.id==siteId?'selected':''}>${s.siteName}</option>`)].join('');
   document.getElementById('svc-siteId').innerHTML = sOpts;
   document.getElementById('svc-siteId').value = siteId || '';
-  ['svc-customer','svc-issue','svc-address','svc-contact','svc-notes','svc-unitnum','svc-to-email'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('svc-equipclass').value = '— Select Class —';
+  ['svc-customer','svc-issue','svc-address','svc-contact','svc-notes','svc-equip-unit','svc-to-email'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('svc-equip-cat').value = '— Select Class —';
   populateBranchPicker('svc-branch-pick','service');
   document.getElementById('svc-priority').value = 'URGENT';
   if (siteId) prefillServiceSite();
@@ -4357,8 +4323,8 @@ function prefillServiceSite() {
 }
 
 function sendServiceCall() {
-  const equipClass = document.getElementById('svc-equipclass').value;
-  const unitNum = document.getElementById('svc-unitnum').value.trim();
+  const equipClass = document.getElementById('svc-equip-cat').value;
+  const unitNum = document.getElementById('svc-equip-unit').value.trim();
   const equip = equipClass + (unitNum?' — Unit #'+unitNum:'');
   const issue = document.getElementById('svc-issue').value.trim();
   if (!equipClass || equipClass === '— Select Class —') { toast('Please select equipment class', true); return; }
@@ -4412,8 +4378,8 @@ function openCallOff(siteId) {
   const sOpts = ['<option value="">— Select Site —</option>', ...jobsites.map(s => `<option value="${s.id}" ${s.id==siteId?'selected':''}>${s.siteName}</option>`)].join('');
   document.getElementById('co-siteId').innerHTML = sOpts;
   document.getElementById('co-siteId').value = siteId || '';
-  ['co-customer','co-address','co-contact','co-notes','co-unitnum','co-to-email'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('co-equipclass').value = '— Select Class —';
+  ['co-customer','co-address','co-contact','co-notes','co-equip-unit','co-to-email'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('co-equip-cat').value = '— Select Class —';
   populateBranchPicker('co-branch-pick','calloff');
   document.getElementById('co-date').value = today();
   document.getElementById('co-reason').value = 'Job Complete';
@@ -4446,7 +4412,7 @@ function sendCallOff() {
 
   // Get selected equipment — either from multi-picker or manual entry
   const coSel = document.getElementById('co-equip-pick');
-  const selectedEquip = Array.from(coSel.selectedOptions);
+  const selectedEquip = coSel ? Array.from(coSel.selectedOptions) : [];
   let equip = '';
   let equipList = [];
 
@@ -4457,8 +4423,8 @@ function sendCallOff() {
     });
     equip = equipList.join('\n  ');
   } else {
-    const equipClass = document.getElementById('co-equipclass').value;
-    const unitNum = document.getElementById('co-unitnum').value.trim();
+    const equipClass = document.getElementById('co-equip-cat').value;
+    const unitNum = document.getElementById('co-equip-unit').value.trim();
     if (!equipClass || equipClass === '— Select Class —') { toast('Please select equipment or enter manually', true); return; }
     equip = equipClass + (unitNum?' — Unit #'+unitNum:'');
     equipList = [equip];
@@ -4507,7 +4473,7 @@ Please confirm pickup.
   }}).then(async () => {
     // Auto-mark all selected equipment as Pending Pickup
     const coSelEl = document.getElementById('co-equip-pick');
-    const coSelected = Array.from(coSelEl.selectedOptions);
+    const coSelected = coSelEl ? Array.from(coSelEl.selectedOptions) : [];
     for (const opt of coSelected) {
       const eq = equipment.find(e => e.id == opt.value);
       if (eq) await api({ action:'update', type:'equipment', record: { ...eq, status:'Pending Pickup' } });
@@ -5496,6 +5462,37 @@ async function addEquipment() {
   }
 }
 
+function openServiceCallFromEquip(id) {
+  const eq = equipment.find(e => e.id == id);
+  if (!eq) return;
+  const s = jobsites.find(s => s.id == eq.siteId);
+  const c = clients.find(c => c.id == eq.clientId);
+  openServiceCall(eq.siteId || '');
+  setTimeout(() => {
+    if (document.getElementById('svc-equipclass')) document.getElementById('svc-equip-cat').value = eq.equipClass || '— Select Class —';
+    if (document.getElementById('svc-unitnum')) document.getElementById('svc-equip-unit').value = eq.unitNum || '';
+    if (document.getElementById('svc-customer')) document.getElementById('svc-customer').value = c ? c.name + ' — ' + c.company : '';
+  }, 100);
+}
+
+function openCallOffFromEquip(id) {
+  const eq = equipment.find(e => e.id == id);
+  if (!eq) return;
+  const c = clients.find(c => c.id == eq.clientId);
+  openCallOff(eq.siteId || '');
+  setTimeout(() => {
+    // Pre-select this equipment in the multi-picker
+    const picker = document.getElementById('co-equip-pick');
+    if (picker) {
+      for (let opt of picker.options) {
+        if (opt.value == id) { opt.selected = true; break; }
+      }
+      fillCoEquipMulti();
+    }
+    if (document.getElementById('co-customer')) document.getElementById('co-customer').value = c ? c.name + ' — ' + c.company : '';
+  }, 100);
+}
+
 async function removeEquipment(id) {
   if (!confirm('Remove this equipment record?')) return;
   const res = await api({ action:'delete', type:'equipment', id });
@@ -5518,7 +5515,7 @@ function daysUntilOffRent(endStr) {
 
 function renderEquipment() {
   const active = equipment.filter(e => e.status !== 'Off Rent');
-  const totalVal = active.reduce((s,e) => s + (parseFloat((e.rate||'').replace(/[^0-9.]/g,''))||0), 0);
+  const totalVal = active.reduce((s,e) => s + (parseFloat((String(e.rate||'')).replace(/[^0-9.]/g,''))||0), 0);
   const expiring = active.filter(e => { const d = daysUntilOffRent(e.end); return d !== null && d >= 0 && d <= 14; });
   const overdue  = active.filter(e => { const d = daysUntilOffRent(e.end); return d !== null && d < 0; });
 
@@ -5549,7 +5546,9 @@ function renderEquipment() {
       <div style="text-align:right">
         <div style="font-family:var(--fh);font-size:20px;color:var(--blue)">${eq.rate||'—'}</div>
         <div class="equip-days" style="color:${daysColor}">${daysLabel}</div>
-        <div style="display:flex;gap:5px;margin-top:6px;justify-content:flex-end">
+        <div style="display:flex;gap:5px;margin-top:6px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="btn-small" style="color:var(--red);border-color:var(--red)" onclick="openServiceCallFromEquip('${eq.id}')">🔧 Service</button>
+          <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="openCallOffFromEquip('${eq.id}')">📞 Call Off</button>
           <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="markOffRent('${eq.id}')">✓ Off Rent</button>
           <button class="btn-danger" onclick="removeEquipment('${eq.id}')">✕</button>
         </div>
@@ -6249,13 +6248,13 @@ function renderRelationships() {
     if (s.gc) {
       if (!gcCount[s.gc]) gcCount[s.gc] = { name: s.gc, sites: [], value: 0 };
       gcCount[s.gc].sites.push(s.siteName);
-      gcCount[s.gc].value += parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0;
+      gcCount[s.gc].value += parseFloat((String(s.monthlyValue||'')).replace(/[^0-9.]/g,''))||0;
     }
     // Also count client field as GC-like
     if (s.client && !s.gc) {
       if (!gcCount[s.client]) gcCount[s.client] = { name: s.client, sites: [], value: 0 };
       gcCount[s.client].sites.push(s.siteName);
-      gcCount[s.client].value += parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0;
+      gcCount[s.client].value += parseFloat((String(s.monthlyValue||'')).replace(/[^0-9.]/g,''))||0;
     }
   });
   // Add prospect GCs
@@ -6303,7 +6302,7 @@ function renderRelationships() {
   // Customers by site count + value
   const custData = clients.map(c => {
     const sites = jobsites.filter(s => s.clientId == c.id);
-    const value = sites.reduce((sum,s) => sum + (parseFloat((s.monthlyValue||'').replace(/[^0-9.]/g,''))||0), 0);
+    const value = sites.reduce((sum,s) => sum + (parseFloat((String(s.monthlyValue||'')).replace(/[^0-9.]/g,''))||0), 0);
     return { name: c.name, company: c.company, id: c.id, siteCount: sites.length, value: value };
   }).filter(c => c.siteCount > 0).sort((a,b) => b.siteCount - a.siteCount || b.value - a.value);
 
@@ -6342,7 +6341,7 @@ function renderCompetitors() {
     const key = p.competitor.trim();
     if (!comp[key]) comp[key] = { name: key, sites: [], prospects: [], lost: [], revenueLost: 0 };
     comp[key].lost.push(p.name);
-    comp[key].revenueLost += parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0;
+    comp[key].revenueLost += parseFloat((String(p.value||'')).replace(/[^0-9.]/g,''))||0;
   });
 
   const list = Object.values(comp).sort((a,b) => b.revenueLost - a.revenueLost || (b.sites.length+b.prospects.length) - (a.sites.length+a.prospects.length));
@@ -6365,30 +6364,7 @@ function renderCompetitors() {
 // ══════════════════════════════════════════════
 // LOST RENTALS
 // ══════════════════════════════════════════════
-function renderLostRentals() {
-  // Lost prospects + any quotes marked lost
-  const lost = prospects.filter(p => p.stage === 'Lost');
 
-  const total = lost.reduce((s,p) => s + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
-  // Reason buckets pulled from notes/lostReason field if present
-  function reasonVal(reason) {
-    return lost.filter(p => (p.lostReason||'').toLowerCase().includes(reason)).reduce((s,p) => s + (parseFloat((p.value||'').replace(/[^0-9.]/g,''))||0), 0);
-  }
-  document.getElementById('lr-total').textContent = '$'+total.toLocaleString();
-  document.getElementById('lr-price').textContent = '$'+reasonVal('price').toLocaleString();
-  document.getElementById('lr-avail').textContent = '$'+reasonVal('availab').toLocaleString();
-  document.getElementById('lr-logistics').textContent = '$'+reasonVal('logist').toLocaleString();
-
-  document.getElementById('lostrentals-list').innerHTML = lost.length ? lost.map(p => `
-    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);padding:13px 16px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div style="font-weight:600;font-size:14px">${p.name}</div><div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${p.company}</div></div>
-        <div style="font-family:var(--fh);font-size:20px;color:var(--red)">${p.value||'—'}</div>
-      </div>
-      ${p.competitor?`<div style="font-family:var(--fm);font-size:11px;color:var(--red);margin-top:4px">⚔ Lost to ${p.competitor}</div>`:''}
-      ${p.lostReason?`<div style="font-family:var(--fm);font-size:11px;color:var(--yellow);margin-top:2px">Reason: ${p.lostReason}</div>`:''}
-    </div>`).join('') : '<div class="empty-state">No lost rentals logged yet.</div>';
-}
 
 // ══════════════════════════════════════════════
 // MAP
