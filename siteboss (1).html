@@ -1530,7 +1530,11 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div id="eq-alert-list"><div class="empty-state">No expiring equipment.</div></div>
       </div>
       <div>
-        <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--blue);margin-bottom:10px">ALL EQUIPMENT ON RENT</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--blue)">ALL EQUIPMENT ON RENT</div>
+          <span id="eq-search-count" style="font-family:var(--fm);font-size:10px;color:var(--muted2)"></span>
+        </div>
+        <input id="eq-search" type="text" placeholder="🔍 Search equipment, unit #, customer, or site..." oninput="renderEquipment()" style="margin-bottom:12px">
         <div id="eq-all-list"><div class="empty-state">No equipment tracked yet.</div></div>
       </div>
     </div>
@@ -5566,8 +5570,26 @@ function renderEquipment() {
   const alertEl = document.getElementById('eq-alert-list');
   if (alertEl) alertEl.innerHTML = alertList.length ? alertList.map(e => eqCard(e, daysUntilOffRent(e.end)<0?'expired':'expiring')).join('') : '<div class="empty-state">No expiring equipment. ✅</div>';
 
+  const q = (document.getElementById('eq-search') ? document.getElementById('eq-search').value : '').trim().toLowerCase();
+  const matches = e => {
+    if (!q) return true;
+    const c = clients.find(c => c.id == e.clientId) || {};
+    const s = jobsites.find(s => s.id == e.siteId) || {};
+    const hay = [e.equip, e.equipClass, e.unitNum, e.rate, e.status, e.notes, e.start, e.end,
+                 c.name, c.company, s.siteName].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(q);
+  };
+  const filtered = active.filter(matches);
   const allEl = document.getElementById('eq-all-list');
-  if (allEl) allEl.innerHTML = active.length ? active.map(e => eqCard(e,'')).join('') : '<div class="empty-state">No equipment on rent yet.</div>';
+  const countEl = document.getElementById('eq-search-count');
+  if (countEl) countEl.textContent = q ? (filtered.length + ' of ' + active.length + ' shown') : '';
+  if (allEl) {
+    allEl.innerHTML = active.length
+      ? (filtered.length
+          ? filtered.map(e => eqCard(e,'')).join('')
+          : '<div class="empty-state">No equipment matches \u201c' + q + '\u201d.</div>')
+      : '<div class="empty-state">No equipment on rent yet.</div>';
+  }
 }
 
 // ══════════════════════════════════════════════
