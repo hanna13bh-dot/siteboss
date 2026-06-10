@@ -1592,7 +1592,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Job Site</label>
             <select id="eq-siteId"><option value="">— None —</option></select>
           </div>
-          <div class="form-group"><label>Job Site Name (manual / override)</label><input type="text" id="eq-sitename" placeholder="Type or change site name"></div><div class="form-group"><label>Address</label><input type="text" id="eq-address" placeholder="Site address"></div><div class="form-group"><label>Monthly Rate</label><input type="text" id="eq-rate" placeholder="$4,700"></div>
+          <div class="form-group"><label>Job Site Name (manual / override)</label><input type="text" id="eq-sitename" placeholder="Type or change site name"></div><div class="form-group"><label>Address</label><input type="text" id="eq-address" placeholder="Site address"></div><div class="form-group"><label>Contact</label><input type="text" id="eq-contact" placeholder="On-site contact"></div><div class="form-group"><label>Monthly Rate</label><input type="text" id="eq-rate" placeholder="$4,700"></div>
           <div class="form-group"><label>On Rent Date</label><input type="date" id="eq-start"></div>
           <div class="form-group"><label>Expected Off Rent</label><input type="date" id="eq-end"></div>
           <div class="form-group"><label>Status</label>
@@ -2415,6 +2415,27 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </div>
 
 <!-- EDIT SITE MODAL -->
+<div class="modal-overlay" id="eqe-modal" style="z-index:10001">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--blue)">EDIT EQUIPMENT</div>
+    <input type="hidden" id="eqe-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Equipment</label><input type="text" id="eqe-equip"></div>
+      <div class="form-group"><label>Class</label><input type="text" id="eqe-equipClass"></div>
+      <div class="form-group"><label>Unit #</label><input type="text" id="eqe-unitnum"></div>
+      <div class="form-group"><label>Customer</label><input type="text" id="eqe-customer" list="customer-companies"></div>
+      <div class="form-group"><label>Job Site Name</label><input type="text" id="eqe-sitename"></div>
+      <div class="form-group"><label>Contact</label><input type="text" id="eqe-contact"></div>
+      <div class="form-group"><label>Address</label><input type="text" id="eqe-address"></div>
+      <div class="form-group"><label>Quantity</label><input type="text" id="eqe-qty"></div>
+      <div class="form-group"><label>Status</label><select id="eqe-status"><option value="On Rent">On Rent</option><option value="Expiring">Expiring</option><option value="Off Rent">Off Rent</option><option value="Pending Pickup">Pending Pickup</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" id="eqe-save-btn" onclick="saveEquipEdit()">Save</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="es-modal" style="z-index:10001">
   <div class="modal">
     <div class="modal-title" style="color:var(--green)">EDIT JOB SITE</div>
@@ -5510,6 +5531,8 @@ async function refreshEquipmentFromReport(input) {
       siteId: s ? s.id : '',
       siteName: siteName,
       address: s ? (s.address||'') : '',
+      customerName: customerName,
+      contact: ordered,
       status:'On Rent'
     }});
     imported++;
@@ -5576,6 +5599,8 @@ async function addEquipment() {
     equip: equip || equipClass, equipClass, unitNum, clientId,
     qty:     document.getElementById('eq-qty').value.trim() || '1',
     siteId:  document.getElementById('eq-siteId').value,
+    contact: gval('eq-contact',''),
+    customerName: (clients.find(c => c.id == clientId)||{}).company || '',
     siteName: gval('eq-sitename',''),
     address: gval('eq-address',''),
     rate:    document.getElementById('eq-rate').value.trim(),
@@ -5588,7 +5613,7 @@ async function addEquipment() {
   btn.disabled = false; btn.textContent = 'ADD EQUIPMENT →';
   if (res && res.success) {
     toast('Equipment added ✓');
-    ['eq-equip','eq-qty','eq-rate','eq-start','eq-end','eq-notes','eq-address','eq-sitename'].forEach(id => document.getElementById(id).value = '');
+    ['eq-equip','eq-qty','eq-rate','eq-start','eq-end','eq-notes','eq-address','eq-sitename','eq-contact'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('eq-clientId').value = '';
     document.getElementById('eq-siteId').value = '';
     await syncAll();
@@ -5633,6 +5658,38 @@ async function removeEquipment(id) {
   if (res && res.success) { toast('Removed ✓'); await syncAll(); }
 }
 
+function openEditEquip(id){
+  const eq = equipment.find(e => e.id == id); if(!eq) return;
+  const c = clients.find(c => c.id == eq.clientId);
+  const set=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=(v==null?'':v); };
+  set('eqe-id', eq.id);
+  set('eqe-equip', eq.equip);
+  set('eqe-equipClass', eq.equipClass);
+  set('eqe-unitnum', eq.unitNum);
+  set('eqe-customer', eq.customerName || (c ? (c.company || c.name) : ''));
+  set('eqe-sitename', eq.siteName || '');
+  set('eqe-contact', eq.contact || '');
+  set('eqe-address', eq.address || '');
+  set('eqe-qty', eq.qty || '1');
+  set('eqe-status', eq.status || 'On Rent');
+  document.getElementById('eqe-modal').classList.add('open');
+}
+async function saveEquipEdit(){
+  const id=gval('eqe-id',''); const eq=equipment.find(e => e.id == id); if(!eq) return;
+  const custName=gval('eqe-customer','').trim();
+  let c=clients.find(c => c.company && custName && c.company.toLowerCase()===custName.toLowerCase());
+  if(!c && custName) c=clients.find(c => c.company && (c.company.toLowerCase().includes(custName.toLowerCase()) || custName.toLowerCase().includes(c.company.toLowerCase())));
+  const btn=document.getElementById('eqe-save-btn'); if(btn){btn.disabled=true; btn.textContent='SAVING...';}
+  const record={ ...eq,
+    equip: gval('eqe-equip',''), equipClass: gval('eqe-equipClass',''), unitNum: gval('eqe-unitnum','').trim(),
+    customerName: custName, clientId: c ? c.id : (eq.clientId||''),
+    siteName: gval('eqe-sitename',''), contact: gval('eqe-contact',''), address: gval('eqe-address',''),
+    qty: gval('eqe-qty','')||'1', status: gval('eqe-status','On Rent')
+  };
+  const res=await api({ action:'update', type:'equipment', record });
+  if(btn){btn.disabled=false; btn.textContent='Save';}
+  if(res && res.success){ toast('Equipment updated ✓'); closeModals(); await syncAll(); }
+}
 async function markOffRent(id) {
   const eq = equipment.find(e => e.id == id);
   if (!eq) return;
@@ -5666,18 +5723,21 @@ function renderEquipment() {
   function eqCard(eq, urgency) {
     const c = clients.find(c => c.id == eq.clientId);
     const s = jobsites.find(s => s.id == eq.siteId);
-    const days = daysUntilOffRent(eq.end);
-    const daysLabel = days === null ? '—' : days < 0 ? `${Math.abs(days)}d OVERDUE` : days === 0 ? 'OFF RENT TODAY' : `${days}d left`;
-    const daysColor = days === null ? 'var(--muted2)' : days < 0 ? 'var(--red)' : days <= 14 ? 'var(--yellow)' : 'var(--green)';
+    const custName = eq.customerName || (c ? (c.company || c.name) : '');
+    const siteLabel = eq.siteName || (s ? s.siteName : '');
+    const addr = eq.address || (s ? s.address : '');
     return `<div class="equip-row ${urgency}">
       <div style="flex:1">
-        <div class="equip-name">${eq.equip} ${eq.qty&&eq.qty!=='1'?'(x'+eq.qty+')':''}</div>
-        ${c?`<div class="equip-meta">👷 ${c.name} — ${c.company}</div>`:''}
-        ${(eq.siteName||(s&&s.siteName))?`<div class="equip-meta">🏗 ${eq.siteName||s.siteName}</div>`:''}
-        ${(eq.address||(s&&s.address))?`<div class="equip-meta">📍 ${eq.address||s.address}</div>`:''}
+        <div class="equip-name">${eq.equip||eq.equipClass||'Equipment'} ${eq.qty&&eq.qty!=='1'?'(x'+eq.qty+')':''}</div>
+        ${eq.unitNum?`<div class="equip-meta">Unit #${eq.unitNum}</div>`:''}
+        ${custName?`<div class="equip-meta">👷 ${custName}</div>`:''}
+        ${siteLabel?`<div class="equip-meta">🏗 ${siteLabel}</div>`:''}
+        ${eq.contact?`<div class="equip-meta">📞 ${eq.contact}</div>`:''}
+        ${addr?`<div class="equip-meta">📍 ${addr}</div>`:''}
       </div>
       <div style="text-align:right">
         <div style="display:flex;gap:5px;margin-top:6px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="openEditEquip('${eq.id}')">✎ Edit</button>
           <button class="btn-small" style="color:var(--red);border-color:var(--red)" onclick="openServiceCallFromEquip('${eq.id}')">🔧 Service</button>
           <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="openCallOffFromEquip('${eq.id}')">📞 Call Off</button>
           <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="markOffRent('${eq.id}')">✓ Off Rent</button>
