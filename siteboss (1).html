@@ -769,8 +769,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Customer *</label>
             <select id="s-clientId" onchange="fillClientName()">
               <option value="">— Select Customer —</option>
-            </select>
-            <button type="button" class="btn-small" style="margin-top:6px" onclick="quickAddCustomer('site')">+ New Customer</button>
+            </select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('s-clientId')">+ New Customer</button>
+            <button type="button" class="btn-small" style="margin-top:6px" onclick="quickAddCustomer('s-clientId')">+ New Customer</button>
           </div>
           <div class="form-group"><label>General Contractor</label><input type="text" id="s-gc" placeholder="GC Company"></div>
           <div class="form-group"><label>GC Contact Name</label><input type="text" id="s-gcname" placeholder="John Smith"></div>
@@ -1129,7 +1129,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Project Name *</label><input type="text" id="p-name" placeholder="Downtown Office Tower"></div>
           <div class="form-group"><label>GC / Company *</label><input type="text" id="p-company" placeholder="ABC Construction"></div>
           <div class="form-group"><label>Contact Name</label><input type="text" id="p-contact" placeholder="John Smith"></div>
-          <div class="form-group"><label>Contact Phone</label><input type="text" id="p-phone" placeholder="(555) 000-0000"></div>
+          <div class="form-group"><label>Contact Phone</label><input type="text" id="p-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label>Email</label><input type="text" id="p-email" placeholder="name@company.com"></div>
           <div class="form-group"><label>Address</label><input type="text" id="p-address" placeholder="123 Main St"></div>
           <div class="form-group"><label>City</label><input type="text" id="p-city" placeholder="Houston, TX"></div>
           <div class="form-group"><label>Zone</label><input type="text" id="p-zone" placeholder="North, South..."></div>
@@ -1163,7 +1163,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Linked Customer</label>
             <select id="p-clientId">
               <option value="">— None —</option>
-            </select>
+            </select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('p-clientId')">+ New Customer</button>
           </div>
           <div class="form-group"><label>Last Follow-Up Date</label><input type="date" id="p-followup"></div>
         </div>
@@ -1211,14 +1211,14 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Title *</label><input type="text" id="fu-title" placeholder="Call John re: scissor lift renewal"></div>
           <div class="form-group"><label>Due Date *</label><input type="date" id="fu-due"></div>
           <div class="form-group"><label>Linked Customer</label>
-            <select id="fu-clientId"><option value="">— None —</option></select>
+            <select id="fu-clientId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('fu-clientId')">+ New Customer</button>
           </div>
           <div class="form-group"><label>Linked Job Site</label>
-            <select id="fu-siteId" onchange="toggleFuManualSite()"><option value="">— None —</option><option value="__manual__">+ Type manually</option></select>
+            <select id="fu-siteId" onchange="toggleFuManualSite()"><option value="">— None —</option><option value="__manual__">+ Type manually</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--blue);border-color:var(--blue)" onclick="quickAddSiteInline('fu-siteId')">+ New Job Site</button>
             <input type="text" id="fu-sitename-manual" placeholder="Type job site name..." style="margin-top:6px;display:none">
           </div>
           <div class="form-group"><label>Linked Prospect</label>
-            <select id="fu-prospectId"><option value="">— None —</option></select>
+            <select id="fu-prospectId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--accent);border-color:var(--accent)" onclick="quickAddProspect('fu-prospectId')">+ New Prospect</button>
           </div>
           <div class="form-group"><label>Type</label>
             <select id="fu-type">
@@ -1300,7 +1300,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="form-title">ADD INVOICE</div>
         <div class="form-grid">
           <div class="form-group"><label>Customer *</label>
-            <select id="inv-clientId"><option value="">— Select Customer —</option></select>
+            <select id="inv-clientId"><option value="">— Select Customer —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('inv-clientId')">+ New Customer</button>
           </div>
           <div class="form-group"><label>Amount *</label><input type="text" id="inv-amount" placeholder="$5,000"></div>
           <div class="form-group"><label>Days Past Due</label>
@@ -1312,7 +1312,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
             </select>
           </div>
           <div class="form-group"><label>Job Site</label>
-            <select id="inv-siteId"><option value="">— None —</option></select>
+            <select id="inv-siteId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--blue);border-color:var(--blue)" onclick="quickAddSiteInline('inv-siteId')">+ New Job Site</button>
           </div>
           <div class="form-group"><label>Status</label>
             <select id="inv-status">
@@ -1382,6 +1382,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="section-head">
         <div class="section-title" style="color:var(--accent)">📋 DAILY ACTIVITY REPORT</div>
         <div class="section-actions">
+          <button class="btn-small" onclick="syncAll()">🔄 Refresh</button>
           <button class="btn btn-primary" onclick="exportActivityReport()">⬇ Export Today</button>
         </div>
       </div>
@@ -1487,12 +1488,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="section-actions"><button class="btn-small" onclick="renderPlaud()">🔄 Refresh</button></div>
       </div>
       <div class="form-card" style="border-top-color:var(--accent)">
-        <label>Published CSV URL — in Google Sheets: File → Share → Publish to web → CSV</label>
-        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-          <input type="text" id="plaud-url" placeholder="https://docs.google.com/.../pub?output=csv" style="flex:1;min-width:220px">
-          <button class="btn btn-primary" onclick="savePlaudUrl()">Save & Load</button>
-        </div>
-        <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:6px">Reads your Plaud → Zapier sheet (✓ / Date / Task). Tap a note to turn it into a To-Do or Prospect.</div>
+        <div style="font-family:var(--fm);font-size:11px;color:var(--muted2);line-height:1.7">Reads your Plaud → Zapier sheet privately through your own Apps Script (✓ / Date / Task). Tap a note to turn it into a To-Do or Prospect. Tap Refresh to pull the latest.</div>
       </div>
       <div id="plaud-list"><div class="empty-state">Paste your published CSV URL above to load Plaud notes.</div></div>
     </div>
@@ -1587,10 +1583,10 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <input type="hidden" id="eq-equip">
           <div class="form-group"><label>Quantity</label><input type="text" id="eq-qty" placeholder="1"></div>
           <div class="form-group"><label>Customer *</label>
-            <select id="eq-clientId"><option value="">— Select Customer —</option></select>
+            <select id="eq-clientId"><option value="">— Select Customer —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('eq-clientId')">+ New Customer</button>
           </div>
           <div class="form-group"><label>Job Site</label>
-            <select id="eq-siteId"><option value="">— None —</option></select>
+            <select id="eq-siteId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--blue);border-color:var(--blue)" onclick="quickAddSiteInline('eq-siteId')">+ New Job Site</button>
           </div>
           <div class="form-group"><label>Job Site Name (manual / override)</label><input type="text" id="eq-sitename" placeholder="Type or change site name"></div><div class="form-group"><label>Address</label><input type="text" id="eq-address" placeholder="Site address"></div><div class="form-group"><label>Contact</label><input type="text" id="eq-contact" placeholder="On-site contact"></div><div class="form-group"><label>Monthly Rate</label><input type="text" id="eq-rate" placeholder="$4,700"></div>
           <div class="form-group"><label>On Rent Date</label><input type="date" id="eq-start"></div>
@@ -1688,7 +1684,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
             <select id="v-clientId" onchange="prefillVisitCustomer()">
               <option value="">— Select Customer —</option>
               <option value="__manual__">+ Type manually</option>
-            </select>
+            </select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('v-clientId')">+ New Customer</button>
             <input type="text" id="v-customername" placeholder="Or type name..." style="margin-top:6px;display:none">
           </div>
           <div class="form-group"><label>Visit Date *</label><input type="date" id="v-date"></div>
@@ -1759,7 +1755,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Project Name</label><input type="text" id="ep-name"></div>
       <div class="form-group"><label>GC / Company</label><input type="text" id="ep-company"></div>
       <div class="form-group"><label>Contact Name</label><input type="text" id="ep-contact"></div>
-      <div class="form-group"><label>Contact Phone</label><input type="text" id="ep-phone"></div>
+      <div class="form-group"><label>Contact Phone</label><input type="text" id="ep-phone"></div><div class="form-group"><label>Email</label><input type="text" id="ep-email"></div>
       <div class="form-group"><label>Address</label><input type="text" id="ep-address"></div>
       <div class="form-group"><label>City</label><input type="text" id="ep-city"></div>
       <div class="form-group"><label>Zone</label><input type="text" id="ep-zone"></div>
@@ -1791,7 +1787,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       </div>
       <div class="form-group"><label>Referred By</label><input type="text" id="ep-referredby"></div>
       <div class="form-group"><label>Linked Customer</label>
-        <select id="ep-clientId"><option value="">— None —</option></select>
+        <select id="ep-clientId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('ep-clientId')">+ New Customer</button>
       </div>
       <div class="form-group"><label>Last Follow-Up</label><input type="date" id="ep-followup"></div>
     </div>
@@ -1824,14 +1820,14 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Title</label><input type="text" id="efu-title"></div>
       <div class="form-group"><label>Due Date</label><input type="date" id="efu-due"></div>
       <div class="form-group"><label>Linked Customer</label>
-        <select id="efu-clientId"><option value="">— None —</option></select>
+        <select id="efu-clientId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('efu-clientId')">+ New Customer</button>
       </div>
       <div class="form-group"><label>Linked Job Site</label>
-        <select id="efu-siteId" onchange="toggleEfuManualSite()"><option value="">— None —</option><option value="__manual__">+ Type manually</option></select>
+        <select id="efu-siteId" onchange="toggleEfuManualSite()"><option value="">— None —</option><option value="__manual__">+ Type manually</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--blue);border-color:var(--blue)" onclick="quickAddSiteInline('efu-siteId')">+ New Job Site</button>
         <input type="text" id="efu-sitename-manual" placeholder="Type job site name..." style="margin-top:6px;display:none">
       </div>
       <div class="form-group"><label>Linked Prospect</label>
-        <select id="efu-prospectId"><option value="">— None —</option></select>
+        <select id="efu-prospectId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--accent);border-color:var(--accent)" onclick="quickAddProspect('efu-prospectId')">+ New Prospect</button>
       </div>
       <div class="form-group"><label>Type</label>
         <select id="efu-type">
@@ -1873,7 +1869,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <input type="hidden" id="einv-id">
     <div class="form-grid">
       <div class="form-group"><label>Customer</label>
-        <select id="einv-clientId"><option value="">— Select —</option></select>
+        <select id="einv-clientId"><option value="">— Select —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('einv-clientId')">+ New Customer</button>
       </div>
       <div class="form-group"><label>Amount</label><input type="text" id="einv-amount"></div>
       <div class="form-group"><label>Days Past Due</label>
@@ -1885,7 +1881,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         </select>
       </div>
       <div class="form-group"><label>Job Site</label>
-        <select id="einv-siteId"><option value="">— None —</option></select>
+        <select id="einv-siteId"><option value="">— None —</option></select><button type="button" class="btn-small" style="margin-top:5px;color:var(--blue);border-color:var(--blue)" onclick="quickAddSiteInline('einv-siteId')">+ New Job Site</button>
       </div>
       <div class="form-group"><label>Status</label>
         <select id="einv-status">
@@ -2170,6 +2166,40 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </div>
 
 <!-- QUICK ADD CUSTOMER MODAL -->
+<div class="modal-overlay" id="quicksite-modal">
+  <div class="modal">
+    <div class="modal-title g">QUICK ADD JOB SITE</div>
+    <input type="hidden" id="qs-return">
+    <div class="form-grid">
+      <div class="form-group"><label>Site Name *</label><input type="text" id="qs-name"></div>
+      <div class="form-group"><label>Customer</label><select id="qs-clientId"><option value="">— None —</option></select></div>
+      <div class="form-group"><label>Address</label><input type="text" id="qs-address"></div>
+      <div class="form-group"><label>City</label><input type="text" id="qs-city"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-green" id="qs-save-btn" onclick="saveQuickSite()">ADD & LINK →</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="quickprospect-modal">
+  <div class="modal">
+    <div class="modal-title">QUICK ADD PROSPECT</div>
+    <input type="hidden" id="qp-return">
+    <div class="form-grid">
+      <div class="form-group"><label>Name *</label><input type="text" id="qp-name"></div>
+      <div class="form-group"><label>Company</label><input type="text" id="qp-company"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="qp-phone"></div>
+      <div class="form-group"><label>Email</label><input type="text" id="qp-email"></div>
+      <div class="form-group"><label>Stage</label><select id="qp-stage"><option value="Lead">Lead</option><option value="Contacted">Contacted</option><option value="Quoted">Quoted</option></select></div>
+      <div class="form-group"><label>Source</label><input type="text" id="qp-source" placeholder="Drive By / Referral / Permit"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" id="qp-save-btn" onclick="saveQuickProspect()">ADD & LINK →</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="quickcust-modal">
   <div class="modal" style="border-top-color:var(--green)">
     <div class="modal-title" style="color:var(--green)">QUICK ADD CUSTOMER</div>
@@ -2445,7 +2475,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Customer</label>
         <select id="es-clientId" onchange="fillEditClientName()">
           <option value="">— Select Customer —</option>
-        </select>
+        </select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('es-clientId')">+ New Customer</button>
       </div>
       <div class="form-group"><label>General Contractor</label><input type="text" id="es-gc"></div>
       <div class="form-group"><label>GC Contact Name</label><input type="text" id="es-gcname"></div>
@@ -3437,6 +3467,7 @@ async function addProspect() {
     name, company,
     contact: document.getElementById('p-contact').value.trim(),
     phone: document.getElementById('p-phone').value.trim(),
+    email: document.getElementById('p-email').value.trim(),
     address: document.getElementById('p-address').value.trim(),
     city: document.getElementById('p-city').value.trim(),
     zone: document.getElementById('p-zone').value.trim(),
@@ -3456,7 +3487,7 @@ async function addProspect() {
   btn.disabled = false; btn.textContent = 'ADD PROSPECT →';
   if (res && res.success) {
     toast('Prospect added ✓');
-    ['p-name','p-company','p-contact','p-phone','p-address','p-city','p-zone','p-start','p-value','p-equip','p-referredby','p-competitor','p-notes','p-followup'].forEach(id => document.getElementById(id).value = '');
+    ['p-name','p-company','p-contact','p-phone','p-email','p-address','p-city','p-zone','p-start','p-value','p-equip','p-referredby','p-competitor','p-notes','p-followup'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('p-stage').value = 'Lead';
     document.getElementById('p-source').value = 'Drive By';
     document.getElementById('p-clientId').value = '';
@@ -3530,6 +3561,7 @@ function openEditProspect(id) {
   document.getElementById('ep-company').value = p.company || '';
   document.getElementById('ep-contact').value = p.contact || '';
   document.getElementById('ep-phone').value = p.phone || '';
+  if(document.getElementById('ep-email')) document.getElementById('ep-email').value = p.email || '';
   document.getElementById('ep-address').value = p.address || '';
   document.getElementById('ep-city').value = p.city || '';
   document.getElementById('ep-zone').value = p.zone || '';
@@ -3560,6 +3592,7 @@ async function saveProspectEdit() {
     company: document.getElementById('ep-company').value.trim(),
     contact: document.getElementById('ep-contact').value.trim(),
     phone: document.getElementById('ep-phone').value.trim(),
+    email: gval('ep-email',''),
     address: document.getElementById('ep-address').value.trim(),
     city: document.getElementById('ep-city').value.trim(),
     zone: document.getElementById('ep-zone').value.trim(),
@@ -3606,6 +3639,7 @@ function renderProspects() {
         <div class="prospect-card-name">${p.name}</div>
         <div class="prospect-card-sub">${p.company}</div>
         ${p.contact ? `<div class="prospect-card-sub">👤 ${p.contact}${p.phone?' · '+p.phone:''}</div>` : ''}
+        ${p.email ? `<div class="prospect-card-sub">📧 ${p.email}</div>` : ''}
         ${p.city ? `<div class="prospect-card-sub">📍 ${p.city}${p.zone?' · '+p.zone:''}</div>` : ''}
         ${p.value ? `<div class="prospect-card-value">💰 ${p.value}/mo</div>` : ''}
         ${p.startDate ? `<div class="prospect-card-date">🗓 Start: ${p.startDate}</div>` : ''}
@@ -3614,12 +3648,13 @@ function renderProspects() {
         ${p.competitor ? `<div class="prospect-card-sub"><span class="competitor-badge">⚔ vs ${p.competitor}</span></div>` : ''}
         ${p.lastFollowUp ? `<div class="prospect-card-date">Last follow-up: ${p.lastFollowUp}</div>` : ''}
         <div style="margin-top:6px"><span class="prospect-source ${sourceClass[p.source]||'src-other'}">${sourceEmoji[p.source]||'📌'} ${p.source||'Other'}</span></div>
-        <div style="display:flex;gap:5px;margin-top:8px" onclick="event.stopPropagation()">
+        <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap" onclick="event.stopPropagation()">
           <button class="btn-small" onclick="openEditProspect('${p.id}')">Edit</button>
           ${p.stage !== 'Won' && p.stage !== 'Lost' ? `<button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="event.stopPropagation();convertToSite('${p.id}')">→ Convert</button>` : ''}
           <button class="btn-small" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();openSubCompTracker('${p.id}','prospect')">⚔ Subs</button>
           <button class="btn-small" onclick="event.stopPropagation();sendCreditApp('${p.id}')">💳 Credit App</button>
           <button class="btn-small" onclick="event.stopPropagation();sendReEngagement('${p.id}')">📧 Re-Engage</button>
+          <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="event.stopPropagation();sendToFollowUp('prospect','${p.id}')">→ Follow-Up</button>
           <button class="btn-danger" onclick="event.stopPropagation();deleteProspect('${p.id}')">✕</button>
         </div>
       </div>`).join('');
@@ -3632,49 +3667,46 @@ function renderProspects() {
 function plEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function plAttr(s){return plEsc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function savePlaudUrl(){
-  const u=(document.getElementById('plaud-url').value||'').trim();
+  const el=document.getElementById('plaud-url'); const u=((el?el.value:'')||'').trim();
   if(!u){ toast('Paste the CSV URL first', true); return; }
   localStorage.setItem('siteboss_plaud_url', u);
   toast('Saved ✓'); renderPlaud();
 }
 async function renderPlaud(){
-  const url=localStorage.getItem('siteboss_plaud_url')||'';
-  const urlEl=document.getElementById('plaud-url'); if(urlEl && !urlEl.value) urlEl.value=url;
   const list=document.getElementById('plaud-list'); if(!list) return;
-  if(!url){ list.innerHTML='<div class="empty-state">Paste your published CSV URL above to load Plaud notes.</div>'; return; }
   list.innerHTML='<div class="empty-state">Loading Plaud notes...</div>';
   try{
-    const resp=await fetch(url); const text=await resp.text();
-    const rows=parseCSV(text).filter(r=>r.length && r.some(c=>(c||'').trim()!==''));
-    let hi=rows.findIndex(r=>r.map(c=>(c||'').toLowerCase().trim()).includes('task'));
-    if(hi<0) hi=0;
-    const hdr=rows[hi].map(c=>(c||'').toLowerCase().trim());
-    let iDone=hdr.findIndex(c=>c==='✓'||c==='done'||c==='complete'||c==='completed');
-    const iDate=hdr.indexOf('date');
-    const iTask=hdr.indexOf('task');
-    const items=[];
-    for(const r of rows.slice(hi+1)){
-      const task=((iTask>=0?r[iTask]:r[r.length-1])||'').trim(); if(!task) continue;
-      const date=((iDate>=0?r[iDate]:'')||'').trim();
-      const done=iDone>=0 ? !!((r[iDone]||'').trim()) : false;
-      items.push({task,date,done});
-    }
-    if(!items.length){ list.innerHTML='<div class="empty-state">No tasks found in the sheet.</div>'; return; }
+    const data = await api({ action:'getAll', type:'plaud' });
+    if (data && data.error) { list.innerHTML='<div class="empty-state">Plaud connection issue: '+plEsc(data.error)+'</div>'; return; }
+    const items = (data && data.records) ? data.records : [];
+    const tabName = (data && data.tab) ? data.tab : '';
+    if(!items.length){ list.innerHTML='<div class="empty-state">No Plaud notes yet. Record something and let your Zap run, then tap Refresh.</div>'; return; }
     const open=items.filter(i=>!i.done), doneItems=items.filter(i=>i.done);
     const card=i=>`<div class="equip-row" style="border-left-color:${i.done?'var(--green)':'var(--accent)'};opacity:${i.done?'0.55':'1'}">
-      <div style="flex:1"><div class="equip-name">${i.done?'✓ ':''}${plEsc(i.task)}</div>${i.date?`<div class="equip-meta">${plEsc(i.date)}</div>`:''}</div>
+      <div style="flex:1"><div class="equip-name">${i.done?'✓ ':''}${plEsc(i.task)}</div>${i.date?`<div class="equip-meta">${plEsc(i.date)}${i.tab?' · '+plEsc(i.tab):''}</div>`:''}</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
         <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" data-t="${plAttr(i.task)}" onclick="plaudToTask(this.dataset.t)">➕ To-Do</button>
+        <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" data-t="${plAttr(i.task)}" onclick="plaudToFollowUp(this.dataset.t)">→ Follow-Up</button>
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" data-t="${plAttr(i.task)}" onclick="plaudToProspect(this.dataset.t)">→ Prospect</button>
       </div></div>`;
-    list.innerHTML = open.map(card).join('') + (doneItems.length ? `<div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin:14px 0 6px">COMPLETED (${doneItems.length})</div>`+doneItems.map(card).join('') : '');
+    const hdr = tabName ? `<div style="font-family:var(--fm);font-size:11px;color:var(--accent);margin-bottom:10px">\ud83d\udcc5 Showing: ${plEsc(tabName)}</div>` : '';
+    list.innerHTML = hdr + open.map(card).join('') + (doneItems.length ? `<div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin:14px 0 6px">COMPLETED (${doneItems.length})</div>`+doneItems.map(card).join('') : '');
   }catch(e){
-    list.innerHTML='<div class="empty-state">Couldn\'t load the sheet. Make sure it\'s Published to web as CSV.<br>'+plEsc(String(e.message||e))+'</div>';
+    list.innerHTML='<div class="empty-state">Couldn\'t load Plaud notes. '+plEsc(String(e.message||e))+'</div>';
   }
 }
 async function plaudToTask(text){
   const res=await api({ action:'add', type:'tasks', record:{ text:text, when:'today', status:'open', created:today() } });
   if(res && res.success){ toast('Added to To-Do ✓'); await syncAll(); }
+}
+function plaudToFollowUp(text){
+  showPanel('add-followup');
+  setTimeout(()=>{
+    const set=(i,v)=>{ const el=document.getElementById(i); if(el && v) el.value=v; };
+    set('fu-title', text);
+    set('fu-due', today());
+    set('fu-notes', 'Created from Plaud note');
+  },60);
 }
 function plaudToProspect(text){
   showPanel('add-prospect');
@@ -3695,7 +3727,8 @@ async function addTask() {
 async function toggleTask(id) {
   const t = tasks.find(t => t.id == id);
   if (!t) return;
-  const res = await api({ action:'update', type:'tasks', record: { ...t, status: t.status==='done'?'open':'done' } });
+  const nowDone = t.status !== 'done';
+  const res = await api({ action:'update', type:'tasks', record: { ...t, status: nowDone?'done':'open', completedDate: nowDone?today():'' } });
   if (res && res.success) await syncAll();
 }
 
@@ -3704,6 +3737,18 @@ async function deleteTask(id) {
   if (res && res.success) await syncAll();
 }
 
+function sendToFollowUp(kind, id){
+  let title='', clientId='', prospectId='', notes='';
+  if(kind==='task'){ const t=tasks.find(t=>t.id==id); if(!t) return; title=t.text||'Follow up'; notes='Created from To-Do task'; }
+  else if(kind==='prospect'){ const p=prospects.find(p=>p.id==id); if(!p) return; title='Follow up: '+(p.name||p.company||'prospect'); prospectId=p.id; clientId=p.clientId||''; notes='Created from prospect'; }
+  showPanel('add-followup');
+  setTimeout(()=>{
+    const set=(i,v)=>{ const el=document.getElementById(i); if(el && v) el.value=v; };
+    set('fu-title',title); set('fu-due',today()); set('fu-notes',notes);
+    if(prospectId) set('fu-prospectId',prospectId);
+    if(clientId) set('fu-clientId',clientId);
+  },60);
+}
 function renderTasks() {
   const todayTasks = tasks.filter(t => t.when === 'today' && t.status !== 'done');
   const weekTasks  = tasks.filter(t => t.when === 'week' && t.status !== 'done');
@@ -3730,6 +3775,7 @@ function renderTasks() {
     return `<div class="task-row ${done?'done':''} ${t.when==='week'?'week':''}">
       <div class="task-check ${done?'checked':''}" onclick="toggleTask('${t.id}')">${done?'✓':''}</div>
       <div class="task-text ${done?'done':''}">${t.text}</div>
+      <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="sendToFollowUp('task','${t.id}')">→ Follow-Up</button>
       <button class="btn-danger" onclick="deleteTask('${t.id}')">✕</button>
     </div>`;
   }
@@ -4297,11 +4343,19 @@ function renderFollowUps() {
   document.getElementById('fu-today-list').innerHTML    = dueToday.length ? dueToday.map(f => fuCard(f,'today')).join('')    : '<div class="empty-state">Nothing due today.</div>';
   document.getElementById('fu-upcoming-list').innerHTML = upcoming.length ? upcoming.map(f => fuCard(f,'upcoming')).join('') : '<div class="empty-state">Nothing upcoming.</div>';
 
-  // Dashboard follow-up badge
-  const fuDateStr2 = (d) => d && d.includes('T') ? d.split('T')[0] : d||'';
+  // Dashboard follow-up cards + list
+  const setFuD = (id,v) => { const el=document.getElementById(id); if(el) el.textContent = v; };
+  setFuD('dash-fu-overdue', overdue.length);
+  setFuD('dash-fu-today', dueToday.length);
+  setFuD('dash-fu-upcoming', upcoming.length);
   if (document.getElementById('dash-fu-count')) {
     document.getElementById('dash-fu-count').textContent = overdue.length + dueToday.length;
     document.getElementById('dash-fu-count').style.color = (overdue.length + dueToday.length) > 0 ? 'var(--red)' : 'var(--green)';
+  }
+  const dfl = document.getElementById('dash-fu-list');
+  if (dfl) {
+    const attention = overdue.map(f => fuCard(f,'urgent')).concat(dueToday.map(f => fuCard(f,'today')));
+    dfl.innerHTML = attention.length ? attention.join('') : '<div class="empty-state">No follow-ups need attention today. ✅</div>';
   }
 }
 
@@ -4440,6 +4494,14 @@ function fillCoBranch() {
   if (c && c.coEmail) document.getElementById('co-to-email').value = c.coEmail;
 }
 
+function matchEquipCat(equipClass){
+  const ec = (equipClass||'').toLowerCase();
+  if(!ec) return '';
+  const cats = ['Mini Excavator','Track Loader','Smooth Drum Roller','Scissor Lift','Boom Lift','Telehandler','Excavator','Skid Steer','Bulldozer','Compactor','Trencher','Light Tower','Generator','Air Compressor','Forklift','Dump Truck'];
+  for(const cat of cats){ if(ec.includes(cat.toLowerCase())) return cat; }
+  return '';
+}
+function mdy(d){ if(!d) return ''; var s=String(d).split('T')[0]; var m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? (m[2]+'-'+m[3]+'-'+m[1]) : s; }
 function openServiceCall(siteId) {
   // Populate site dropdown
   const sOpts = ['<option value="">— Select Site —</option>', ...jobsites.map(s => `<option value="${s.id}" ${s.id==siteId?'selected':''}>${s.siteName}</option>`)].join('');
@@ -4457,7 +4519,7 @@ function prefillServiceSite() {
   const siteId = document.getElementById('svc-siteId').value;
   const s = jobsites.find(s => s.id == siteId);
   if (!s) return;
-  document.getElementById('svc-customer').value = s.client || '';
+  document.getElementById('svc-customer').value = s.client || ((clients.find(c => c.id == s.clientId)||{}).company || '');
   document.getElementById('svc-address').value = [s.address, s.city].filter(Boolean).join(', ');
   document.getElementById('svc-contact').value = s.superintendent ? `${s.superintendent}${s.supePhone?' — '+s.supePhone:''}` : '';
   const svcEquip = s.equipOnSite || '';
@@ -4492,7 +4554,7 @@ function sendServiceCall() {
   const body = `SERVICE CALL REQUEST
 ${'='.repeat(40)}
 Priority: ${priority}
-Date: ${today()}
+Date: ${mdy(today())}
 Sales Rep: Brad Hanna — 405-203-2125
 
 EQUIPMENT: ${equip}
@@ -4541,7 +4603,7 @@ function prefillCallOffSite() {
   const siteId = document.getElementById('co-siteId').value;
   const s = jobsites.find(s => s.id == siteId);
   if (!s) return;
-  document.getElementById('co-customer').value = s.client || '';
+  document.getElementById('co-customer').value = s.client || ((clients.find(c => c.id == s.clientId)||{}).company || '');
   document.getElementById('co-address').value = [s.address, s.city].filter(Boolean).join(', ');
   document.getElementById('co-contact').value = s.superintendent ? `${s.superintendent}${s.supePhone?' — '+s.supePhone:''}` : '';
   const coEquip = s.equipOnSite || '';
@@ -4588,14 +4650,14 @@ function sendCallOff() {
   const notes = document.getElementById('co-notes').value.trim();
   const toEmail = document.getElementById('co-to-email').value.trim() || localStorage.getItem('calloff_email') || '';
 
-  const subject = equipList.length > 1 ? `Call Off — ${equipList.length} pieces — ${s?s.siteName:customer} — Pickup ${date}` : `Call Off — ${equipList[0]} — ${s?s.siteName:customer} — Pickup ${date}`;
+  const subject = equipList.length > 1 ? `Call Off — ${equipList.length} pieces — ${s?s.siteName:customer} — Pickup ${mdy(date)}` : `Call Off — ${equipList[0]} — ${s?s.siteName:customer} — Pickup ${mdy(date)}`;
   const body = `CALL OFF REQUEST
 ${'='.repeat(40)}
-Date: ${today()}
+Date: ${mdy(today())}
 Sales Rep: Brad Hanna — 405-203-2125
 
 EQUIPMENT: ${equip}
-PICKUP DATE: ${date}
+PICKUP DATE: ${mdy(date)}
 CUSTOMER: ${customer}
 SITE: ${s?s.siteName:'—'}
 ADDRESS: ${address}
@@ -5243,6 +5305,38 @@ Brad Hanna`;
 // ══════════════════════════════════════════════
 // QUICK ADD CUSTOMER (from job site / prospect)
 // ══════════════════════════════════════════════
+function quickAddSiteInline(returnTo){
+  document.getElementById('qs-return').value = returnTo;
+  ['qs-name','qs-address','qs-city'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('qs-clientId').innerHTML = ['<option value="">— None —</option>'].concat(clients.map(c => `<option value="${c.id}">${c.company||c.name}</option>`)).join('');
+  document.getElementById('quicksite-modal').classList.add('open');
+}
+async function saveQuickSite(){
+  const name = document.getElementById('qs-name').value.trim();
+  if(!name){ toast('Site name required', true); return; }
+  const cid = document.getElementById('qs-clientId').value;
+  const c = clients.find(c => c.id == cid);
+  const btn = document.getElementById('qs-save-btn'); btn.disabled=true; btn.textContent='SAVING...';
+  const record = { siteName:name, clientId:cid, client: c?(c.company||c.name):'', address:document.getElementById('qs-address').value.trim(), city:document.getElementById('qs-city').value.trim(), status:'Active' };
+  const res = await api({ action:'add', type:'jobsites', record });
+  btn.disabled=false; btn.textContent='ADD & LINK →';
+  if(res && res.success){ toast('Job site added & linked ✓'); closeModals(); await syncAll(); const sel=document.getElementById(document.getElementById('qs-return').value); if(sel){ sel.value=res.id; sel.dispatchEvent(new Event('change')); } }
+}
+function quickAddProspect(returnTo){
+  document.getElementById('qp-return').value = returnTo;
+  ['qp-name','qp-company','qp-phone','qp-email','qp-source'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('qp-stage').value = 'Lead';
+  document.getElementById('quickprospect-modal').classList.add('open');
+}
+async function saveQuickProspect(){
+  const name = document.getElementById('qp-name').value.trim();
+  if(!name){ toast('Name required', true); return; }
+  const btn = document.getElementById('qp-save-btn'); btn.disabled=true; btn.textContent='SAVING...';
+  const record = { name, company:document.getElementById('qp-company').value.trim(), phone:document.getElementById('qp-phone').value.trim(), email:document.getElementById('qp-email').value.trim(), stage:document.getElementById('qp-stage').value, source:document.getElementById('qp-source').value.trim()||'Manual', notes:'Added via quick-add' };
+  const res = await api({ action:'add', type:'prospects', record });
+  btn.disabled=false; btn.textContent='ADD & LINK →';
+  if(res && res.success){ toast('Prospect added & linked ✓'); closeModals(); await syncAll(); const sel=document.getElementById(document.getElementById('qp-return').value); if(sel){ sel.value=res.id; sel.dispatchEvent(new Event('change')); } }
+}
 function quickAddCustomer(returnTo) {
   document.getElementById('qc-return').value = returnTo;
   ['qc-name','qc-company','qc-phone','qc-email','qc-equip','qc-value'].forEach(id => document.getElementById(id).value = '');
@@ -5270,10 +5364,8 @@ async function saveQuickCustomer() {
     closeModals();
     await syncAll();
     // Auto-select the new customer in whichever dropdown we came from
-    const returnTo = document.getElementById('qc-return').value;
-    if (returnTo === 'site') {
-      document.getElementById('s-clientId').value = res.id;
-    }
+    const sel = document.getElementById(document.getElementById('qc-return').value);
+    if (sel) { sel.value = res.id; sel.dispatchEvent(new Event('change')); }
   }
 }
 
@@ -5365,9 +5457,9 @@ function renderServiceLog() {
           <div style="font-weight:600;font-size:14px">${l.equip||'—'}</div>
           <div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">${l.customer||'—'}${l.siteName?' · '+l.siteName:''}</div>
           ${isService&&l.issue?`<div style="font-family:var(--fm);font-size:11px;color:var(--red);margin-top:2px">Issue: ${l.issue}</div>`:''}
-          ${!isService&&l.pickupDate?`<div style="font-family:var(--fm);font-size:11px;color:var(--blue);margin-top:2px">Pickup: ${l.pickupDate} — ${l.reason||''}</div>`:''}
+          ${!isService&&l.pickupDate?`<div style="font-family:var(--fm);font-size:11px;color:var(--blue);margin-top:2px">Pickup: ${mdy(l.pickupDate)} — ${l.reason||''}</div>`:''}
           ${l.contact?`<div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">Contact: ${l.contact}</div>`:''}
-          <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:4px">Sent ${l.date||'—'} to ${l.sentTo||'—'}</div>
+          <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:4px">Sent ${mdy(l.date)||'—'} to ${l.sentTo||'—'}</div>
           ${l.replyNotes?`<div style="font-family:var(--fm);font-size:11px;color:var(--green);margin-top:4px;border-left:2px solid var(--green);padding-left:8px">💬 Reply: ${l.replyNotes}</div>`:''}
           ${l.resolvedDate?`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">Resolved: ${l.resolvedDate}</div>`:''}
         </div>
@@ -5624,14 +5716,16 @@ async function addEquipment() {
 function openServiceCallFromEquip(id) {
   const eq = equipment.find(e => e.id == id);
   if (!eq) return;
-  const s = jobsites.find(s => s.id == eq.siteId);
   const c = clients.find(c => c.id == eq.clientId);
   openServiceCall(eq.siteId || '');
-  setTimeout(() => {
-    if (document.getElementById('svc-equipclass')) document.getElementById('svc-equip-cat').value = eq.equipClass || '— Select Class —';
-    if (document.getElementById('svc-unitnum')) document.getElementById('svc-equip-unit').value = eq.unitNum || '';
-    if (document.getElementById('svc-customer')) document.getElementById('svc-customer').value = c ? c.name + ' — ' + c.company : '';
-  }, 100);
+  const cat = matchEquipCat(eq.equipClass);
+  if (cat) document.getElementById('svc-equip-cat').value = cat;
+  document.getElementById('svc-equip-unit').value = eq.unitNum || '';
+  const custName = eq.customerName || (c ? (c.name ? c.name + ' \u2014 ' + c.company : c.company) : '');
+  if (custName) document.getElementById('svc-customer').value = custName;
+  if (eq.contact) document.getElementById('svc-contact').value = eq.contact;
+  if (eq.address && !document.getElementById('svc-address').value) document.getElementById('svc-address').value = eq.address;
+  if (document.getElementById('svc-equip')) document.getElementById('svc-equip').value = (eq.equip || eq.equipClass || '') + (eq.unitNum ? ' \u2014 Unit #' + eq.unitNum : '');
 }
 
 function openCallOffFromEquip(id) {
@@ -5639,17 +5733,14 @@ function openCallOffFromEquip(id) {
   if (!eq) return;
   const c = clients.find(c => c.id == eq.clientId);
   openCallOff(eq.siteId || '');
-  setTimeout(() => {
-    // Pre-select this equipment in the multi-picker
-    const picker = document.getElementById('co-equip-pick');
-    if (picker) {
-      for (let opt of picker.options) {
-        if (opt.value == id) { opt.selected = true; break; }
-      }
-      fillCoEquipMulti();
-    }
-    if (document.getElementById('co-customer')) document.getElementById('co-customer').value = c ? c.name + ' — ' + c.company : '';
-  }, 100);
+  const cat = matchEquipCat(eq.equipClass);
+  if (cat) document.getElementById('co-equip-cat').value = cat;
+  document.getElementById('co-equip-unit').value = eq.unitNum || '';
+  const custName = eq.customerName || (c ? (c.name ? c.name + ' \u2014 ' + c.company : c.company) : '');
+  if (custName) document.getElementById('co-customer').value = custName;
+  if (eq.contact) document.getElementById('co-contact').value = eq.contact;
+  if (eq.address && !document.getElementById('co-address').value) document.getElementById('co-address').value = eq.address;
+  if (document.getElementById('co-equip')) document.getElementById('co-equip').value = (eq.equip || eq.equipClass || '') + (eq.unitNum ? ' \u2014 Unit #' + eq.unitNum : '');
 }
 
 async function removeEquipment(id) {
@@ -6351,7 +6442,7 @@ function renderActivityReport() {
   // Completed follow-ups today
   const completedFU = followups.filter(f => f.status === 'Done' && (f.dueDate||'').includes(todayStr));
   const completedVisits = visits.filter(v => v.status === 'Done' && (v.lastVisit||'').includes(todayStr));
-  const completedTasks = tasks.filter(t => t.status === 'done');
+  const completedTasks = tasks.filter(t => t.status === 'done' && (t.completedDate||'').includes(todayStr));
 
   const allCompleted = [
     ...completedFU.map(f => ({ type:'Follow-Up', name: f.title, icon:'⏰' })),
