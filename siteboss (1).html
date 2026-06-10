@@ -2476,7 +2476,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Customer</label>
         <select id="es-clientId" onchange="fillEditClientName()">
           <option value="">— Select Customer —</option>
-        </select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="quickAddCustomer('es-clientId')">+ New Customer</button><button type="button" class="btn-small" style="margin-top:5px;color:var(--accent);border-color:var(--accent)" onclick="quickAddProspectFromSite()">+ New Prospect</button>
+        </select><button type="button" class="btn-small" style="margin-top:5px;color:var(--green);border-color:var(--green)" onclick="showPanel('add-customer')">+ New Customer</button><button type="button" class="btn-small" style="margin-top:5px;color:var(--accent);border-color:var(--accent)" onclick="showPanel('add-prospect')">+ New Prospect</button>
       </div>
       <div class="form-group"><label>General Contractor</label><input type="text" id="es-gc"></div>
       <div class="form-group"><label>GC Contact Name</label><input type="text" id="es-gcname"></div>
@@ -6943,166 +6943,123 @@ function loadLeaflet() {
 }
 
 function showMapPopup(loc) {
-  const popup = document.getElementById('map-popup');
+  const popup   = document.getElementById('map-popup');
   const overlay = document.getElementById('map-popup-overlay');
+  popup.className = 'map-popup';
 
+  // ── CLIENT ──────────────────────────────────────────────────────────────
   if (loc.type === 'client') {
     const c = loc.data;
     const days = daysSince(c.lastContact);
     const tier = getTier(days);
     const tierColors = {1:'var(--accent)', 2:'var(--yellow)', 3:'var(--red)'};
-    const tierNames = {1:'Active', 2:'Warm', 3:'Cold'};
-
-    popup.className = 'map-popup';
+    const tierNames  = {1:'Active', 2:'Warm', 3:'Cold'};
     popup.style.borderTopColor = tierColors[tier];
-
     document.getElementById('mp-title').textContent = c.name;
-    document.getElementById('mp-title').style.color = tierColors[tier];
-    document.getElementById('mp-sub').textContent = c.company;
-
+    document.getElementById('mp-title').style.color  = tierColors[tier];
+    document.getElementById('mp-sub').textContent    = c.company;
     document.getElementById('mp-grid').innerHTML = `
-      <div class="popup-field"><div class="popup-label">Status</div><div class="popup-val" style="color:${tierColors[tier]}">${tierNames[tier]} — ${days} days silent</div></div>
+      <div class="popup-field"><div class="popup-label">Status</div><div class="popup-val" style="color:${tierColors[tier]}">${tierNames[tier]} — ${days}d</div></div>
       <div class="popup-field"><div class="popup-label">Phone</div><div class="popup-val">${c.phone||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Equipment</div><div class="popup-val">${c.equip||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Monthly Value</div><div class="popup-val" style="color:var(--green)">${c.value||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Last Contact</div><div class="popup-val">${c.lastContact||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Project Type</div><div class="popup-val">${c.project||'—'}</div></div>
-    `;
-
+      <div class="popup-field"><div class="popup-label">Project Type</div><div class="popup-val">${c.project||'—'}</div></div>`;
     const sites = clientSites(c.id);
-    if (sites.length) {
-      document.getElementById('mp-subs').innerHTML = `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--blue);margin-bottom:8px">JOB SITES (${sites.length})</div>` +
-        sites.map(s => `<div class="popup-sub-item"><div class="popup-sub-name">${s.siteName}</div><div class="popup-sub-detail">${s.city||''} · ${s.status} · ${s.monthlyValue||'—'}/mo</div></div>`).join('');
-    } else {
-      document.getElementById('mp-subs').innerHTML = '';
-    }
+    let extra = sites.length
+      ? `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--blue);margin-bottom:8px">JOB SITES (${sites.length})</div>`
+        + sites.map(s=>`<div class="popup-sub-item"><div class="popup-sub-name">${s.siteName}</div><div class="popup-sub-detail">${s.city||''} · ${s.status} · ${s.monthlyValue||'—'}/mo</div></div>`).join('')
+      : '';
+    if (c.notes) extra += `<div style="margin-top:10px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--accent);padding-left:10px">${c.notes}</div>`;
+    document.getElementById('mp-subs').innerHTML = extra;
 
-    if (c.notes) {
-      document.getElementById('mp-subs').innerHTML += `<div style="margin-top:10px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--accent);padding-left:10px">${c.notes}</div>`;
-    }
+  // ── PROSPECT ─────────────────────────────────────────────────────────────
+  } else if (loc.type === 'prospect') {
+    const p = loc.data;
+    const stageColors = {'Lead':'var(--muted2)','Contacted':'var(--blue)','Quoted':'var(--yellow)','Won':'var(--green)','Lost':'var(--red)'};
+    const color = stageColors[p.stage] || 'var(--blue)';
+    popup.style.borderTopColor = color;
+    document.getElementById('mp-title').textContent = p.name || p.company || 'Prospect';
+    document.getElementById('mp-title').style.color  = color;
+    document.getElementById('mp-sub').textContent    = (p.company||'') + (p.stage?' \u00b7 '+p.stage:'');
+    document.getElementById('mp-grid').innerHTML = `
+      <div class="popup-field"><div class="popup-label">Stage</div><div class="popup-val" style="color:${color}">${p.stage||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Est. Value</div><div class="popup-val" style="color:var(--green)">${p.value||'—'}/mo</div></div>
+      <div class="popup-field"><div class="popup-label">Contact</div><div class="popup-val">${p.contact||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Phone</div><div class="popup-val">${p.phone?`<a href="tel:${p.phone}" style="color:var(--blue)">${p.phone}</a>`:'—'}</div></div>
+      ${p.email?`<div class="popup-field"><div class="popup-label">Email</div><div class="popup-val"><a href="mailto:${p.email}" style="color:var(--blue)">${p.email}</a></div></div>`:''}
+      <div class="popup-field"><div class="popup-label">Equip Needed</div><div class="popup-val">${p.equip||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Source</div><div class="popup-val">${p.source||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Last Follow-Up</div><div class="popup-val">${p.lastFollowUp||'—'}</div></div>
+      ${p.competitor?`<div class="popup-field"><div class="popup-label">Competitor</div><div class="popup-val" style="color:var(--red)">${p.competitor}</div></div>`:''}
+      ${p.referredBy?`<div class="popup-field"><div class="popup-label">Referred By</div><div class="popup-val">${p.referredBy}</div></div>`:''}`;
+    let psubs = '';
+    if (p.notes) psubs += `<div style="font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid ${color};padding-left:10px;line-height:1.6;margin-bottom:12px">${p.notes}</div>`;
+    psubs += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="closeMapPopup();setTimeout(()=>openEditProspect('${p.id}'),100)">\u270e Edit</button>
+      <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="closeMapPopup();setTimeout(()=>sendToFollowUp('prospect','${p.id}'),100)">\u2192 Follow-Up</button>
+      <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('${(p.address||p.company||'')+(p.city?', '+p.city:'')}'),'_blank')">&#128205; Maps</button>
+    </div>`;
+    document.getElementById('mp-subs').innerHTML = psubs;
 
+  // ── JOB SITE ─────────────────────────────────────────────────────────────
   } else {
     const s = loc.data;
     const statusColors = {Active:'var(--blue)', Pending:'var(--yellow)', Complete:'var(--muted2)', Lost:'var(--red)'};
     const color = statusColors[s.status] || 'var(--blue)';
-
-    popup.className = 'map-popup';
     popup.style.borderTopColor = color;
-
     document.getElementById('mp-title').textContent = s.siteName;
-    document.getElementById('mp-title').style.color = color;
-    document.getElementById('mp-sub').textContent = s.client || '—';
-
+    document.getElementById('mp-title').style.color  = color;
+    document.getElementById('mp-sub').textContent    = s.client || '—';
     document.getElementById('mp-grid').innerHTML = `
       <div class="popup-field"><div class="popup-label">Status</div><div class="popup-val" style="color:${color}">${s.status||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Monthly Value</div><div class="popup-val" style="color:var(--green)">${s.monthlyValue||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Address</div><div class="popup-val">${s.address||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">City</div><div class="popup-val">${s.city||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Address</div><div class="popup-val">${[s.address,s.city].filter(Boolean).join(', ')||'—'}</div></div>
       <div class="popup-field"><div class="popup-label">Zone</div><div class="popup-val">${s.zone||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Equipment on Site</div><div class="popup-val">${s.equipOnSite||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Last Check-In</div><div class="popup-val" style="color:${s.lastCheckIn?'var(--green)':'var(--red)'}">${s.lastCheckIn||'⚠ None'}</div></div>
-      <div class="popup-field"><div class="popup-label">Competitor</div><div class="popup-val" style="color:${s.competitor?'var(--red)':'var(--muted2)'}">${s.competitor||'None'}</div></div>
-      ${s.quotes?`<div class="popup-field" style="grid-column:1/-1"><div class="popup-label">Quotes</div><div class="popup-val" style="font-size:11px;white-space:pre-line">${s.quotes}</div></div>`:''}
-      <div class="popup-field"><div class="popup-label">Start Date</div><div class="popup-val">${s.startDate||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">End Date</div><div class="popup-val">${s.endDate||'—'}</div></div>
-      ${s.projPct&&s.projPct!=='0'?`<div class="popup-field" style="grid-column:1/-1">
-        <div class="popup-label">Project Completion</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-          <div style="flex:1;background:var(--border);height:8px;border-radius:4px;overflow:hidden">
-            <div style="height:100%;width:${s.projPct}%;background:var(--blue);border-radius:4px"></div>
-          </div>
-          <span style="font-family:var(--fh);font-size:16px;color:var(--blue)">${s.projPct}%</span>
-        </div>
-      </div>`:''}
-    `;
+      <div class="popup-field"><div class="popup-label">Equipment</div><div class="popup-val">${s.equipOnSite||'—'}</div></div>
+      <div class="popup-field"><div class="popup-label">Last Check-In</div><div class="popup-val" style="color:${s.lastCheckIn?'var(--green)':'var(--red)'}">${s.lastCheckIn||'\u26a0 None'}</div></div>
+      <div class="popup-field"><div class="popup-label">Competitor</div><div class="popup-val" style="color:${s.competitor?'var(--red)':'var(--muted2)'}\">${s.competitor||'None'}</div></div>
+      <div class="popup-field"><div class="popup-label">Follow-Up</div><div class="popup-val" style="color:var(--accent)">${s.followUpDate?mdy(s.followUpDate):'—'}</div></div>
+      ${s.projPct&&s.projPct!=='0'?`<div class="popup-field" style="grid-column:1/-1"><div class="popup-label">Project Completion</div><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div style="flex:1;background:var(--border);height:8px;border-radius:4px;overflow:hidden"><div style="height:100%;width:${s.projPct}%;background:var(--blue);border-radius:4px"></div></div><span style="font-family:var(--fh);font-size:16px;color:var(--blue)">${s.projPct}%</span></div></div>`:``}
+      ${s.quotes?`<div class="popup-field" style="grid-column:1/-1"><div class="popup-label">Quotes</div><div class="popup-val" style="font-size:11px;white-space:pre-line">${s.quotes}</div></div>`:''}`;
 
-    // Show all subs + notes
     let subsHtml = '';
-
-    // General Contractor section
     if (s.gc || s.gcName || s.gcPhone) {
-      subsHtml += `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:8px;margin-top:4px">GENERAL CONTRACTOR</div>
+      subsHtml += `<div style="font-family:var(--fh);font-size:12px;letter-spacing:1px;color:var(--accent);margin-bottom:6px;margin-top:4px">GENERAL CONTRACTOR</div>
         <div class="popup-sub-item" style="border-left:3px solid var(--accent)">
-          <div class="popup-sub-name">🏢 ${s.gc||'—'}</div>
-          <div class="popup-sub-detail">${s.gcName?'👤 '+s.gcName:''}${s.gcPhone?' · 📞 '+s.gcPhone:''}</div>
+          <div class="popup-sub-name">&#x1f3e2; ${s.gc||'—'}</div>
+          <div class="popup-sub-detail">${s.gcName?'&#x1f464; '+s.gcName:''}${s.gcPhone?' &middot; &#x1f4de; '+s.gcPhone:''}</div>
         </div>`;
     }
-
-    // Build complete sub list
-    const subFields = [
-      {name: s.superintendent, phone: s.supePhone, company: s.sub1company, label:'Sub 1'},
-    ];
-    for (let i = 2; i <= 10; i++) {
-      subFields.push({
-        name: s['sub'+i+'name'], 
-        phone: s['sub'+i+'phone'], 
-        company: s['sub'+i+'company'], 
-        label:'Sub '+i
-      });
-    }
-    const activeSubs = subFields.filter(sub => sub.name);
-
+    // All subs 1-14
+    const subFields = [{name:s.superintendent, phone:s.supePhone, company:s.sub1company, wt:s.sub1worktype, label:'Sub 1'}];
+    for (let i=2; i<=14; i++) subFields.push({name:s['sub'+i+'name'], phone:s['sub'+i+'phone'], company:s['sub'+i+'company'], wt:s['sub'+i+'worktype'], label:'Sub '+i});
+    const activeSubs = subFields.filter(sub => sub.name || sub.company);
     if (activeSubs.length) {
-      subsHtml += `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--muted2);margin-bottom:8px;margin-top:4px">SUPERINTENDENTS (${activeSubs.length})</div>`;
-      subsHtml += activeSubs.map(sub => `
+      subsHtml += `<div style="font-family:var(--fh);font-size:12px;letter-spacing:1px;color:var(--muted2);margin:10px 0 6px">SUBS / SUPERINTENDENTS (${activeSubs.length})</div>`;
+      subsHtml += activeSubs.map(sub=>`
         <div class="popup-sub-item">
-          <div class="popup-sub-name">👤 ${sub.label}: ${sub.name}</div>
-          <div class="popup-sub-detail">
-            ${sub.phone ? `📞 ${sub.phone}` : ''}
-            ${sub.company ? ` · 🏢 ${sub.company}` : ''}
-          </div>
+          <div class="popup-sub-name">&#x1f464; ${sub.label}: ${sub.name||sub.company}</div>
+          <div class="popup-sub-detail">${sub.phone?`&#x1f4de; <a href="tel:${sub.phone}" style="color:var(--blue)">${sub.phone}</a>`:''} ${sub.company&&sub.name?`&middot; &#x1f3d7; ${sub.company}`:sub.company?`&#x1f3d7; ${sub.company}`:''} ${sub.wt?`&middot; &#x1f6e0; ${sub.wt}`:''}</div>
         </div>`).join('');
-    } else {
-      subsHtml += '<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-top:8px">No superintendents added yet.</div>';
     }
-
-    // Linked customer info
     const linkedClient = clients.find(c => c.id == s.clientId);
     if (linkedClient) {
-      subsHtml += `<div style="font-family:var(--fh);font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:8px;margin-top:14px">LINKED CUSTOMER</div>
+      subsHtml += `<div style="font-family:var(--fh);font-size:12px;letter-spacing:1px;color:var(--accent);margin:10px 0 6px">LINKED CUSTOMER</div>
         <div class="popup-sub-item" onclick="closeMapPopup();openProfile('${linkedClient.id}')" style="cursor:pointer;border-left:3px solid var(--accent)">
-          <div class="popup-sub-name">👷 ${linkedClient.name}</div>
-          <div class="popup-sub-detail">${linkedClient.company} · ${linkedClient.phone||'—'}</div>
+          <div class="popup-sub-name">&#x1f477; ${linkedClient.name}</div>
+          <div class="popup-sub-detail">${linkedClient.company} &middot; ${linkedClient.phone||'—'}</div>
         </div>`;
     }
-
-    // Quick action buttons
-    subsHtml += `<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-      <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="closeMapPopup();setTimeout(function(){openEditSite('${s.id}')},100)">✏ Edit Site</button>
-      <button class="btn-small" onclick="closeMapPopup();touchClient('${s.clientId||''}')" ${!s.clientId?'disabled':''}>✓ Log Visit</button>
+    if (s.notes) subsHtml += `<div style="margin-top:10px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--blue);padding-left:10px;line-height:1.6">${s.notes}</div>`;
+    subsHtml += `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="closeMapPopup();setTimeout(()=>openSiteDetail('${s.id}'),100)">&#128203; Details</button>
+      <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="closeMapPopup();setTimeout(()=>openEditSite('${s.id}'),100)">\u270e Edit</button>
+      <button class="btn-small" onclick="closeMapPopup();touchClient('${s.clientId||''}')">&#10003; Log Visit</button>
+      <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('${(s.address||s.siteName)+(s.city?', '+s.city:'')}'),'_blank')">&#128205; Maps</button>
     </div>`;
-
-    if (s.notes) {
-      subsHtml += `<div style="margin-top:12px;font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid var(--blue);padding-left:10px;line-height:1.6">${s.notes}</div>`;
-    }
-
     document.getElementById('mp-subs').innerHTML = subsHtml;
   }
-
-  if (loc.type === 'prospect') {
-    const p = loc.data;
-    const stageColors = {'Lead':'var(--muted2)','Contacted':'var(--blue)','Quoted':'var(--yellow)','Won':'var(--green)','Lost':'var(--red)'};
-    const color = stageColors[p.stage] || 'var(--blue)';
-    popup.className = 'map-popup';
-    popup.style.borderTopColor = color;
-    document.getElementById('mp-title').textContent = p.name;
-    document.getElementById('mp-title').style.color = color;
-    document.getElementById('mp-sub').textContent = p.company + ' · ' + (p.stage||'');
-    document.getElementById('mp-grid').innerHTML = `
-      <div class="popup-field"><div class="popup-label">Stage</div><div class="popup-val" style="color:${color}">${p.stage}</div></div>
-      <div class="popup-field"><div class="popup-label">Est. Value</div><div class="popup-val" style="color:var(--green)">${p.value||'—'}/mo</div></div>
-      <div class="popup-field"><div class="popup-label">Contact</div><div class="popup-val">${p.contact||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Phone</div><div class="popup-val">${p.phone||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Equipment Needed</div><div class="popup-val">${p.equip||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Est. Start</div><div class="popup-val">${p.startDate||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Source</div><div class="popup-val">${p.source||'—'}</div></div>
-      <div class="popup-field"><div class="popup-label">Last Follow-Up</div><div class="popup-val">${p.lastFollowUp||'—'}</div></div>
-    `;
-    document.getElementById('mp-subs').innerHTML = p.notes ? `<div style="font-size:12px;color:var(--muted2);font-family:var(--fm);border-left:2px solid ${color};padding-left:10px">${p.notes}</div>` : '';
-    overlay.classList.add('open');
-    return;
-  }
-
   overlay.classList.add('open');
 }
 
