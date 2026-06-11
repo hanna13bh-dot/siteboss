@@ -755,7 +755,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="form-grid">
           <div class="form-group"><label>Name *</label><input type="text" id="f-name" placeholder="John Smith"></div>
           <div class="form-group"><label>Company *</label><input type="text" id="f-company" placeholder="ABC Construction"></div>
-          <div class="form-group"><label>Phone</label><input type="text" id="f-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label>Address</label><input type="text" id="f-address" placeholder="Street address"></div><div class="form-group"><label>City</label><input type="text" id="f-city"></div><div class="form-group"><label>Zone</label><input type="text" id="f-zone" placeholder="e.g. North OKC"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="f-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label>Address</label><input type="text" id="f-address" placeholder="Street address"></div><div class="form-group"><label>City</label><input type="text" id="f-city"></div><div class="form-group"><label>State</label><input type="text" id="f-state" placeholder="OK"></div><div class="form-group"><label>Zip Code</label><input type="text" id="f-zip" placeholder="73101"></div><div class="form-group"><label>Zone</label><input type="text" id="f-zone" placeholder="e.g. North OKC"></div>
           <div class="form-group"><label>Email</label><input type="text" id="f-email" placeholder="john@abc.com"></div>
           <div class="form-group"><label>Equipment They Rent</label><input type="text" id="f-equip" placeholder="Excavators, lifts..."></div>
           <div class="form-group"><label>Last Contact Date *</label><input type="date" id="f-date"></div>
@@ -2203,7 +2203,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Phone</label><input type="text" id="qc-phone"></div>
       <div class="form-group"><label>Email</label><input type="text" id="qc-email"></div>
       <div class="form-group"><label>Equipment</label><input type="text" id="qc-equip"></div>
-      <div class="form-group"><label>Monthly Value</label><input type="text" id="qc-value"></div>
+      <div class="form-group"><label>Monthly Value</label><input type="text" id="qc-value"></div><div class="form-group"><label>Address</label><input type="text" id="qc-address"></div><div class="form-group"><label>City</label><input type="text" id="qc-city"></div><div class="form-group"><label>State</label><input type="text" id="qc-state" placeholder="OK"></div><div class="form-group"><label>Zip Code</label><input type="text" id="qc-zip" placeholder="73101"></div><div class="form-group"><label>Zone</label><input type="text" id="qc-zone"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
@@ -2429,7 +2429,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="form-grid">
       <div class="form-group"><label>Name</label><input type="text" id="ec-name"></div>
       <div class="form-group"><label>Company</label><input type="text" id="ec-company"></div>
-      <div class="form-group"><label>Phone</label><input type="text" id="ec-phone"></div><div class="form-group"><label>Address</label><input type="text" id="ec-address"></div><div class="form-group"><label>City</label><input type="text" id="ec-city"></div><div class="form-group"><label>Zone</label><input type="text" id="ec-zone"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="ec-phone"></div><div class="form-group"><label>Address</label><input type="text" id="ec-address"></div><div class="form-group"><label>City</label><input type="text" id="ec-city"></div><div class="form-group"><label>State</label><input type="text" id="ec-state"></div><div class="form-group"><label>Zip Code</label><input type="text" id="ec-zip"></div><div class="form-group"><label>Zone</label><input type="text" id="ec-zone"></div>
       <div class="form-group"><label>Email</label><input type="text" id="ec-email"></div>
       <div class="form-group"><label>Equipment</label><input type="text" id="ec-equip"></div>
       <div class="form-group"><label>Last Contact</label><input type="date" id="ec-date"></div>
@@ -3071,7 +3071,7 @@ function getRouteFilteredSites(){
   // Customers (day filters don't apply — customers have no follow-up date; show all with an address)
   if(include==='customers'||include==='both'){
     let custs=clients.filter(c=>(c.address||c.city));
-    stops=stops.concat(custs.map(c=>({kind:'customer',name:c.company||c.name,address:c.address,city:c.city,zone:c.zone,followUpDate:''})));
+    stops=stops.concat(custs.map(c=>({kind:'customer',name:c.company||c.name,address:c.address,city:c.city,state:c.state,zip:c.zip,zone:c.zone,followUpDate:''})));
   }
   // Zone filter applies to both
   if(zone!=='all') stops=stops.filter(s=>s.zone===zone);
@@ -3101,7 +3101,7 @@ function updateRoutePreview(){
     +sites.map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
       <div style="background:var(--green);color:#000;font-weight:700;font-family:var(--fh);font-size:14px;min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center">${i+1}</div>
       <div><div style="font-weight:600">${s.name||s.siteName}${s.kind==="customer"?' <span style=\'font-family:var(--fm);font-size:9px;color:var(--accent)\'>CUSTOMER</span>':''}</div>
-      <div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${[s.address,s.city].filter(Boolean).join(', ')}${s.zone?' \u00b7 Zone: '+s.zone:''}${s.followUpDate?' \u00b7 '+mdy(s.followUpDate):''}</div></div>
+      <div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}${s.zone?' \u00b7 Zone: '+s.zone:''}${s.followUpDate?' \u00b7 '+mdy(s.followUpDate):''}</div></div>
     </div>`).join('');
 }
 
@@ -3111,7 +3111,7 @@ function launchRoute(){
   const originType=document.getElementById('route-origin').value;
   const originAddr=document.getElementById('route-origin-addr').value.trim();
   const origin=originType==='custom'&&originAddr?encodeURIComponent(originAddr):'My+Location';
-  const addrs=sites.map(s=>encodeURIComponent([s.address,s.city].filter(Boolean).join(', ')));
+  const addrs=sites.map(s=>encodeURIComponent([s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')));
   if(addrs.length===1){
     window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${addrs[0]}&travelmode=driving`,'_blank');
   } else {
@@ -3238,6 +3238,8 @@ async function addClient() {
     phone: document.getElementById('f-phone').value.trim(),
     address: document.getElementById('f-address').value.trim(),
     city: document.getElementById('f-city').value.trim(),
+    state: document.getElementById('f-state').value.trim(),
+    zip: document.getElementById('f-zip').value.trim(),
     zone: document.getElementById('f-zone').value.trim(),
     email: document.getElementById('f-email').value.trim(),
     equip: document.getElementById('f-equip').value.trim(),
@@ -3250,7 +3252,7 @@ async function addClient() {
   btn.disabled = false; btn.textContent = 'ADD CUSTOMER →';
   if (res && res.success) {
     toast('Customer added ✓');
-    ['f-name','f-company','f-phone','f-email','f-equip','f-project','f-value','f-notes','f-address','f-city','f-zone'].forEach(id => document.getElementById(id).value = '');
+    ['f-name','f-company','f-phone','f-email','f-equip','f-project','f-value','f-notes','f-address','f-city','f-zone','f-state','f-zip'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f-date').value = today();
     await syncAll();
     showPanel('customers');
@@ -3258,8 +3260,24 @@ async function addClient() {
 }
 
 async function touchClient(id) {
-  const res = await api({ action:'touch', type:'clients', id });
-  if (res && res.success) { toast('Marked as contacted today ✓'); await syncAll(); }
+  const c = clients.find(c => c.id == id);
+  if (!c) { const res = await api({ action:'touch', type:'clients', id }); if(res&&res.success){toast('Marked contacted ✓');await syncAll();} return; }
+  // Ask what kind of contact + optional note, then log it dated.
+  const type = prompt('Contact type? Type one:\nOffice Visit, Call, Email, Text, Other','Call');
+  if (type === null) return; // cancelled = do nothing
+  const note = prompt('What happened? (optional — leave blank to just mark contacted)');
+  if (note === null) return;
+  const log = parseCustLog(c.visitLog);
+  log.push({ date: today(), type: (type||'Other').trim(), note: (note||'').trim() });
+  const record = { ...c, lastContact: today(), visitLog: JSON.stringify(log) };
+  const res = await api({ action:'update', type:'clients', record });
+  if (res && res.success) {
+    toast('Contact logged ✓');
+    await syncAll();
+    if (activeProfileId == id) openProfile(id);
+  } else {
+    toast('Could not log contact', true);
+  }
 }
 
 async function deleteClient(id) {
@@ -3277,6 +3295,8 @@ function openEditClient(id) {
   document.getElementById('ec-phone').value = c.phone || '';
   document.getElementById('ec-address').value = c.address || '';
   document.getElementById('ec-city').value = c.city || '';
+  document.getElementById('ec-state').value = c.state || '';
+  document.getElementById('ec-zip').value = c.zip || '';
   document.getElementById('ec-zone').value = c.zone || '';
   document.getElementById('ec-email').value = c.email || '';
   document.getElementById('ec-equip').value = c.equip || '';
@@ -3298,6 +3318,8 @@ async function saveClientEdit() {
     phone: document.getElementById('ec-phone').value.trim(),
     address: document.getElementById('ec-address').value.trim(),
     city: document.getElementById('ec-city').value.trim(),
+    state: document.getElementById('ec-state').value.trim(),
+    zip: document.getElementById('ec-zip').value.trim(),
     zone: document.getElementById('ec-zone').value.trim(),
     email: document.getElementById('ec-email').value.trim(),
     equip: document.getElementById('ec-equip').value.trim(),
@@ -6268,7 +6290,13 @@ async function saveQuickCustomer() {
     email: document.getElementById('qc-email').value.trim(),
     equip: document.getElementById('qc-equip').value.trim(),
     lastContact: today(),
-    project: '', value: document.getElementById('qc-value').value.trim(), notes: 'Added via quick-add'
+    project: '', value: document.getElementById('qc-value').value.trim(),
+    address: (document.getElementById('qc-address')||{}).value ? document.getElementById('qc-address').value.trim() : '',
+    city: (document.getElementById('qc-city')||{}).value ? document.getElementById('qc-city').value.trim() : '',
+    state: (document.getElementById('qc-state')||{}).value ? document.getElementById('qc-state').value.trim() : '',
+    zip: (document.getElementById('qc-zip')||{}).value ? document.getElementById('qc-zip').value.trim() : '',
+    zone: (document.getElementById('qc-zone')||{}).value ? document.getElementById('qc-zone').value.trim() : '',
+    notes: 'Added via quick-add'
   };
   const res = await api({ action:'add', type:'clients', record });
   btn.disabled = false; btn.textContent = 'ADD & LINK →';
