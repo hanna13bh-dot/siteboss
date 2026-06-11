@@ -3031,7 +3031,8 @@ function loadGoogleMaps(){
   return new Promise(r=>{
     window._gmapsReady=()=>{gmapsLoaded=true;gmapsLoading=false;r();};
     const s=document.createElement('script');
-    s.src=`https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places&callback=_gmapsReady`;
+    s.onerror=()=>{ gmapsLoading=false; console.error('Google Maps failed to load — check API key, billing, and that Maps JavaScript API + Places API are enabled.'); };
+    s.src=`https://maps.googleapis.com/maps/api/js?key=${GMAPS_API_KEY}&libraries=places&callback=_gmapsReady`;
     document.head.appendChild(s);
   });
 }
