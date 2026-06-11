@@ -2467,6 +2467,49 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="modal-actions"><button class="btn-ghost" onclick="closeModals()">Close</button></div>
   </div>
 </div>
+<div class="modal-overlay" id="route-modal" style="z-index:10003">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" style="color:var(--green)">&#128205; ROUTE OPTIMIZER</div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>Filter by Day</label>
+        <select id="route-day">
+          <option value="all">All Follow-Up Dates</option>
+          <option value="today">Today</option>
+          <option value="tomorrow">Tomorrow</option>
+          <option value="week">This Week</option>
+          <option value="overdue">Overdue</option>
+          <option value="custom">Custom Date</option>
+        </select>
+      </div>
+      <div class="form-group" id="route-custom-wrap" style="display:none">
+        <label>Date</label>
+        <input type="date" id="route-custom-date">
+      </div>
+      <div class="form-group">
+        <label>Filter by Zone</label>
+        <select id="route-zone"><option value="all">All Zones</option></select>
+      </div>
+      <div class="form-group">
+        <label>Start From</label>
+        <select id="route-origin">
+          <option value="current">My Current Location</option>
+          <option value="office">Office / Branch</option>
+          <option value="custom">Custom Address</option>
+        </select>
+      </div>
+      <div class="form-group" id="route-origin-wrap" style="display:none">
+        <label>Start Address</label>
+        <input type="text" id="route-origin-addr" placeholder="Enter starting address">
+      </div>
+    </div>
+    <div id="route-preview" style="margin-bottom:14px"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn" style="background:var(--green);color:#000;font-weight:700" onclick="launchRoute()">&#128205; Open in Google Maps</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="es-modal" style="z-index:10001">
   <div class="modal">
     <div class="modal-title" style="color:var(--green)">EDIT JOB SITE</div>
@@ -2604,17 +2647,83 @@ function initMapAutocomplete(prefix){
     pairs.forEach(([a,c])=>attachAutocomplete(a,c));
   });
 }
-async function buildRoute(){
-  const sites=jobsites.filter(s=>s.followUpDate&&(s.address||s.city)).sort((a,b)=>a.followUpDate<b.followUpDate?-1:1);
-  if(!sites.length){toast('No sites with follow-up dates — add a Follow-Up Date to job sites first',true);return;}
-  const addrs=sites.map(s=>encodeURIComponent([s.address,s.city].filter(Boolean).join(', ')));
-  if(addrs.length===1){
-    window.open('https://www.google.com/maps/dir/?api=1&destination='+addrs[0]+'&travelmode=driving','_blank');
+function buildRoute(){ openRouteOptimizer(); }
+
+function openRouteOptimizer(){
+  // Populate zone dropdown
+  const zones=[...new Set(jobsites.map(s=>s.zone).filter(Boolean))].sort();
+  const zSel=document.getElementById('route-zone');
+  if(zSel){ zSel.innerHTML='<option value="all">All Zones</option>'+zones.map(z=>`<option value="${z}">${z}</option>`).join(''); }
+  // Reset fields
+  const dSel=document.getElementById('route-day'); if(dSel) dSel.value='all';
+  const oSel=document.getElementById('route-origin'); if(oSel) oSel.value='current';
+  document.getElementById('route-custom-wrap').style.display='none';
+  document.getElementById('route-origin-wrap').style.display='none';
+  // Wire change handlers
+  if(dSel && !dSel._wired){ dSel._wired=true; dSel.addEventListener('change',()=>{
+    document.getElementById('route-custom-wrap').style.display=dSel.value==='custom'?'':'none';
+    updateRoutePreview();
+  });}
+  if(oSel && !oSel._wired){ oSel._wired=true; oSel.addEventListener('change',()=>{
+    document.getElementById('route-origin-wrap').style.display=oSel.value==='custom'?'':'none';
+  });}
+  if(zSel && !zSel._wired){ zSel._wired=true; zSel.addEventListener('change', updateRoutePreview); }
+  updateRoutePreview();
+  document.getElementById('route-modal').classList.add('open');
+}
+
+function getRouteFilteredSites(){
+  const day=document.getElementById('route-day').value;
+  const zone=document.getElementById('route-zone').value;
+  const td=today();
+  const tomorrow=(()=>{const d=new Date(td+'T00:00:00');d.setDate(d.getDate()+1);return d.toISOString().split('T')[0];})();
+  const weekEnd=dateAdd(td,7);
+  let sites=jobsites.filter(s=>(s.address||s.city));
+  // day filter
+  if(day==='today') sites=sites.filter(s=>s.followUpDate===td);
+  else if(day==='tomorrow') sites=sites.filter(s=>s.followUpDate===tomorrow);
+  else if(day==='week') sites=sites.filter(s=>s.followUpDate>=td&&s.followUpDate<=weekEnd);
+  else if(day==='overdue') sites=sites.filter(s=>s.followUpDate&&s.followUpDate<td);
+  else if(day==='custom'){
+    const cd=document.getElementById('route-custom-date').value;
+    if(cd) sites=sites.filter(s=>s.followUpDate===cd); else sites=[];
+  } else sites=sites.filter(s=>s.followUpDate); // 'all' — still require a followUpDate
+  // zone filter
+  if(zone!=='all') sites=sites.filter(s=>s.zone===zone);
+  return sites.sort((a,b)=>a.followUpDate<b.followUpDate?-1:1);
+}
+
+function updateRoutePreview(){
+  const sites=getRouteFilteredSites();
+  const el=document.getElementById('route-preview');
+  if(!el) return;
+  if(!sites.length){
+    el.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);text-align:center;padding:12px">No sites match this filter. Try changing the day or zone.</div>';
     return;
   }
-  const dest=addrs[addrs.length-1];
-  const wps=addrs.slice(0,-1).join('|');
-  window.open(`https://www.google.com/maps/dir/?api=1&origin=My+Location&destination=${dest}&waypoints=${wps}&travelmode=driving`,'_blank');
+  el.innerHTML=`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">${sites.length} Stop${sites.length!==1?'s':''} in Route</div>`
+    +sites.map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <div style="background:var(--green);color:#000;font-weight:700;font-family:var(--fh);font-size:14px;min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center">${i+1}</div>
+      <div><div style="font-weight:600">${s.siteName}</div>
+      <div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${[s.address,s.city].filter(Boolean).join(', ')}${s.zone?' \u00b7 Zone: '+s.zone:''}${s.followUpDate?' \u00b7 '+mdy(s.followUpDate):''}</div></div>
+    </div>`).join('');
+}
+
+function launchRoute(){
+  const sites=getRouteFilteredSites();
+  if(!sites.length){toast('No stops — adjust your filters',true);return;}
+  const originType=document.getElementById('route-origin').value;
+  const originAddr=document.getElementById('route-origin-addr').value.trim();
+  const origin=originType==='custom'&&originAddr?encodeURIComponent(originAddr):'My+Location';
+  const addrs=sites.map(s=>encodeURIComponent([s.address,s.city].filter(Boolean).join(', ')));
+  if(addrs.length===1){
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${addrs[0]}&travelmode=driving`,'_blank');
+  } else {
+    const dest=addrs[addrs.length-1];
+    const wps=addrs.slice(0,-1).join('|');
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${wps}&travelmode=driving`,'_blank');
+  }
+  closeModals();
 }
 document.addEventListener('DOMContentLoaded',()=>{
   ['s-address','p-address'].forEach(id=>{
@@ -3224,7 +3333,10 @@ function buildPrompt(c, tier) {
 }
 
 function populateClientDropdowns() {
-  const opts = ['<option value="">— Select Customer —</option>',
+  const opts = [
+    '<option value="">— Select Customer —</option>',
+    '<option value="__new_customer__" style="color:var(--green)">➕ New Customer</option>',
+    '<option value="__new_prospect__" style="color:var(--accent)">🔍 New Prospect</option>',
     ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)
   ].join('');
   document.getElementById('s-clientId').innerHTML = opts;
@@ -3263,8 +3375,26 @@ function populateClientDropdowns() {
   const eqSiteSel = document.getElementById('eq-siteId'); if (eqSiteSel) eqSiteSel.innerHTML = eqSOpts;
 }
 
-function fillClientName() {}
-function fillEditClientName() {}
+function fillClientName() {
+  const val = document.getElementById('s-clientId').value;
+  if (val === '__new_customer__') {
+    document.getElementById('s-clientId').value = '';
+    showPanel('add-customer');
+  } else if (val === '__new_prospect__') {
+    document.getElementById('s-clientId').value = '';
+    showPanel('add-prospect');
+  }
+}
+function fillEditClientName() {
+  const val = document.getElementById('es-clientId').value;
+  if (val === '__new_customer__') {
+    document.getElementById('es-clientId').value = '';
+    showPanel('add-customer');
+  } else if (val === '__new_prospect__') {
+    document.getElementById('es-clientId').value = '';
+    showPanel('add-prospect');
+  }
+}
 
 function togglePrompt(id) { document.getElementById('prompt-'+id).classList.toggle('open'); }
 function copyPrompt(id) {
