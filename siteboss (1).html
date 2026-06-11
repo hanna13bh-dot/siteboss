@@ -778,7 +778,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Last Check-In Date</label><input type="date" id="s-checkin"></div>
           <div class="form-group"><label>Sub 1 Name</label><input type="text" id="s-supe" placeholder="Mike Johnson"></div>
           <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="s-supephone" placeholder="(555) 000-0000"></div>
-          <div class="form-group"><label>Sub 1 Company</label><select id="s-sub1company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 1 Company</label><input type="text" list="customer-companies" id="s-sub1company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 1 Work Type</label><select id="s-sub1worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -802,7 +802,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 2 Name</label><input type="text" id="s-sub2name" placeholder=""></div>
           <div class="form-group"><label>Sub 2 Phone</label><input type="text" id="s-sub2phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 2 Company</label><select id="s-sub2company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 2 Company</label><input type="text" list="customer-companies" id="s-sub2company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 2 Work Type</label><select id="s-sub2worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -826,7 +826,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 3 Name</label><input type="text" id="s-sub3name" placeholder=""></div>
           <div class="form-group"><label>Sub 3 Phone</label><input type="text" id="s-sub3phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 3 Company</label><select id="s-sub3company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 3 Company</label><input type="text" list="customer-companies" id="s-sub3company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 3 Work Type</label><select id="s-sub3worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -850,7 +850,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 4 Name</label><input type="text" id="s-sub4name" placeholder=""></div>
           <div class="form-group"><label>Sub 4 Phone</label><input type="text" id="s-sub4phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 4 Company</label><select id="s-sub4company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 4 Company</label><input type="text" list="customer-companies" id="s-sub4company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 4 Work Type</label><select id="s-sub4worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -874,7 +874,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 5 Name</label><input type="text" id="s-sub5name" placeholder=""></div>
           <div class="form-group"><label>Sub 5 Phone</label><input type="text" id="s-sub5phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 5 Company</label><select id="s-sub5company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 5 Company</label><input type="text" list="customer-companies" id="s-sub5company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 5 Work Type</label><select id="s-sub5worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -898,7 +898,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 6 Name</label><input type="text" id="s-sub6name" placeholder=""></div>
           <div class="form-group"><label>Sub 6 Phone</label><input type="text" id="s-sub6phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 6 Company</label><select id="s-sub6company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 6 Company</label><input type="text" list="customer-companies" id="s-sub6company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 6 Work Type</label><select id="s-sub6worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -922,7 +922,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 7 Name</label><input type="text" id="s-sub7name" placeholder=""></div>
           <div class="form-group"><label>Sub 7 Phone</label><input type="text" id="s-sub7phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 7 Company</label><select id="s-sub7company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 7 Company</label><input type="text" list="customer-companies" id="s-sub7company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 7 Work Type</label><select id="s-sub7worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -946,7 +946,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 8 Name</label><input type="text" id="s-sub8name" placeholder=""></div>
           <div class="form-group"><label>Sub 8 Phone</label><input type="text" id="s-sub8phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 8 Company</label><select id="s-sub8company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 8 Company</label><input type="text" list="customer-companies" id="s-sub8company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 8 Work Type</label><select id="s-sub8worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -970,7 +970,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 9 Name</label><input type="text" id="s-sub9name" placeholder=""></div>
           <div class="form-group"><label>Sub 9 Phone</label><input type="text" id="s-sub9phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 9 Company</label><select id="s-sub9company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 9 Company</label><input type="text" list="customer-companies" id="s-sub9company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 9 Work Type</label><select id="s-sub9worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -994,7 +994,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
           <div class="form-group"><label>Sub 10 Name</label><input type="text" id="s-sub10name" placeholder=""></div>
           <div class="form-group"><label>Sub 10 Phone</label><input type="text" id="s-sub10phone" placeholder=""></div>
-          <div class="form-group"><label>Sub 10 Company</label><select id="s-sub10company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+          <div class="form-group"><label>Sub 10 Company</label><input type="text" list="customer-companies" id="s-sub10company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Equipment On Site</label><input type="text" id="s-equip" placeholder="Scissor lift, excavator..."></div>
           <div class="form-group"><label>Est. Monthly Value</label><input type="text" id="s-value" placeholder="$8,000"></div>
           <div class="form-group"><label>Zone</label><input type="text" id="s-zone" placeholder="North, South, Zone 1..."></div>
@@ -2531,7 +2531,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Last Check-In Date</label><input type="date" id="es-checkin"></div>
       <div class="form-group"><label>Sub 1 Name</label><input type="text" id="es-supe"></div>
       <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="es-supephone"></div>
-      <div class="form-group"><label>Sub 1 Company</label><select id="es-sub1company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 1 Company</label><input type="text" list="customer-companies" id="es-sub1company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 1 Work Type</label><select id="es-sub1worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2558,7 +2558,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 2 Name</label><input type="text" id="es-sub2name"></div>
       <div class="form-group"><label>Sub 2 Phone</label><input type="text" id="es-sub2phone"></div>
-      <div class="form-group"><label>Sub 2 Company</label><select id="es-sub2company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 2 Company</label><input type="text" list="customer-companies" id="es-sub2company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 2 Work Type</label><select id="es-sub2worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2585,7 +2585,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 3 Name</label><input type="text" id="es-sub3name"></div>
       <div class="form-group"><label>Sub 3 Phone</label><input type="text" id="es-sub3phone"></div>
-      <div class="form-group"><label>Sub 3 Company</label><select id="es-sub3company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 3 Company</label><input type="text" list="customer-companies" id="es-sub3company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 3 Work Type</label><select id="es-sub3worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2612,7 +2612,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 4 Name</label><input type="text" id="es-sub4name"></div>
       <div class="form-group"><label>Sub 4 Phone</label><input type="text" id="es-sub4phone"></div>
-      <div class="form-group"><label>Sub 4 Company</label><select id="es-sub4company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 4 Company</label><input type="text" list="customer-companies" id="es-sub4company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 4 Work Type</label><select id="es-sub4worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2639,7 +2639,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 5 Name</label><input type="text" id="es-sub5name"></div>
       <div class="form-group"><label>Sub 5 Phone</label><input type="text" id="es-sub5phone"></div>
-      <div class="form-group"><label>Sub 5 Company</label><select id="es-sub5company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 5 Company</label><input type="text" list="customer-companies" id="es-sub5company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 5 Work Type</label><select id="es-sub5worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2666,7 +2666,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 6 Name</label><input type="text" id="es-sub6name"></div>
       <div class="form-group"><label>Sub 6 Phone</label><input type="text" id="es-sub6phone"></div>
-      <div class="form-group"><label>Sub 6 Company</label><select id="es-sub6company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 6 Company</label><input type="text" list="customer-companies" id="es-sub6company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 6 Work Type</label><select id="es-sub6worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2693,7 +2693,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 7 Name</label><input type="text" id="es-sub7name"></div>
       <div class="form-group"><label>Sub 7 Phone</label><input type="text" id="es-sub7phone"></div>
-      <div class="form-group"><label>Sub 7 Company</label><select id="es-sub7company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 7 Company</label><input type="text" list="customer-companies" id="es-sub7company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 7 Work Type</label><select id="es-sub7worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2720,7 +2720,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 8 Name</label><input type="text" id="es-sub8name"></div>
       <div class="form-group"><label>Sub 8 Phone</label><input type="text" id="es-sub8phone"></div>
-      <div class="form-group"><label>Sub 8 Company</label><select id="es-sub8company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 8 Company</label><input type="text" list="customer-companies" id="es-sub8company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 8 Work Type</label><select id="es-sub8worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2747,7 +2747,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 9 Name</label><input type="text" id="es-sub9name"></div>
       <div class="form-group"><label>Sub 9 Phone</label><input type="text" id="es-sub9phone"></div>
-      <div class="form-group"><label>Sub 9 Company</label><select id="es-sub9company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 9 Company</label><input type="text" list="customer-companies" id="es-sub9company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 9 Work Type</label><select id="es-sub9worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2774,7 +2774,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 10 Name</label><input type="text" id="es-sub10name"></div>
       <div class="form-group"><label>Sub 10 Phone</label><input type="text" id="es-sub10phone"></div>
-      <div class="form-group"><label>Sub 10 Company</label><select id="es-sub10company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 10 Company</label><input type="text" list="customer-companies" id="es-sub10company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 10 Work Type</label><select id="es-sub10worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2801,7 +2801,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 11 Name</label><input type="text" id="es-sub11name"></div>
       <div class="form-group"><label>Sub 11 Phone</label><input type="text" id="es-sub11phone"></div>
-      <div class="form-group"><label>Sub 11 Company</label><select id="es-sub11company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 11 Company</label><input type="text" list="customer-companies" id="es-sub11company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 11 Work Type</label><select id="es-sub11worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2828,7 +2828,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 12 Name</label><input type="text" id="es-sub12name"></div>
       <div class="form-group"><label>Sub 12 Phone</label><input type="text" id="es-sub12phone"></div>
-      <div class="form-group"><label>Sub 12 Company</label><select id="es-sub12company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 12 Company</label><input type="text" list="customer-companies" id="es-sub12company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 12 Work Type</label><select id="es-sub12worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2855,7 +2855,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 13 Name</label><input type="text" id="es-sub13name"></div>
       <div class="form-group"><label>Sub 13 Phone</label><input type="text" id="es-sub13phone"></div>
-      <div class="form-group"><label>Sub 13 Company</label><select id="es-sub13company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 13 Company</label><input type="text" list="customer-companies" id="es-sub13company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 13 Work Type</label><select id="es-sub13worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -2882,7 +2882,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Sub 14 Name</label><input type="text" id="es-sub14name"></div>
       <div class="form-group"><label>Sub 14 Phone</label><input type="text" id="es-sub14phone"></div>
-      <div class="form-group"><label>Sub 14 Company</label><select id="es-sub14company" onchange="handleSubCompanySel(this)"><option value="">— Pick Company —</option></select></div>
+      <div class="form-group"><label>Sub 14 Company</label><input type="text" list="customer-companies" id="es-sub14company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 14 Work Type</label><select id="es-sub14worktype">
 <option value="">— Work Type —</option>
 <option value="Concrete">Concrete</option>
@@ -7704,5 +7704,6 @@ window.addEventListener('load', function() {
 });
 
 </script>
+<datalist id="customer-companies"></datalist>
 </body>
 </html>
