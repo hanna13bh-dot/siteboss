@@ -588,6 +588,15 @@ tr:hover td{background:rgba(255,255,255,.015)}
         </div>
       </div>
 
+      <!-- JOB PROGRESS -->
+      <div style="margin-top:18px">
+        <div class="col-title" style="color:var(--accent)">📊 JOB PROGRESS</div>
+        <div id="dash-progress-overall" style="margin-bottom:12px"></div>
+        <div id="dash-progress-list">
+          <div class="empty-state"><div class="empty-icon">⟳</div>Loading...</div>
+        </div>
+      </div>
+
       <!-- FOLLOW-UP SUMMARY -->
       <div style="margin-top:24px">
         <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
@@ -3825,6 +3834,7 @@ function renderAll() {
   document.getElementById('dash-sites-list').innerHTML = activeSites.length
     ? activeSites.slice(0,5).map(s => dashSiteCard(s)).join('')
     : '<div class="empty-state"><div class="empty-icon">🏗</div>No active sites yet.</div>';
+  renderJobProgress();
 
   // Re-engagement
   document.getElementById('re-t2').innerHTML = t2.length ? t2.map(c => reengCard(c,2)).join('') : '<div class="empty-state">None right now.</div>';
@@ -3906,6 +3916,61 @@ function reengCard(c, tier) {
   </div>`;
 }
 
+function siteDataScore(s){
+  // Card/data completeness: how many key fields are filled
+  const fields=[s.siteName,s.clientId,s.address,s.city,s.zone,s.status,s.startDate,s.monthlyValue,s.gc||s.gcName,s.gcPhone,(s.superintendent||s.sub1company),s.equipOnSite,s.followUpDate];
+  const filled=fields.filter(v=>v&&String(v).trim()).length;
+  return Math.round((filled/fields.length)*100);
+}
+function progBar(pct,color){
+  pct=Math.max(0,Math.min(100,parseInt(pct)||0));
+  return `<div style="flex:1;background:var(--border);height:9px;border-radius:5px;overflow:hidden;min-width:60px"><div style="height:100%;width:${pct}%;background:${color};border-radius:5px"></div></div>`;
+}
+function renderJobProgress(){
+  const ov=document.getElementById('dash-progress-overall');
+  const list=document.getElementById('dash-progress-list');
+  if(!ov||!list) return;
+  const sites=jobsites.filter(s=>s.status==='Active'||!s.status);
+  if(!sites.length){ ov.innerHTML=''; list.innerHTML='<div class="empty-state"><div class="empty-icon">🏗</div>No active sites yet.</div>'; return; }
+  const projAvg=Math.round(sites.reduce((a,s)=>a+(parseInt(s.projPct)||0),0)/sites.length);
+  const dataAvg=Math.round(sites.reduce((a,s)=>a+siteDataScore(s),0)/sites.length);
+  ov.innerHTML=`
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+        <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);min-width:120px">PROJECT COMPLETION</div>
+        ${progBar(projAvg,'var(--blue)')}
+        <div style="font-family:var(--fh);font-size:16px;color:var(--blue);min-width:42px;text-align:right">${projAvg}%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);min-width:120px">CARD COMPLETENESS</div>
+        ${progBar(dataAvg,'var(--accent)')}
+        <div style="font-family:var(--fh);font-size:16px;color:var(--accent);min-width:42px;text-align:right">${dataAvg}%</div>
+      </div>
+      <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:8px;text-align:right">${sites.length} active site${sites.length!==1?'s':''}</div>
+    </div>`;
+  const sorted=[...sites].sort((a,b)=>(parseInt(a.projPct)||0)-(parseInt(b.projPct)||0));
+  list.innerHTML=sorted.map(s=>{
+    const c=clients.find(c=>c.id==s.clientId);
+    const proj=parseInt(s.projPct)||0;
+    const data=siteDataScore(s);
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:10px 13px;margin-bottom:6px;cursor:pointer" onclick="openSiteDetail('${s.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <div style="font-weight:600;font-size:13px">${s.siteName}</div>
+        <div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${c?(c.company||c.name):''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <div style="font-family:var(--fm);font-size:9px;color:var(--muted2);min-width:52px">Project</div>
+        ${progBar(proj,'var(--blue)')}
+        <div style="font-family:var(--fm);font-size:11px;color:var(--blue);min-width:34px;text-align:right">${proj}%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-family:var(--fm);font-size:9px;color:var(--muted2);min-width:52px">Card</div>
+        ${progBar(data,'var(--accent)')}
+        <div style="font-family:var(--fm);font-size:11px;color:var(--accent);min-width:34px;text-align:right">${data}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
 function dashSiteCard(s) {
   const c = clients.find(c => c.id == s.clientId);
   return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);padding:10px 13px;margin-bottom:6px">
