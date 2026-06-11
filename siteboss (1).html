@@ -783,7 +783,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>GC Contact Name</label><input type="text" id="s-gcname" placeholder="John Smith"></div>
           <div class="form-group"><label>GC Phone</label><input type="text" id="s-gcphone" placeholder="(555) 000-0000"></div><div class="form-group"><label>Follow-Up Date</label><input type="date" id="s-followUpDate"></div>
           <div class="form-group"><label>Address</label><input type="text" id="s-address" placeholder="123 Main St"></div>
-          <div class="form-group"><label>City</label><input type="text" id="s-city" placeholder="Houston, TX"></div>
+          <div class="form-group"><label>City</label><input type="text" id="s-city" placeholder="Houston, TX"></div><div class="form-group"><label>State</label><input type="text" id="s-state" placeholder="OK"></div><div class="form-group"><label>Zip Code</label><input type="text" id="s-zip" placeholder="73101"></div>
           <div class="form-group"><label>Last Check-In Date</label><input type="date" id="s-checkin"></div>
           <div class="form-group"><label>Sub 1 Name</label><input type="text" id="s-supe" placeholder="Mike Johnson"></div>
           <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="s-supephone" placeholder="(555) 000-0000"></div>
@@ -2537,6 +2537,35 @@ tr:hover td{background:rgba(255,255,255,.015)}
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="ev-modal" style="z-index:10001">
+  <div class="modal" style="border-top-color:var(--blue)">
+    <div class="modal-title" style="color:var(--blue)">EDIT VISIT</div>
+    <input type="hidden" id="ev-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Customer / Contact</label>
+        <select id="ev-clientId"><option value="">— Select Customer —</option><option value="__manual__">+ Type manually</option></select>
+        <input type="text" id="ev-customername" placeholder="Or type name..." style="margin-top:6px;display:none">
+      </div>
+      <div class="form-group"><label>Visit Date *</label><input type="date" id="ev-date"></div>
+      <div class="form-group"><label>Zone / Territory</label><input type="text" id="ev-zone"></div>
+      <div class="form-group"><label>Priority</label>
+        <select id="ev-priority"><option value="High">🔴 High</option><option value="Medium">🟡 Medium</option><option value="Low">🟢 Low</option></select>
+      </div>
+      <div class="form-group"><label>Visit Type</label>
+        <select id="ev-type"><option value="Office Visit">🏢 Office Visit</option><option value="Site Visit">🏗 Site Visit</option><option value="Lunch">🍽 Lunch</option><option value="Other">Other</option></select>
+      </div>
+      <div class="form-group"><label>Last Visit Date</label><input type="date" id="ev-lastvisit"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="ev-status"><option value="Scheduled">Scheduled</option><option value="Done">Done</option></select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px"><label>Notes / Purpose</label><textarea id="ev-notes" rows="3"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" id="ev-save-btn" onclick="saveVisitEdit()">Save</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="es-modal" style="z-index:10001">
   <div class="modal">
     <div class="modal-title" style="color:var(--green)">EDIT JOB SITE</div>
@@ -2552,7 +2581,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>GC Contact Name</label><input type="text" id="es-gcname"></div>
       <div class="form-group"><label>GC Phone</label><input type="text" id="es-gcphone"></div><div class="form-group"><label>Follow-Up Date</label><input type="date" id="es-followUpDate"></div>
       <div class="form-group"><label>Address</label><input type="text" id="es-address"></div>
-      <div class="form-group"><label>City</label><input type="text" id="es-city"></div>
+      <div class="form-group"><label>City</label><input type="text" id="es-city"></div><div class="form-group"><label>State</label><input type="text" id="es-state"></div><div class="form-group"><label>Zip Code</label><input type="text" id="es-zip"></div>
       <div class="form-group"><label>Last Check-In Date</label><input type="date" id="es-checkin"></div>
       <div class="form-group"><label>Sub 1 Name</label><input type="text" id="es-supe"></div>
       <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="es-supephone"></div>
@@ -3006,22 +3035,41 @@ function loadGoogleMaps(){
     document.head.appendChild(s);
   });
 }
-function attachAutocomplete(inputId, cityId){
+function attachAutocomplete(inputId, cityId, stateId, zipId){
   if(!gmapsLoaded||!window.google) return;
   const input=document.getElementById(inputId);
   if(!input||input._ac) return; input._ac=true;
   const ac=new google.maps.places.Autocomplete(input,{componentRestrictions:{country:'us'},fields:['formatted_address','address_components']});
   ac.addListener('place_changed',()=>{
     const pl=ac.getPlace(); if(!pl.address_components) return;
-    const city=(pl.address_components.find(c=>c.types.includes('locality'))||{}).long_name||'';
-    const state=(pl.address_components.find(c=>c.types.includes('administrative_area_level_1'))||{}).short_name||'';
-    if(cityId && city){const el=document.getElementById(cityId);if(el)el.value=city+(state?' '+state:'');}
+    const comp=(type,short)=>{const c=pl.address_components.find(c=>c.types.includes(type));return c?(short?c.short_name:c.long_name):'';};
+    const streetNum=comp('street_number'), route=comp('route');
+    const street=[streetNum,route].filter(Boolean).join(' ');
+    const city=comp('locality')||comp('sublocality')||comp('administrative_area_level_2');
+    const state=comp('administrative_area_level_1',true);
+    const zip=comp('postal_code');
+    const setVal=(id,v)=>{if(id&&v){const el=document.getElementById(id);if(el)el.value=v;}};
+    // put just the street into the address field (cleaner than full formatted)
+    if(street) input.value=street;
+    if(cityId){ const el=document.getElementById(cityId); if(el) el.value = city || el.value; }
+    setVal(stateId,state);
+    setVal(zipId,zip);
   });
 }
 function initMapAutocomplete(prefix){
   loadGoogleMaps().then(()=>{
-    const pairs=[['s-address','s-city'],['es-address','es-city'],['p-address','p-city'],['ep-address','ep-city'],['qs-address','qs-city']];
-    pairs.forEach(([a,c])=>attachAutocomplete(a,c));
+    // [address, city, state, zip]
+    const sets=[
+      ['s-address','s-city','s-state','s-zip'],
+      ['es-address','es-city','es-state','es-zip'],
+      ['p-address','p-city',null,null],
+      ['ep-address','ep-city',null,null],
+      ['qs-address','qs-city',null,null],
+      ['f-address','f-city','f-state','f-zip'],
+      ['ec-address','ec-city','ec-state','ec-zip'],
+      ['qc-address','qc-city','qc-state','qc-zip']
+    ];
+    sets.forEach(([a,c,st,z])=>attachAutocomplete(a,c,st,z));
   });
 }
 function buildRoute(){ openRouteOptimizer(); }
@@ -3066,7 +3114,7 @@ function getRouteFilteredSites(){
     else if(day==='week') sites=sites.filter(s=>s.followUpDate>=td&&s.followUpDate<=weekEnd);
     else if(day==='overdue') sites=sites.filter(s=>s.followUpDate&&s.followUpDate<td);
     else if(day==='custom'){const cd=document.getElementById('route-custom-date').value; sites=cd?sites.filter(s=>s.followUpDate===cd):[];}
-    stops=stops.concat(sites.map(s=>({kind:'site',name:s.siteName,address:s.address,city:s.city,zone:s.zone,followUpDate:s.followUpDate})));
+    stops=stops.concat(sites.map(s=>({kind:'site',name:s.siteName,address:s.address,city:s.city,state:s.state,zip:s.zip,zone:s.zone,followUpDate:s.followUpDate})));
   }
   // Customers (day filters don't apply — customers have no follow-up date; show all with an address)
   if(include==='customers'||include==='both'){
@@ -3122,9 +3170,9 @@ function launchRoute(){
   closeModals();
 }
 document.addEventListener('DOMContentLoaded',()=>{
-  ['s-address','p-address'].forEach(id=>{
+  ['s-address','es-address','p-address','f-address','ec-address','qc-address','qs-address'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.addEventListener('focusin',()=>loadGoogleMaps().then(()=>{attachAutocomplete('s-address','s-city');attachAutocomplete('p-address','p-city');attachAutocomplete('qs-address','qs-city');}),{once:true});
+    if(el) el.addEventListener('focusin',()=>loadGoogleMaps().then(()=>initMapAutocomplete()),{once:true});
   });
 });
 let SHEET_URL = localStorage.getItem('brad_crm_v3_url') || 'https://script.google.com/macros/s/AKfycbyY9IQfOjZrvrCwvabb_h_hDTnlKT272TW5St2_HS13Tb5jML-7yZMoRavpOajmbXxB8Q/exec';
@@ -3367,6 +3415,8 @@ async function addSite() {
     followUpDate: document.getElementById('s-followUpDate').value,
     address: document.getElementById('s-address').value.trim(),
     city: document.getElementById('s-city').value.trim(),
+    state: (document.getElementById('s-state')||{}).value ? document.getElementById('s-state').value.trim() : '',
+    zip: (document.getElementById('s-zip')||{}).value ? document.getElementById('s-zip').value.trim() : '',
     lastCheckIn: document.getElementById('s-checkin').value,
     superintendent: document.getElementById('s-supe').value.trim(),
     supePhone: document.getElementById('s-supephone').value.trim(),
@@ -3529,6 +3579,8 @@ function openEditSite(id) {
   if(!s.gcPhone && s.supePhone) sv('es-gcphone', s.supePhone);
   sv('es-address', s.address);
   sv('es-city', s.city);
+  sv('es-state', s.state);
+  sv('es-zip', s.zip);
   sv('es-checkin', s.lastCheckIn);
   sv('es-supe', s.superintendent);
   sv('es-supephone', s.supePhone);
@@ -3583,6 +3635,8 @@ async function saveSiteEdit() {
     supePhone: document.getElementById('es-gcphone').value.trim(),
     address: document.getElementById('es-address').value.trim(),
     city: document.getElementById('es-city').value.trim(),
+    state: gval('es-state',''),
+    zip: gval('es-zip',''),
     lastCheckIn: document.getElementById('es-checkin').value,
     superintendent: document.getElementById('es-supe').value.trim(),
     supePhone: document.getElementById('es-supephone').value.trim(),
@@ -7041,6 +7095,52 @@ function prefillVisitCustomer() {
   txt.style.display = sel.value === '__manual__' ? 'block' : 'none';
 }
 
+function openEditVisit(id){
+  const v=visits.find(v=>v.id==id); if(!v) return;
+  // populate client dropdown
+  const sel=document.getElementById('ev-clientId');
+  sel.innerHTML='<option value="">— Select Customer —</option><option value="__manual__">+ Type manually</option>'+
+    clients.slice().sort((a,b)=>(a.company||a.name||'').localeCompare(b.company||b.name||'')).map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('');
+  const set=(i,val)=>{const el=document.getElementById(i); if(el) el.value=(val==null?'':val);};
+  set('ev-id',v.id);
+  if(v.clientId){ sel.value=v.clientId; document.getElementById('ev-customername').style.display='none'; }
+  else if(v.customerName){ sel.value='__manual__'; const cn=document.getElementById('ev-customername'); cn.style.display='block'; cn.value=v.customerName; }
+  set('ev-date',v.date);
+  set('ev-zone',v.zone);
+  set('ev-priority',v.priority||'Medium');
+  set('ev-type',v.type||'Office Visit');
+  set('ev-lastvisit',v.lastVisit);
+  set('ev-status',v.status||'Scheduled');
+  set('ev-notes',v.notes);
+  sel.onchange=function(){ const cn=document.getElementById('ev-customername'); cn.style.display=(this.value==='__manual__')?'block':'none'; };
+  document.getElementById('ev-modal').classList.add('open');
+}
+async function saveVisitEdit(){
+  const id=document.getElementById('ev-id').value;
+  const v=visits.find(v=>v.id==id); if(!v) return;
+  const date=document.getElementById('ev-date').value;
+  if(!date){ toast('Visit date is required', true); return; }
+  const clientId=document.getElementById('ev-clientId').value;
+  const manualName=document.getElementById('ev-customername').value.trim();
+  const c=clients.find(c=>c.id==clientId);
+  const customerName = clientId==='__manual__' ? manualName : (c ? c.name+' — '+c.company : v.customerName||'');
+  const btn=document.getElementById('ev-save-btn'); btn.disabled=true; btn.textContent='SAVING...';
+  const record={ ...v,
+    clientId: clientId==='__manual__' ? '' : clientId,
+    customerName,
+    date,
+    zone: document.getElementById('ev-zone').value.trim(),
+    priority: document.getElementById('ev-priority').value,
+    type: document.getElementById('ev-type').value,
+    lastVisit: document.getElementById('ev-lastvisit').value,
+    status: document.getElementById('ev-status').value,
+    notes: document.getElementById('ev-notes').value.trim()
+  };
+  const res=await api({ action:'update', type:'visits', record });
+  btn.disabled=false; btn.textContent='Save';
+  if(res && res.success){ toast('Visit updated ✓'); closeModals(); await syncAll(); }
+  else toast('Update failed', true);
+}
 async function addVisit() {
   const clientId = document.getElementById('v-clientId').value;
   const manualName = document.getElementById('v-customername').value.trim();
@@ -7148,6 +7248,7 @@ function renderVisits() {
         <div style="margin-top:4px"><span style="font-family:var(--fm);font-size:9px;color:${priColor[v.priority]||'var(--muted2)'}">${v.priority||''} priority</span></div>
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="openEditVisit('${v.id}')">✎ Edit</button>
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="completeVisit('${v.id}')">✓ Done</button>
         <button class="btn-danger" onclick="deleteVisit('${v.id}')">✕</button>
       </div>
