@@ -2573,6 +2573,55 @@ let arSearch  = '';
 let cFilter   = 'all', cSearch = '';
 let sFilter   = 'all', sSearch = '';
 let activeProfileId = null;
+const GMAPS_API_KEY = 'AIzaSyCnii1FQsurUfZk3VX69uMDXeFha50MyYk';
+let gmapsLoaded=false, gmapsLoading=false;
+function loadGoogleMaps(){
+  if(gmapsLoaded) return Promise.resolve();
+  if(gmapsLoading) return new Promise(r=>{const t=setInterval(()=>{if(gmapsLoaded){clearInterval(t);r();}},100);});
+  gmapsLoading=true;
+  return new Promise(r=>{
+    window._gmapsReady=()=>{gmapsLoaded=true;gmapsLoading=false;r();};
+    const s=document.createElement('script');
+    s.src=`https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places&callback=_gmapsReady`;
+    document.head.appendChild(s);
+  });
+}
+function attachAutocomplete(inputId, cityId){
+  if(!gmapsLoaded||!window.google) return;
+  const input=document.getElementById(inputId);
+  if(!input||input._ac) return; input._ac=true;
+  const ac=new google.maps.places.Autocomplete(input,{componentRestrictions:{country:'us'},fields:['formatted_address','address_components']});
+  ac.addListener('place_changed',()=>{
+    const pl=ac.getPlace(); if(!pl.address_components) return;
+    const city=(pl.address_components.find(c=>c.types.includes('locality'))||{}).long_name||'';
+    const state=(pl.address_components.find(c=>c.types.includes('administrative_area_level_1'))||{}).short_name||'';
+    if(cityId && city){const el=document.getElementById(cityId);if(el)el.value=city+(state?' '+state:'');}
+  });
+}
+function initMapAutocomplete(prefix){
+  loadGoogleMaps().then(()=>{
+    const pairs=[['s-address','s-city'],['es-address','es-city'],['p-address','p-city'],['ep-address','ep-city'],['qs-address','qs-city']];
+    pairs.forEach(([a,c])=>attachAutocomplete(a,c));
+  });
+}
+async function buildRoute(){
+  const sites=jobsites.filter(s=>s.followUpDate&&(s.address||s.city)).sort((a,b)=>a.followUpDate<b.followUpDate?-1:1);
+  if(!sites.length){toast('No sites with follow-up dates — add a Follow-Up Date to job sites first',true);return;}
+  const addrs=sites.map(s=>encodeURIComponent([s.address,s.city].filter(Boolean).join(', ')));
+  if(addrs.length===1){
+    window.open('https://www.google.com/maps/dir/?api=1&destination='+addrs[0]+'&travelmode=driving','_blank');
+    return;
+  }
+  const dest=addrs[addrs.length-1];
+  const wps=addrs.slice(0,-1).join('|');
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=My+Location&destination=${dest}&waypoints=${wps}&travelmode=driving`,'_blank');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  ['s-address','p-address'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('focusin',()=>loadGoogleMaps().then(()=>{attachAutocomplete('s-address','s-city');attachAutocomplete('p-address','p-city');attachAutocomplete('qs-address','qs-city');}),{once:true});
+  });
+});
 let SHEET_URL = localStorage.getItem('brad_crm_v3_url') || 'https://script.google.com/macros/s/AKfycbyY9IQfOjZrvrCwvabb_h_hDTnlKT272TW5St2_HS13Tb5jML-7yZMoRavpOajmbXxB8Q/exec';
 
 // Always hide setup screen and launch
@@ -2919,6 +2968,7 @@ function openEditSite(id) {
   sv('es-status', s.status || 'Active');
   sv('es-notes', s.notes);
   document.getElementById('es-modal').classList.add('open');
+  initMapAutocomplete();
 }
 
 async function saveSiteEdit() {
@@ -3489,7 +3539,7 @@ function renderSiteFollowUpSchedule(){
   if(overdue.length) out+=`<div style="font-family:var(--fm);font-size:10px;font-weight:700;color:var(--red);margin:0 0 6px;text-transform:uppercase;letter-spacing:1px">&#9888; Overdue (${overdue.length})</div>`+overdue.map(s=>row(s,'urgent')).join('');
   if(dueNow.length) out+=`<div style="font-family:var(--fm);font-size:10px;font-weight:700;color:var(--yellow);margin:${overdue.length?'12px':0} 0 6px;text-transform:uppercase;letter-spacing:1px">&#128467; Due This Week (${dueNow.length})</div>`+dueNow.map(s=>row(s,'today')).join('');
   if(upcoming.length) out+=`<div style="font-family:var(--fm);font-size:10px;font-weight:700;color:var(--blue);margin:${(overdue.length||dueNow.length)?'12px':0} 0 6px;text-transform:uppercase;letter-spacing:1px">&#128197; Upcoming (${upcoming.length})</div>`+upcoming.map(s=>row(s,'upcoming')).join('');
-  el.innerHTML='<div class="section-title" style="margin-bottom:10px">&#128467; Follow-Up Schedule</div>'+out;
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="section-title">&#128467; Follow-Up Schedule</div><button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="buildRoute()">&#128205; Build Route</button></div>'+out;
 }
 function dateAdd(d,days){const dt=new Date(d+'T00:00:00');dt.setDate(dt.getDate()+days);return dt.toISOString().split('T')[0];}
 function renderSiteTable() {
@@ -3687,6 +3737,7 @@ function openEditProspect(id) {
   const opts = ['<option value="">— None —</option>', ...clients.map(c => `<option value="${c.id}" ${c.id==p.clientId?'selected':''}>${c.name} — ${c.company}</option>`)].join('');
   document.getElementById('ep-clientId').innerHTML = opts;
   document.getElementById('ep-modal').classList.add('open');
+  initMapAutocomplete();
 }
 
 async function saveProspectEdit() {
