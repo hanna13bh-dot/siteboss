@@ -2470,6 +2470,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" id="sd-edit-btn">&#9998; Edit</button>
         <button class="btn-small" style="color:var(--red);border-color:var(--red)" id="sd-svc-btn">&#128295; Service</button>
         <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" id="sd-co-btn">&#128222; Call Off</button>
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" id="sd-checkin-btn">&#10003; Check In</button>
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="window.open(document.getElementById('sd-map-url').value,'_blank')">&#128205; Maps</button>
         <input type="hidden" id="sd-map-url">
       </div>
@@ -2938,6 +2939,14 @@ tr:hover td{background:rgba(255,255,255,.015)}
           </div>
         </div>
     <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="es-notes" rows="3"></textarea></div>
+    <div class="form-group" style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label style="margin:0">Visit Log</label>
+        <button type="button" class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="addSiteVisitNote()">&#10003; Check In + Add Note</button>
+      </div>
+      <input type="hidden" id="es-visitlog">
+      <div id="es-visitlog-display" style="max-height:200px;overflow-y:auto"></div>
+    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
       <button class="btn btn-green" id="es-save-btn" onclick="saveSiteEdit()">SAVE →</button>
@@ -3390,6 +3399,58 @@ async function deleteSite(id) {
   if (res && res.success) { toast('Site removed ✓'); await syncAll(); }
 }
 
+function parseVisitLog(raw){
+  if(!raw) return [];
+  try{ const a=JSON.parse(raw); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+}
+function renderVisitLog(){
+  const disp=document.getElementById('es-visitlog-display');
+  const raw=document.getElementById('es-visitlog');
+  if(!disp||!raw) return;
+  const log=parseVisitLog(raw.value);
+  if(!log.length){ disp.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);padding:6px 0">No visits logged yet. Tap "Check In + Add Note" after a site visit.</div>'; return; }
+  disp.innerHTML=log.slice().reverse().map((e,ri)=>{
+    const idx=log.length-1-ri;
+    return `<div style="background:var(--surface2);border-left:3px solid var(--green);border-radius:0 6px 6px 0;padding:7px 10px;margin-bottom:5px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:var(--fh);font-size:12px;color:var(--green)">${mdy(e.date)}</span>
+        <button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);padding:1px 7px" onclick="deleteVisitNote(${idx})">&#x2715;</button>
+      </div>
+      <div style="font-size:12px;margin-top:3px;line-height:1.5;white-space:pre-wrap">${(e.note||'').replace(/</g,'&lt;')}</div>
+    </div>`;
+  }).join('');
+}
+function addSiteVisitNote(){
+  const raw=document.getElementById('es-visitlog');
+  const log=parseVisitLog(raw.value);
+  const note=prompt('What happened on this visit? (date stamped today)');
+  if(note===null) return;
+  log.push({date:today(), note:note.trim()});
+  raw.value=JSON.stringify(log);
+  // also stamp last check-in date
+  const ci=document.getElementById('es-checkin'); if(ci) ci.value=today();
+  renderVisitLog();
+}
+function deleteVisitNote(idx){
+  const raw=document.getElementById('es-visitlog');
+  const log=parseVisitLog(raw.value);
+  if(idx<0||idx>=log.length) return;
+  if(!confirm('Delete this visit note?')) return;
+  log.splice(idx,1);
+  raw.value=JSON.stringify(log);
+  renderVisitLog();
+}
+async function quickCheckInSite(id){
+  const s=jobsites.find(s=>s.id==id); if(!s) return;
+  const note=prompt('Check in at '+s.siteName+' — what happened? (optional)');
+  if(note===null) return;
+  const log=parseVisitLog(s.visitLog);
+  log.push({date:today(), note:(note||'').trim()});
+  const record={...s, lastCheckIn:today(), visitLog:JSON.stringify(log)};
+  const res=await api({action:'update',type:'jobsites',record});
+  if(res&&res.success){ toast('Checked in \u2713'); closeModals(); await syncAll(); }
+  else toast('Check-in failed',true);
+}
 function openEditSite(id) {
   const s = jobsites.find(s => s.id == id);
   if (!s) return;
@@ -3434,6 +3495,8 @@ function openEditSite(id) {
   sv('es-end', s.endDate);
   sv('es-status', s.status || 'Active');
   sv('es-notes', s.notes);
+  const vlEl=document.getElementById('es-visitlog'); if(vlEl) vlEl.value=s.visitLog||'';
+  renderVisitLog();
   document.getElementById('es-modal').classList.add('open');
   initMapAutocomplete();
 }
@@ -3529,7 +3592,8 @@ async function saveSiteEdit() {
     startDate: document.getElementById('es-start').value,
     endDate: document.getElementById('es-end').value,
     status: document.getElementById('es-status').value,
-    notes: document.getElementById('es-notes').value.trim()
+    notes: document.getElementById('es-notes').value.trim(),
+    visitLog: gval('es-visitlog', prev.visitLog||'')
   };
   const res = await api({ action:'update', type:'jobsites', record });
   btn.disabled = false; btn.textContent = 'SAVE →';
@@ -4071,6 +4135,7 @@ function openSiteDetail(id){
   document.getElementById('sd-edit-btn').onclick=()=>{closeModals();setTimeout(()=>openEditSite(id),80);};
   document.getElementById('sd-svc-btn').onclick=()=>{closeModals();setTimeout(()=>openServiceCall(id),80);};
   document.getElementById('sd-co-btn').onclick=()=>{closeModals();setTimeout(()=>openCallOff(id),80);};
+  document.getElementById('sd-checkin-btn').onclick=()=>{quickCheckInSite(id);};
   const row=(label,val,color)=>val?`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><div style="font-family:var(--fm);font-size:10px;color:var(--muted2);min-width:110px;padding-top:1px">${label}</div><div style="flex:1;color:${color||'var(--text)'};">${val}</div></div>`:'';
   const sec=(t,col)=>`<div style="font-family:var(--fh);font-size:11px;letter-spacing:1px;color:${col||'var(--muted2)'};margin:14px 0 6px;text-transform:uppercase">${t}</div>`;
   let body='';
