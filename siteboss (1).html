@@ -755,7 +755,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="form-grid">
           <div class="form-group"><label>Name *</label><input type="text" id="f-name" placeholder="John Smith"></div>
           <div class="form-group"><label>Company *</label><input type="text" id="f-company" placeholder="ABC Construction"></div>
-          <div class="form-group"><label>Phone</label><input type="text" id="f-phone" placeholder="(555) 000-0000"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="f-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label>Address</label><input type="text" id="f-address" placeholder="Street address"></div><div class="form-group"><label>City</label><input type="text" id="f-city"></div><div class="form-group"><label>Zone</label><input type="text" id="f-zone" placeholder="e.g. North OKC"></div>
           <div class="form-group"><label>Email</label><input type="text" id="f-email" placeholder="john@abc.com"></div>
           <div class="form-group"><label>Equipment They Rent</label><input type="text" id="f-equip" placeholder="Excavators, lifts..."></div>
           <div class="form-group"><label>Last Contact Date *</label><input type="date" id="f-date"></div>
@@ -2388,6 +2388,13 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="pinfo"><div class="pinfo-label">Project Type</div><div class="pinfo-val" id="pp-project" style="font-size:12px">—</div></div>
     </div>
     <div style="margin-top:12px;font-size:12px;color:var(--muted2);font-family:var(--fm)" id="pp-notes"></div>
+    <div id="pp-visitlog-section" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="col-title" style="color:var(--green);margin:0">CONTACT LOG</div>
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="logCustomerVisit()">&#10003; Log Visit / Contact</button>
+      </div>
+      <div id="pp-visitlog-display"></div>
+    </div>
   </div>
 
   <div class="profile-section">
@@ -2422,7 +2429,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="form-grid">
       <div class="form-group"><label>Name</label><input type="text" id="ec-name"></div>
       <div class="form-group"><label>Company</label><input type="text" id="ec-company"></div>
-      <div class="form-group"><label>Phone</label><input type="text" id="ec-phone"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="ec-phone"></div><div class="form-group"><label>Address</label><input type="text" id="ec-address"></div><div class="form-group"><label>City</label><input type="text" id="ec-city"></div><div class="form-group"><label>Zone</label><input type="text" id="ec-zone"></div>
       <div class="form-group"><label>Email</label><input type="text" id="ec-email"></div>
       <div class="form-group"><label>Equipment</label><input type="text" id="ec-equip"></div>
       <div class="form-group"><label>Last Contact</label><input type="date" id="ec-date"></div>
@@ -2483,6 +2490,14 @@ tr:hover td{background:rgba(255,255,255,.015)}
   <div class="modal" style="max-width:520px">
     <div class="modal-title" style="color:var(--green)">&#128205; ROUTE OPTIMIZER</div>
     <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>Include</label>
+        <select id="route-include">
+          <option value="sites">Job Sites</option>
+          <option value="customers">Customers</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
       <div class="form-group">
         <label>Filter by Day</label>
         <select id="route-day">
@@ -3013,7 +3028,7 @@ function buildRoute(){ openRouteOptimizer(); }
 
 function openRouteOptimizer(){
   // Populate zone dropdown
-  const zones=[...new Set(jobsites.map(s=>s.zone).filter(Boolean))].sort();
+  const zones=[...new Set([...jobsites.map(s=>s.zone),...clients.map(c=>c.zone)].filter(Boolean))].sort();
   const zSel=document.getElementById('route-zone');
   if(zSel){ zSel.innerHTML='<option value="all">All Zones</option>'+zones.map(z=>`<option value="${z}">${z}</option>`).join(''); }
   // Reset fields
@@ -3030,29 +3045,43 @@ function openRouteOptimizer(){
     document.getElementById('route-origin-wrap').style.display=oSel.value==='custom'?'':'none';
   });}
   if(zSel && !zSel._wired){ zSel._wired=true; zSel.addEventListener('change', updateRoutePreview); }
+  const iSel=document.getElementById('route-include'); if(iSel && !iSel._wired){ iSel._wired=true; iSel.addEventListener('change', updateRoutePreview); }
   updateRoutePreview();
   document.getElementById('route-modal').classList.add('open');
 }
 
 function getRouteFilteredSites(){
+  const include=(document.getElementById('route-include')||{}).value||'sites';
   const day=document.getElementById('route-day').value;
   const zone=document.getElementById('route-zone').value;
   const td=today();
   const tomorrow=(()=>{const d=new Date(td+'T00:00:00');d.setDate(d.getDate()+1);return d.toISOString().split('T')[0];})();
   const weekEnd=dateAdd(td,7);
-  let sites=jobsites.filter(s=>(s.address||s.city));
-  // day filter
-  if(day==='today') sites=sites.filter(s=>s.followUpDate===td);
-  else if(day==='tomorrow') sites=sites.filter(s=>s.followUpDate===tomorrow);
-  else if(day==='week') sites=sites.filter(s=>s.followUpDate>=td&&s.followUpDate<=weekEnd);
-  else if(day==='overdue') sites=sites.filter(s=>s.followUpDate&&s.followUpDate<td);
-  else if(day==='custom'){
-    const cd=document.getElementById('route-custom-date').value;
-    if(cd) sites=sites.filter(s=>s.followUpDate===cd); else sites=[];
-  } // 'all' — every site with an address (no follow-up date required)
-  // zone filter
-  if(zone!=='all') sites=sites.filter(s=>s.zone===zone);
-  return sites.sort((a,b)=>a.followUpDate<b.followUpDate?-1:1);
+  let stops=[];
+  // Job sites
+  if(include==='sites'||include==='both'){
+    let sites=jobsites.filter(s=>(s.address||s.city));
+    if(day==='today') sites=sites.filter(s=>s.followUpDate===td);
+    else if(day==='tomorrow') sites=sites.filter(s=>s.followUpDate===tomorrow);
+    else if(day==='week') sites=sites.filter(s=>s.followUpDate>=td&&s.followUpDate<=weekEnd);
+    else if(day==='overdue') sites=sites.filter(s=>s.followUpDate&&s.followUpDate<td);
+    else if(day==='custom'){const cd=document.getElementById('route-custom-date').value; sites=cd?sites.filter(s=>s.followUpDate===cd):[];}
+    stops=stops.concat(sites.map(s=>({kind:'site',name:s.siteName,address:s.address,city:s.city,zone:s.zone,followUpDate:s.followUpDate})));
+  }
+  // Customers (day filters don't apply — customers have no follow-up date; show all with an address)
+  if(include==='customers'||include==='both'){
+    let custs=clients.filter(c=>(c.address||c.city));
+    stops=stops.concat(custs.map(c=>({kind:'customer',name:c.company||c.name,address:c.address,city:c.city,zone:c.zone,followUpDate:''})));
+  }
+  // Zone filter applies to both
+  if(zone!=='all') stops=stops.filter(s=>s.zone===zone);
+  // Sort: follow-up date first (sites), then name
+  return stops.sort((a,b)=>{
+    if(a.followUpDate&&b.followUpDate) return a.followUpDate<b.followUpDate?-1:1;
+    if(a.followUpDate) return -1;
+    if(b.followUpDate) return 1;
+    return (a.name||'')<(b.name||'')?-1:1;
+  });
 }
 
 function updateRoutePreview(){
@@ -3071,7 +3100,7 @@ function updateRoutePreview(){
   el.innerHTML=`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">${sites.length} Stop${sites.length!==1?'s':''} in Route</div>`
     +sites.map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
       <div style="background:var(--green);color:#000;font-weight:700;font-family:var(--fh);font-size:14px;min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center">${i+1}</div>
-      <div><div style="font-weight:600">${s.siteName}</div>
+      <div><div style="font-weight:600">${s.name||s.siteName}${s.kind==="customer"?' <span style=\'font-family:var(--fm);font-size:9px;color:var(--accent)\'>CUSTOMER</span>':''}</div>
       <div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${[s.address,s.city].filter(Boolean).join(', ')}${s.zone?' \u00b7 Zone: '+s.zone:''}${s.followUpDate?' \u00b7 '+mdy(s.followUpDate):''}</div></div>
     </div>`).join('');
 }
@@ -3207,6 +3236,9 @@ async function addClient() {
   const record = {
     name, company,
     phone: document.getElementById('f-phone').value.trim(),
+    address: document.getElementById('f-address').value.trim(),
+    city: document.getElementById('f-city').value.trim(),
+    zone: document.getElementById('f-zone').value.trim(),
     email: document.getElementById('f-email').value.trim(),
     equip: document.getElementById('f-equip').value.trim(),
     lastContact: date,
@@ -3218,7 +3250,7 @@ async function addClient() {
   btn.disabled = false; btn.textContent = 'ADD CUSTOMER →';
   if (res && res.success) {
     toast('Customer added ✓');
-    ['f-name','f-company','f-phone','f-email','f-equip','f-project','f-value','f-notes'].forEach(id => document.getElementById(id).value = '');
+    ['f-name','f-company','f-phone','f-email','f-equip','f-project','f-value','f-notes','f-address','f-city','f-zone'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f-date').value = today();
     await syncAll();
     showPanel('customers');
@@ -3243,6 +3275,9 @@ function openEditClient(id) {
   document.getElementById('ec-name').value = c.name || '';
   document.getElementById('ec-company').value = c.company || '';
   document.getElementById('ec-phone').value = c.phone || '';
+  document.getElementById('ec-address').value = c.address || '';
+  document.getElementById('ec-city').value = c.city || '';
+  document.getElementById('ec-zone').value = c.zone || '';
   document.getElementById('ec-email').value = c.email || '';
   document.getElementById('ec-equip').value = c.equip || '';
   document.getElementById('ec-date').value = c.lastContact || '';
@@ -3261,6 +3296,9 @@ async function saveClientEdit() {
     name: document.getElementById('ec-name').value.trim(),
     company: document.getElementById('ec-company').value.trim(),
     phone: document.getElementById('ec-phone').value.trim(),
+    address: document.getElementById('ec-address').value.trim(),
+    city: document.getElementById('ec-city').value.trim(),
+    zone: document.getElementById('ec-zone').value.trim(),
     email: document.getElementById('ec-email').value.trim(),
     equip: document.getElementById('ec-equip').value.trim(),
     lastContact: document.getElementById('ec-date').value,
@@ -3607,6 +3645,47 @@ function closeModals() {
 // ══════════════════════════════════════════════
 // CUSTOMER PROFILE
 // ══════════════════════════════════════════════
+function parseCustLog(raw){ if(!raw) return []; try{const a=JSON.parse(raw);return Array.isArray(a)?a:[];}catch(e){return [];} }
+function renderCustomerLog(c){
+  const disp=document.getElementById('pp-visitlog-display'); if(!disp) return;
+  const log=parseCustLog(c&&c.visitLog);
+  if(!log.length){ disp.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);padding:6px 0">No contacts logged yet. Tap "Log Visit / Contact" after an office visit, call, or email.</div>'; return; }
+  const typeColor={'Office Visit':'var(--green)','Call':'var(--blue)','Email':'var(--accent)','Text':'var(--yellow)','Other':'var(--muted2)'};
+  disp.innerHTML=log.slice().reverse().map((e,ri)=>{
+    const idx=log.length-1-ri;
+    const col=typeColor[e.type]||'var(--muted2)';
+    return `<div style="background:var(--surface2);border-left:3px solid ${col};border-radius:0 6px 6px 0;padding:7px 10px;margin-bottom:5px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:var(--fm);font-size:11px"><span style="color:${col};font-weight:600">${e.type||'Contact'}</span> &middot; <span style="color:var(--muted2)">${mdy(e.date)}</span></span>
+        <button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);padding:1px 7px" onclick="deleteCustLog('${activeProfileId}',${idx})">&#x2715;</button>
+      </div>
+      ${e.note?`<div style="font-size:12px;margin-top:3px;line-height:1.5;white-space:pre-wrap">${e.note.replace(/</g,'&lt;')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+async function logCustomerVisit(){
+  const id=activeProfileId; if(!id) return;
+  const c=clients.find(c=>c.id==id); if(!c) return;
+  const type=prompt('Contact type? Type one:\nOffice Visit, Call, Email, Text, Other','Office Visit');
+  if(type===null) return;
+  const note=prompt('What happened? (optional)');
+  if(note===null) return;
+  const log=parseCustLog(c.visitLog);
+  log.push({date:today(), type:(type||'Other').trim(), note:(note||'').trim()});
+  const record={...c, lastContact:today(), visitLog:JSON.stringify(log)};
+  const res=await api({action:'update',type:'clients',record});
+  if(res&&res.success){ toast('Contact logged \u2713'); await syncAll(); openProfile(id); }
+  else toast('Could not log contact',true);
+}
+async function deleteCustLog(id,idx){
+  const c=clients.find(c=>c.id==id); if(!c) return;
+  const log=parseCustLog(c.visitLog);
+  if(idx<0||idx>=log.length) return;
+  if(!confirm('Delete this log entry?')) return;
+  log.splice(idx,1);
+  const res=await api({action:'update',type:'clients',record:{...c, visitLog:JSON.stringify(log)}});
+  if(res&&res.success){ toast('Deleted \u2713'); await syncAll(); openProfile(id); }
+}
 function openProfile(id) {
   const c = clients.find(c => c.id == id);
   if (!c) return;
@@ -3630,6 +3709,7 @@ function openProfile(id) {
   document.getElementById('pp-last').textContent    = c.lastContact ? `${c.lastContact} (${days}d ago)` : '—';
   document.getElementById('pp-tier').innerHTML      = tierLabel(tier);
   document.getElementById('pp-notes').textContent   = c.notes || '';
+  renderCustomerLog(c);
   document.getElementById('pp-sites').textContent   = sites.length;
   document.getElementById('pp-active').textContent  = activeSites.length;
   document.getElementById('pp-revenue').textContent = totalRev > 0 ? '$' + totalRev.toLocaleString() : '$0';
