@@ -491,6 +491,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="nav-item" onclick="showPanel('visits')">🚗 Visit Schedule</div>
     <div class="nav-item" onclick="showPanel('revenue')">📈 Revenue</div>
     <div class="nav-item" onclick="showPanel('activity')">📋 Activity Report</div>
+    <div class="nav-item" onclick="showPanel('plaud')">📝 Plaud Notes</div>
     <div class="nav-item" onclick="showPanel('stories')">📖 Story Capture</div>
     <div class="nav-item" onclick="showPanel('digest-setup')">☀️ Morning Digest</div>
     <div class="nav-item" onclick="showPanel('branch-contacts');renderBranchContacts()">📧 Branch Contacts</div>
@@ -519,6 +520,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:8px 14px" onclick="showPanel('add-visit')">🚗 Visit</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:8px 14px" onclick="showPanel('add-invoice')">💵 Invoice</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:8px 14px" onclick="showPanel('add-equipment')">🔧 Equipment</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--red);color:var(--red);font-size:11px;padding:8px 14px" onclick="openServiceCall('')">🔧 Service Call</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--blue);color:var(--blue);font-size:11px;padding:8px 14px" onclick="openCallOff('')">📞 Call Off</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:8px 14px" onclick="quickAddTask()">✅ Task</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--red);color:var(--red);font-size:11px;padding:8px 14px" onclick="openLogLostRent('standalone','')">📉 Lost Rent</button>
         </div>
@@ -758,7 +761,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="form-grid">
           <div class="form-group"><label>Name *</label><input type="text" id="f-name" placeholder="John Smith"></div>
           <div class="form-group"><label>Company *</label><input type="text" id="f-company" placeholder="ABC Construction"></div>
-          <div class="form-group"><label>Phone</label><input type="text" id="f-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label>Address</label><input type="text" id="f-address" placeholder="Street address"></div><div class="form-group"><label>City</label><input type="text" id="f-city"></div><div class="form-group"><label>State</label><input type="text" id="f-state" placeholder="OK"></div><div class="form-group"><label>Zip Code</label><input type="text" id="f-zip" placeholder="73101"></div><div class="form-group"><label>Zone</label><input type="text" id="f-zone" placeholder="e.g. North OKC"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="f-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label>Address</label><input type="text" id="f-address" placeholder="Street address"></div><div class="form-group"><label>City</label><input type="text" id="f-city"></div><div class="form-group"><label>State</label><input type="text" id="f-state" placeholder="OK"></div><div class="form-group"><label>Zip Code</label><input type="text" id="f-zip" placeholder="73101"></div><div class="form-group"><label>Zone</label><select id="f-zone"><option value="">— Day / Zone —</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option></select></div>
           <div class="form-group"><label>Email</label><input type="text" id="f-email" placeholder="john@abc.com"></div>
           <div class="form-group"><label>Equipment They Rent</label><input type="text" id="f-equip" placeholder="Excavators, lifts..."></div>
           <div class="form-group"><label>Last Contact Date *</label><input type="date" id="f-date"></div>
@@ -1009,7 +1012,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Sub 10 Company</label><input type="text" list="customer-companies" id="s-sub10company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Equipment On Site</label><input type="text" id="s-equip" placeholder="Scissor lift, excavator..."></div>
           <div class="form-group"><label>Est. Monthly Value</label><input type="text" id="s-value" placeholder="$8,000"></div>
-          <div class="form-group"><label>Zone</label><input type="text" id="s-zone" placeholder="North, South, Zone 1..."></div>
+          <div class="form-group"><label>Zone</label><select id="s-zone"><option value="">— Day / Zone —</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option></select></div>
           <div class="form-group"><label>Start Date</label><input type="date" id="s-start"></div>
           <div class="form-group"><label>End Date (est.)</label><input type="date" id="s-end"></div>
           <div class="form-group"><label>Status</label>
@@ -1707,6 +1710,21 @@ tr:hover td{background:rgba(255,255,255,.015)}
     </div>
 
   <!-- ══ MAP VIEW ══ -->
+    <div class="panel" id="panel-plaud">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--accent)">📝 PLAUD NOTES</div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="renderPlaud()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="form-card" style="border-top-color:var(--accent)">
+        <div style="font-family:var(--fm);font-size:11px;color:var(--muted2);line-height:1.7">Reads your Plaud sheet privately through your Apps Script. Tap a note to turn it into a To-Do, Follow-Up, or Prospect — or mark it Done. Tap Refresh to pull the latest.</div>
+      </div>
+      <div id="plaud-list">
+        <div class="empty-state"><div class="empty-icon">📝</div>Tap Refresh to load your Plaud notes.</div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-map">
       <div class="section-head">
         <div class="section-title" style="color:var(--accent)">🗺 TERRITORY MAP</div>
@@ -1966,7 +1984,12 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <option value="">— Select Site —</option>
         </select>
       </div>
-      <div class="form-group"><label>Customer</label><input type="text" id="svc-customer" placeholder="Customer name"></div>
+      <div class="form-group"><label>Customer</label>
+        <select id="svc-clientId" onchange="prefillServiceCustomer()" style="margin-bottom:6px">
+          <option value="">— Select Customer —</option>
+        </select>
+        <input type="text" id="svc-customer" placeholder="Or type customer name">
+      </div>
       <div class="form-group"><label>Equipment Category *</label>
         <select id="svc-equip-cat" onchange="updateEquipField('svc')">
           <option value="">— Select Category —</option>
@@ -2026,7 +2049,12 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <option value="">— Select Site —</option>
         </select>
       </div>
-      <div class="form-group"><label>Customer</label><input type="text" id="co-customer" placeholder="Customer name"></div>
+      <div class="form-group"><label>Customer</label>
+        <select id="co-clientId" onchange="prefillCallOffCustomer()" style="margin-bottom:6px">
+          <option value="">— Select Customer —</option>
+        </select>
+        <input type="text" id="co-customer" placeholder="Or type customer name">
+      </div>
       <div class="form-group"><label>Equipment Category *</label>
         <select id="co-equip-cat" onchange="updateEquipField('co')">
           <option value="">— Select Category —</option>
@@ -2206,7 +2234,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Phone</label><input type="text" id="qc-phone"></div>
       <div class="form-group"><label>Email</label><input type="text" id="qc-email"></div>
       <div class="form-group"><label>Equipment</label><input type="text" id="qc-equip"></div>
-      <div class="form-group"><label>Monthly Value</label><input type="text" id="qc-value"></div><div class="form-group"><label>Address</label><input type="text" id="qc-address"></div><div class="form-group"><label>City</label><input type="text" id="qc-city"></div><div class="form-group"><label>State</label><input type="text" id="qc-state" placeholder="OK"></div><div class="form-group"><label>Zip Code</label><input type="text" id="qc-zip" placeholder="73101"></div><div class="form-group"><label>Zone</label><input type="text" id="qc-zone"></div>
+      <div class="form-group"><label>Monthly Value</label><input type="text" id="qc-value"></div><div class="form-group"><label>Address</label><input type="text" id="qc-address"></div><div class="form-group"><label>City</label><input type="text" id="qc-city"></div><div class="form-group"><label>State</label><input type="text" id="qc-state" placeholder="OK"></div><div class="form-group"><label>Zip Code</label><input type="text" id="qc-zip" placeholder="73101"></div><div class="form-group"><label>Zone</label><select id="qc-zone"><option value="">— Day / Zone —</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option></select></div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
@@ -2432,7 +2460,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="form-grid">
       <div class="form-group"><label>Name</label><input type="text" id="ec-name"></div>
       <div class="form-group"><label>Company</label><input type="text" id="ec-company"></div>
-      <div class="form-group"><label>Phone</label><input type="text" id="ec-phone"></div><div class="form-group"><label>Address</label><input type="text" id="ec-address"></div><div class="form-group"><label>City</label><input type="text" id="ec-city"></div><div class="form-group"><label>State</label><input type="text" id="ec-state"></div><div class="form-group"><label>Zip Code</label><input type="text" id="ec-zip"></div><div class="form-group"><label>Zone</label><input type="text" id="ec-zone"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="ec-phone"></div><div class="form-group"><label>Address</label><input type="text" id="ec-address"></div><div class="form-group"><label>City</label><input type="text" id="ec-city"></div><div class="form-group"><label>State</label><input type="text" id="ec-state"></div><div class="form-group"><label>Zip Code</label><input type="text" id="ec-zip"></div><div class="form-group"><label>Zone</label><select id="ec-zone"><option value="">— Day / Zone —</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option></select></div>
       <div class="form-group"><label>Email</label><input type="text" id="ec-email"></div>
       <div class="form-group"><label>Equipment</label><input type="text" id="ec-equip"></div>
       <div class="form-group"><label>Last Contact</label><input type="date" id="ec-date"></div>
@@ -2966,7 +2994,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </select></div>
       <div class="form-group"><label>Equipment</label><input type="text" id="es-equip"></div>
       <div class="form-group"><label>Monthly Value</label><input type="text" id="es-value"></div>
-      <div class="form-group"><label>Zone</label><input type="text" id="es-zone"></div>
+      <div class="form-group"><label>Zone</label><select id="es-zone"><option value="">— Day / Zone —</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option></select></div>
       <div class="form-group"><label>Start Date</label><input type="date" id="es-start"></div>
       <div class="form-group"><label>End Date</label><input type="date" id="es-end"></div>
       <div class="form-group"><label>Status</label>
@@ -3351,7 +3379,7 @@ function openEditClient(id) {
   document.getElementById('ec-city').value = c.city || '';
   document.getElementById('ec-state').value = c.state || '';
   document.getElementById('ec-zip').value = c.zip || '';
-  document.getElementById('ec-zone').value = c.zone || '';
+  setZoneSelect('ec-zone', c.zone);
   document.getElementById('ec-email').value = c.email || '';
   document.getElementById('ec-equip').value = c.equip || '';
   document.getElementById('ec-date').value = c.lastContact || '';
@@ -3608,7 +3636,7 @@ function openEditSite(id) {
   sv('es-competitor', s.competitor);
   sv('es-quotes', s.quotes);
   sv('es-value', s.monthlyValue);
-  sv('es-zone', s.zone);
+  setZoneSelect('es-zone', s.zone);
   sv('es-start', s.startDate);
   sv('es-end', s.endDate);
   sv('es-status', s.status || 'Active');
@@ -4153,6 +4181,14 @@ function reengCard(c, tier) {
   </div>`;
 }
 
+function setZoneSelect(id,val){
+  const sel=document.getElementById(id); if(!sel) return;
+  val=val||'';
+  if(val && !Array.from(sel.options).some(o=>o.value===val)){
+    const o=document.createElement('option'); o.value=val; o.textContent=val; sel.appendChild(o);
+  }
+  sel.value=val;
+}
 function siteDataScore(s){
   // Card completeness across the entire site card, including sub data.
   const core=[s.siteName,s.clientId,s.address,s.city,s.zone,s.status,s.startDate,s.endDate,s.monthlyValue,s.gc,s.gcName,s.gcPhone,s.superintendent,s.supePhone,s.equipOnSite,s.workType,s.followUpDate,s.competitor,s.notes];
@@ -5504,12 +5540,40 @@ function openServiceCall(siteId) {
   document.getElementById('svc-siteId').value = siteId || '';
   ['svc-customer','svc-issue','svc-address','svc-contact','svc-notes','svc-equip-unit','svc-to-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('svc-equip-cat').value = '— Select Class —';
+  populateSvcCustomers('svc-clientId');
+  document.getElementById('svc-clientId').value='';
   populateBranchPicker('svc-branch-pick','service');
   document.getElementById('svc-priority').value = 'URGENT';
   if (siteId) prefillServiceSite();
   document.getElementById('service-modal').classList.add('open');
 }
 
+function populateSvcCustomers(selId){
+  const sel=document.getElementById(selId); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Select Customer —</option>'+
+    clients.slice().sort((a,b)=>(a.company||a.name||'').localeCompare(b.company||b.name||''))
+    .map(c=>`<option value="${c.id}">${(c.company||c.name)}</option>`).join('');
+  if(cur) sel.value=cur;
+}
+function prefillServiceCustomer(){
+  const id=document.getElementById('svc-clientId').value;
+  const c=clients.find(c=>c.id==id); if(!c) return;
+  document.getElementById('svc-customer').value=c.company||c.name||'';
+  const contactEl=document.getElementById('svc-contact');
+  if(contactEl && !contactEl.value) contactEl.value=(c.name?c.name:'')+(c.phone?' — '+c.phone:'');
+  const addrEl=document.getElementById('svc-address');
+  if(addrEl && !addrEl.value){ const a=[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '); if(a) addrEl.value=a; }
+}
+function prefillCallOffCustomer(){
+  const id=document.getElementById('co-clientId').value;
+  const c=clients.find(c=>c.id==id); if(!c) return;
+  document.getElementById('co-customer').value=c.company||c.name||'';
+  const contactEl=document.getElementById('co-contact');
+  if(contactEl && !contactEl.value) contactEl.value=(c.name?c.name:'')+(c.phone?' — '+c.phone:'');
+  const addrEl=document.getElementById('co-address');
+  if(addrEl && !addrEl.value){ const a=[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '); if(a) addrEl.value=a; }
+}
 function prefillServiceSite() {
   const siteId = document.getElementById('svc-siteId').value;
   const s = jobsites.find(s => s.id == siteId);
@@ -5587,6 +5651,8 @@ function openCallOff(siteId) {
   document.getElementById('co-siteId').value = siteId || '';
   ['co-customer','co-address','co-contact','co-notes','co-equip-unit','co-to-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('co-equip-cat').value = '— Select Class —';
+  populateSvcCustomers('co-clientId');
+  document.getElementById('co-clientId').value='';
   populateBranchPicker('co-branch-pick','calloff');
   document.getElementById('co-date').value = today();
   document.getElementById('co-reason').value = 'Job Complete';
@@ -7732,11 +7798,12 @@ function setMapFilter(f, btn) {
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice'];
+  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice','plaud'];
   document.querySelectorAll('.nav-item').forEach((n,i) => {
     n.classList.toggle('active', panels[i] === id);
   });
   if (id === 'map') renderMap();
+  if (id === 'plaud') renderPlaud();
   if (id === 'branch-contacts') renderBranchContacts();
   if (id !== 'dashboard' && id !== 'customers' && id !== 'jobsites') closeProfile();
 }
