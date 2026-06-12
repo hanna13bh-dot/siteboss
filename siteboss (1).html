@@ -4719,6 +4719,22 @@ function savePlaudUrl(){
   localStorage.setItem('siteboss_plaud_url', u);
   toast('Saved ✓'); renderPlaud();
 }
+async function togglePlaudDone(cb){
+  const task=cb.dataset.t, tab=cb.dataset.tab, wasDone=cb.dataset.done==='1';
+  cb.disabled=true;
+  if(!wasDone){
+    const res=await api({action:'markPlaudDone',task,tab});
+    if(res&&res.success){
+      toast('Marked complete \u2713');
+      try{ await api({ action:'add', type:'manualActivities', record:{ type:'Plaud Note', date:today(), clientId:'', customerName:'', siteId:'', outcome:'Completed', notes:task } }); await syncAll(); }catch(e){}
+      renderPlaud();
+    } else { cb.checked=false; cb.disabled=false; toast((res&&res.error)||'Could not mark done',true); }
+  } else {
+    const res=await api({action:'markPlaudUndone',task,tab});
+    if(res&&res.success){ toast('Reopened'); renderPlaud(); }
+    else { cb.checked=true; cb.disabled=false; toast((res&&res.error)||'Reopen needs Code.gs redeploy',true); }
+  }
+}
 async function markPlaudDone(task,tab){
   const res=await api({action:'markPlaudDone',task,tab});
   if(res&&res.success){
@@ -4732,24 +4748,7 @@ async function markPlaudDone(task,tab){
   }
   else{toast((res&&res.error)||'Could not mark done',true);}
 }
-async function completePlaudNote(chk){
-  const task=chk.dataset.t, tab=chk.dataset.tab;
-  chk.disabled=true;
-  const res=await api({action:'markPlaudDone',task,tab});
-  if(res&&res.success){
-    // Log to today's activity report so it shows on the daily summary
-    await api({ action:'add', type:'manualActivities', record:{
-      type:'Plaud Note', date:today(), clientId:'', customerName:'', siteId:'',
-      outcome:'Completed', notes:task
-    }});
-    toast('Done \u2713 — saved to today\'s report');
-    await syncAll();
-    renderPlaud();
-  } else {
-    chk.checked=false; chk.disabled=false;
-    toast((res&&res.error)||'Could not mark done',true);
-  }
-}
+
 async function renderPlaud(){
   const list=document.getElementById('plaud-list'); if(!list) return;
   list.innerHTML='<div class="empty-state">Loading Plaud notes...</div>';
@@ -4760,17 +4759,16 @@ async function renderPlaud(){
     const tabName = (data && data.tab) ? data.tab : '';
     if(!items.length){ list.innerHTML='<div class="empty-state">No Plaud notes yet. Record something and let your Zap run, then tap Refresh.</div>'; return; }
     const open=items.filter(i=>!i.done), doneItems=items.filter(i=>i.done);
-    const card=i=>`<div class="equip-row" style="border-left-color:${i.done?'var(--green)':'var(--accent)'}">
-      <div style="flex:1"><div class="equip-name">${plEsc(i.task)}</div>${(i.date||i.tab)?`<div class="equip-meta">${plEsc(i.date||'')}${i.tab?((i.date?' \u00b7 ':'')+plEsc(i.tab)):''}</div>`:''}</div>
-      ${i.done
-        ? `<div style="font-size:22px;color:var(--green);font-weight:700;align-self:center;padding-left:8px">\u2713</div>`
-        : `<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--fm);font-size:11px;color:var(--green)"><input type="checkbox" style="width:18px;height:18px;accent-color:var(--green)" data-t="${plAttr(i.task)}" data-tab="${plAttr(i.tab||'')}" onchange="completePlaudNote(this)"> Done</label>
-            <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" data-t="${plAttr(i.task)}" onclick="plaudToTask(this.dataset.t)">\u2795 To-Do</button>
-            <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" data-t="${plAttr(i.task)}" onclick="plaudToFollowUp(this.dataset.t)">\u2192 Follow-Up</button>
-            <button class="btn-small" style="color:var(--green);border-color:var(--green)" data-t="${plAttr(i.task)}" onclick="plaudToProspect(this.dataset.t)">\u2192 Prospect</button>
-          </div>`
-      }
+    const card=i=>`<div class="equip-row" style="border-left-color:${i.done?'var(--green)':'var(--accent)'};flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <label style="display:flex;align-items:center;cursor:pointer;align-self:flex-start;padding-top:2px"><input type="checkbox" ${i.done?'checked':''} style="width:20px;height:20px;accent-color:var(--green)" data-t="${plAttr(i.task)}" data-tab="${plAttr(i.tab||'')}" data-done="${i.done?'1':'0'}" onchange="togglePlaudDone(this)"></label>
+        <div style="flex:1"><div class="equip-name" style="${i.done?'text-decoration:line-through;opacity:.55':''}">${plEsc(i.task)}</div>${(i.date||i.tab)?`<div class="equip-meta">${plEsc(i.date||'')}${i.tab?((i.date?' \u00b7 ':'')+plEsc(i.tab)):''}</div>`:''}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" data-t="${plAttr(i.task)}" onclick="plaudToTask(this.dataset.t)">\u2795 To-Do</button>
+        <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" data-t="${plAttr(i.task)}" onclick="plaudToFollowUp(this.dataset.t)">\u2192 Follow-Up</button>
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" data-t="${plAttr(i.task)}" onclick="plaudToProspect(this.dataset.t)">\u2192 Prospect</button>
+      </div>
     </div>`;
     const hdr = tabName ? `<div style="font-family:var(--fm);font-size:11px;color:var(--accent);margin-bottom:10px">\ud83d\udcc5 Showing: ${plEsc(tabName)}</div>` : '';
     list.innerHTML = hdr + open.map(card).join('') + (doneItems.length ? `<div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin:14px 0 6px">COMPLETED (${doneItems.length})</div>`+doneItems.map(card).join('') : '');
