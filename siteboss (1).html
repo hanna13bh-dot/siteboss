@@ -3574,6 +3574,8 @@ function addSiteVisitNote(){
   // also stamp last check-in date
   const ci=document.getElementById('es-checkin'); if(ci) ci.value=today();
   renderVisitLog();
+  const sid=document.getElementById('es-id'); const s=sid?jobsites.find(x=>x.id==sid.value):null;
+  if(s) afterCheckInOffer(s, note.trim());
 }
 function deleteVisitNote(idx){
   const raw=document.getElementById('es-visitlog');
@@ -3592,8 +3594,32 @@ async function quickCheckInSite(id){
   log.push({date:today(), note:(note||'').trim()});
   const record={...s, lastCheckIn:today(), visitLog:JSON.stringify(log)};
   const res=await api({action:'update',type:'jobsites',record});
-  if(res&&res.success){ toast('Checked in \u2713'); closeModals(); await syncAll(); }
+  if(res&&res.success){
+    toast('Checked in \u2713');
+    await afterCheckInOffer(s, note);
+    closeModals(); await syncAll();
+  }
   else toast('Check-in failed',true);
+}
+async function afterCheckInOffer(s, note){
+  // Offer to turn the visit into a follow-up or a to-do
+  if(confirm('Create a FOLLOW-UP for '+s.siteName+'?')){
+    closeModals();
+    showPanel('add-followup');
+    setTimeout(()=>{
+      const set=(i,v)=>{const el=document.getElementById(i); if(el&&v) el.value=v;};
+      set('fu-title','Follow up: '+s.siteName+(note?' — '+note:''));
+      set('fu-due', dateAdd(today(),3));
+      set('fu-notes','Created from site check-in');
+    },80);
+    return;
+  }
+  if(confirm('Add a TO-DO task from this visit?')){
+    const txt=prompt('Task:', (note?note:'Follow up at '+s.siteName));
+    if(txt===null||!txt.trim()) return;
+    const r=await api({ action:'add', type:'tasks', record:{ text:txt.trim(), when:'today', status:'open', created:today() } });
+    if(r&&r.success) toast('Task added \u2713');
+  }
 }
 function openEditSite(id) {
   const s = jobsites.find(s => s.id == id);
@@ -4695,8 +4721,34 @@ function savePlaudUrl(){
 }
 async function markPlaudDone(task,tab){
   const res=await api({action:'markPlaudDone',task,tab});
-  if(res&&res.success){toast('Marked complete ✓');renderPlaud();}
+  if(res&&res.success){
+    toast('Marked complete ✓');
+    // Log to today's Activity Report as a completed Plaud note
+    try{
+      await api({ action:'add', type:'manualActivities', record:{ type:'Plaud Note', date:today(), clientId:'', customerName:'', siteId:'', outcome:'Completed', notes:task } });
+      await syncAll();
+    }catch(e){}
+    renderPlaud();
+  }
   else{toast((res&&res.error)||'Could not mark done',true);}
+}
+async function completePlaudNote(chk){
+  const task=chk.dataset.t, tab=chk.dataset.tab;
+  chk.disabled=true;
+  const res=await api({action:'markPlaudDone',task,tab});
+  if(res&&res.success){
+    // Log to today's activity report so it shows on the daily summary
+    await api({ action:'add', type:'manualActivities', record:{
+      type:'Plaud Note', date:today(), clientId:'', customerName:'', siteId:'',
+      outcome:'Completed', notes:task
+    }});
+    toast('Done \u2713 — saved to today\'s report');
+    await syncAll();
+    renderPlaud();
+  } else {
+    chk.checked=false; chk.disabled=false;
+    toast((res&&res.error)||'Could not mark done',true);
+  }
 }
 async function renderPlaud(){
   const list=document.getElementById('plaud-list'); if(!list) return;
@@ -4713,7 +4765,7 @@ async function renderPlaud(){
       ${i.done
         ? `<div style="font-size:22px;color:var(--green);font-weight:700;align-self:center;padding-left:8px">\u2713</div>`
         : `<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn-small" style="color:var(--green);border-color:var(--green)" data-t="${plAttr(i.task)}" data-tab="${plAttr(i.tab||'')}" onclick="markPlaudDone(this.dataset.t,this.dataset.tab)">\u2713 Done</button>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--fm);font-size:11px;color:var(--green)"><input type="checkbox" style="width:18px;height:18px;accent-color:var(--green)" data-t="${plAttr(i.task)}" data-tab="${plAttr(i.tab||'')}" onchange="completePlaudNote(this)"> Done</label>
             <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" data-t="${plAttr(i.task)}" onclick="plaudToTask(this.dataset.t)">\u2795 To-Do</button>
             <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" data-t="${plAttr(i.task)}" onclick="plaudToFollowUp(this.dataset.t)">\u2192 Follow-Up</button>
             <button class="btn-small" style="color:var(--green);border-color:var(--green)" data-t="${plAttr(i.task)}" onclick="plaudToProspect(this.dataset.t)">\u2192 Prospect</button>
