@@ -384,6 +384,9 @@ tr:hover td{background:rgba(255,255,255,.015)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* Google Places autocomplete dropdown must sit above modals (z-index 10001+) */
+.pac-container { z-index: 100000 !important; }
 </style>
 </head>
 <body>
@@ -3040,6 +3043,8 @@ function attachAutocomplete(inputId, cityId, stateId, zipId){
   if(!gmapsLoaded||!window.google) return;
   const input=document.getElementById(inputId);
   if(!input||input._ac) return; input._ac=true;
+  // tapping a pre-filled address selects all so typing replaces it & re-triggers suggestions
+  input.addEventListener('focus',function(){ if(this.value) this.select(); });
   const ac=new google.maps.places.Autocomplete(input,{componentRestrictions:{country:'us'},fields:['formatted_address','address_components']});
   ac.addListener('place_changed',()=>{
     const pl=ac.getPlace(); if(!pl.address_components) return;
