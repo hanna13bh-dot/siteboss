@@ -6685,7 +6685,11 @@ async function refreshEquipmentFromReport(input) {
   toast('Refreshing equipment list...');
 
   const onRentCount = equipment.filter(e => e.status === 'On Rent' || e.status === 'Pending Pickup').length;
-  await api({ action:'clearOnRent', type:'equipment' });
+  const clearRes = await api({ action:'clearOnRent', type:'equipment' });
+  if (!clearRes || !clearRes.success) {
+    toast('Update the Apps Script: Deploy \u2192 Manage deployments \u2192 New version. Batch import isn\'t live yet.', true);
+    input.value=''; return;
+  }
 
   const text = await file.text();
   const rows = parseCSV(text).filter(r => r.length && r.some(c => (c||'').trim() !== ''));
@@ -6756,17 +6760,24 @@ async function refreshEquipmentFromReport(input) {
     });
     imported++;
   }
-  // Send all rows in one batch request (chunked to stay under request size limits)
-  const CHUNK=80;
-  let saved=0;
+  // Send in chunks; retry each chunk once on failure.
+  const CHUNK=40;
+  let saved=0, failedChunks=0;
   for(let i=0;i<batch.length;i+=CHUNK){
     const slice=batch.slice(i,i+CHUNK);
-    const res=await api({ action:'addBatch', type:'equipment', records:slice });
+    let res=await api({ action:'addBatch', type:'equipment', records:slice });
+    if(!(res&&res.success)){
+      await new Promise(r=>setTimeout(r,600)); // brief pause, then retry
+      res=await api({ action:'addBatch', type:'equipment', records:slice });
+    }
     if(res&&res.success) saved+=(res.count||slice.length);
+    else failedChunks++;
+    toast('Loading equipment... '+saved+' of '+batch.length);
   }
   await syncAll();
   input.value='';
-  toast('Equipment refreshed \u2014 ' + onRentCount + ' cleared, ' + saved + ' loaded \u2713');
+  if(failedChunks>0) toast(saved+' of '+batch.length+' loaded \u2014 '+failedChunks+' batch(es) failed, run refresh again', true);
+  else toast('Equipment refreshed \u2014 '+onRentCount+' cleared, '+saved+' loaded \u2713');
 }
 
 function downloadEquipTemplate() {
