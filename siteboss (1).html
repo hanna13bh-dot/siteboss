@@ -6684,10 +6684,16 @@ async function refreshEquipmentFromReport(input) {
   if (!confirm('This will mark all current equipment as Off Rent and load the new report. Continue?')) { input.value=''; return; }
   toast('Refreshing equipment list...');
 
+  // Verify the deployed Code.gs actually has the batch build
+  const ver = await api({ action:'version' });
+  if (!ver || ver.build !== 'batch-2') {
+    toast('Apps Script is still the OLD version. In Apps Script: Deploy \u2192 Manage deployments \u2192 pencil \u2192 New version \u2192 Deploy. (Saving alone won\'t work.)', true);
+    input.value=''; return;
+  }
   const onRentCount = equipment.filter(e => e.status === 'On Rent' || e.status === 'Pending Pickup').length;
   const clearRes = await api({ action:'clearOnRent', type:'equipment' });
   if (!clearRes || !clearRes.success) {
-    toast('Update the Apps Script: Deploy \u2192 Manage deployments \u2192 New version. Batch import isn\'t live yet.', true);
+    toast((clearRes && clearRes.error) ? ('Clear failed: '+clearRes.error) : 'Could not clear old equipment', true);
     input.value=''; return;
   }
 
