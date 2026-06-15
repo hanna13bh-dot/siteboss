@@ -4896,6 +4896,10 @@ async function deleteRevenue(id) {
   if (res && res.success) await syncAll();
 }
 
+function money(val){
+  const n=parseFloat((String(val==null?'':val)).replace(/[^0-9.\-]/g,''))||0;
+  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
 function renderRevenue() {
   // Update dashboard this-month card
   const now = new Date();
@@ -4947,7 +4951,7 @@ function renderRevenue() {
     return `<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);padding:16px 20px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">${label}</div>
-        <div style="font-family:var(--fh);font-size:28px">${r.amount||'$0'}</div>
+        <div style="font-family:var(--fh);font-size:28px">${money(amt)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:14px">
         ${change}
@@ -6679,7 +6683,7 @@ async function refreshEquipmentFromReport(input) {
   if (!confirm('This will mark all current equipment as Off Rent and load the new report. Continue?')) { input.value=''; return; }
   toast('Refreshing equipment list...');
 
-  const onRent = equipment.filter(e => e.status === 'On Rent');
+  const onRent = equipment.filter(e => e.status === 'On Rent' || e.status === 'Pending Pickup');
   for (const eq of onRent) { await api({ action:'update', type:'equipment', record:{ ...eq, status:'Off Rent' } }); }
 
   const text = await file.text();
@@ -6736,12 +6740,16 @@ async function refreshEquipmentFromReport(input) {
 
     await api({ action:'add', type:'equipment', record:{
       equip, equipClass, unitNum, qty:'1',
+      rate: rate,
+      start: start,
+      end: end,
       clientId: c ? c.id : '',
       siteId: s ? s.id : '',
       siteName: siteName,
       address: s ? (s.address||'') : '',
       customerName: customerName,
       contact: ordered,
+      notes: noteParts.join(' | '),
       status:'On Rent'
     }});
     imported++;
@@ -6913,7 +6921,7 @@ function daysUntilOffRent(endStr) {
 }
 
 function renderEquipment() {
-  const active = equipment.filter(e => e.status !== 'Off Rent');
+  const active = equipment.filter(e => e.status === 'On Rent' || e.status === 'Pending Pickup');
   const totalVal = active.reduce((s,e) => s + (parseFloat((String(e.rate||'')).replace(/[^0-9.]/g,''))||0), 0);
   const expiring = active.filter(e => { const d = daysUntilOffRent(e.end); return d !== null && d >= 0 && d <= 14; });
   const overdue  = active.filter(e => { const d = daysUntilOffRent(e.end); return d !== null && d < 0; });
