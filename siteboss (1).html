@@ -5233,46 +5233,89 @@ async function importARCSV(input) {
   if (rows.length < 2) { toast('No rows found in file', true); input.value=''; return; }
   const headers = rows[0].map(x => (x||'').trim().toLowerCase());
   const find = (...names) => { for (const n of names){ const i = headers.indexOf(n); if (i>=0) return i; } return -1; };
-  const iCust   = find('customer','company','customer name','client','account','bill to');
-  const iNum    = find('invoice','invoice number','invoice #','inv #','number','doc number','document');
-  const iAmt    = find('amount','balance','open balance','amount due','total','current balance');
-  const iDays   = find('days','days outstanding','days past due','days overdue','aging','age');
-  const iStatus = find('status');
-  const iNotes  = find('notes','memo','description','comment');
-  if (iCust < 0 || iAmt < 0) {
-    toast('Need at least a Customer and Amount column. Check headers.', true);
-    input.value=''; return;
-  }
+
+  // Detect EquipmentShare aging-bucket format
+  const iB0   = find('0-30 days','0-30','current');
+  const iB30  = find('31-60 days','31-60');
+  const iB60  = find('61-90 days','61-90');
+  const iB90  = find('91-120 days','91-120');
+  const iB120 = find('120+ days','120+','over 120');
+  const isAging = (iB0>=0 && iB30>=0 && iB120>=0);
+
   // verify batch deploy is live
   const ver = await api({ action:'version' });
   if (!ver || ver.build !== 'batch-2') {
     toast('Apps Script is old version — redeploy Code.gs (New version) before importing.', true);
     input.value=''; return;
   }
-  const stripAcct = s => (s||'').replace(/\s*-\s*\d{3,}\s*$/,'').trim();
+
+  const num = v => parseFloat((v||'').toString().replace(/[^0-9.\-]/g,'')) || 0;
+  const stripAcct = s => (s||'').replace(/\s*-\s*[\w ]*\d{3,}\s*$/,'').trim();
+  const matchClient = name => {
+    const cn = stripAcct(name).toLowerCase();
+    return clients.find(c => (c.company||'').toLowerCase()===cn || (c.name||'').toLowerCase()===cn
+                          || stripAcct(c.company||'').toLowerCase()===cn || stripAcct(c.name||'').toLowerCase()===cn);
+  };
+
   const batch = [];
-  let matched = 0, unmatched = 0;
-  for (const v of rows.slice(1)) {
-    const g = i => (i>=0 && i<v.length) ? (v[i]||'').trim() : '';
-    const custName = g(iCust);
-    if (!custName) continue;
-    const cn = stripAcct(custName).toLowerCase();
-    const c = clients.find(c => (c.company||'').toLowerCase()===cn || (c.name||'').toLowerCase()===cn
-                              || stripAcct(c.company||'').toLowerCase()===cn);
-    if (c) matched++; else unmatched++;
-    const daysRaw = (g(iDays)||'').replace(/[^0-9]/g,'');
-    batch.push({
-      clientId: c ? c.id : '',
-      number:   g(iNum),
-      amount:   (g(iAmt)||'').replace(/[^0-9.\-]/g,''),
-      invoiceDate: today(),
-      dueDate:  daysRaw || '0',     // aging buckets read days-outstanding from dueDate
-      siteId:   '',
-      status:   g(iStatus) || 'Open',
-      notes:    (g(iNotes) || '') + (c ? '' : ' [unmatched: '+custName+']')
-    });
+  let matched = 0, unmatched = 0, custCount = 0;
+
+  if (isAging) {
+    // Each non-zero aging bucket becomes one invoice (days set so it lands in the right bucket)
+    const iCust = find('customer name - id','customer name','customer','company') ;
+    const custCol = iCust>=0 ? iCust : 0;
+    const buckets = [
+      { col:iB0,   days:'15',  label:'0-30 days'   },
+      { col:iB30,  days:'45',  label:'31-60 days'  },
+      { col:iB60,  days:'75',  label:'61-90 days'  },
+      { col:iB90,  days:'105', label:'91-120 days' },
+      { col:iB120, days:'135', label:'120+ days'   }
+    ];
+    for (const v of rows.slice(1)) {
+      const name = (v[custCol]||'').trim();
+      if (!name || name === '0') continue;            // skip total row
+      let rowHasAR = false;
+      const c = matchClient(name);
+      for (const b of buckets) {
+        if (b.col < 0) continue;
+        const amt = num(v[b.col]);
+        if (amt <= 0) continue;
+        rowHasAR = true;
+        batch.push({
+          clientId: c ? c.id : '',
+          number: '',
+          amount: String(Math.round(amt)),
+          invoiceDate: today(),
+          dueDate: b.days,
+          siteId: '',
+          status: 'Open',
+          notes: b.label + (c ? '' : ' [unmatched: ' + name + ']')
+        });
+      }
+      if (rowHasAR) { custCount++; if (c) matched++; else unmatched++; }
+    }
+  } else {
+    // Generic format: Customer + single Amount (+ optional Days)
+    const iCust = find('customer','company','customer name','client','account','bill to');
+    const iAmt  = find('amount','balance','open balance','amount due','total','current balance');
+    const iDays = find('days','days outstanding','days past due','days overdue','aging','age');
+    const iNum  = find('invoice','invoice number','invoice #','number');
+    const iNotes= find('notes','memo','description');
+    if (iCust < 0 || iAmt < 0) { toast('Could not detect AR columns. Send me the headers.', true); input.value=''; return; }
+    for (const v of rows.slice(1)) {
+      const g = i => (i>=0 && i<v.length) ? (v[i]||'').trim() : '';
+      const name = g(iCust); if (!name || name==='0') continue;
+      if (num(g(iAmt)) <= 0) continue;
+      const c = matchClient(name);
+      if (c) matched++; else unmatched++; custCount++;
+      batch.push({ clientId: c?c.id:'', number:g(iNum), amount:String(Math.round(num(g(iAmt)))),
+        invoiceDate:today(), dueDate:(g(iDays)||'').replace(/[^0-9]/g,'')||'0', siteId:'',
+        status:'Open', notes:(g(iNotes)||'')+(c?'':' [unmatched: '+name+']') });
+    }
   }
-  if (!batch.length) { toast('No valid rows to import', true); input.value=''; return; }
+
+  if (!batch.length) { toast('No outstanding balances found to import', true); input.value=''; return; }
+
   const CHUNK = 40;
   let saved = 0, failed = 0;
   for (let i=0; i<batch.length; i+=CHUNK) {
@@ -5284,8 +5327,8 @@ async function importARCSV(input) {
   }
   await syncAll();
   input.value='';
-  if (failed) toast(saved+' of '+batch.length+' imported — '+failed+' batch(es) failed, run again', true);
-  else toast('AR imported — '+saved+' invoices ('+matched+' matched, '+unmatched+' unmatched) ✓');
+  if (failed) toast(saved+' of '+batch.length+' line items imported — '+failed+' batch(es) failed, run again', true);
+  else toast('AR imported — '+custCount+' customers, '+saved+' line items ('+matched+' matched, '+unmatched+' unmatched) \u2713');
 }
 
 function exportAR() {
