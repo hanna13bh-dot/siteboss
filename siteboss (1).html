@@ -478,6 +478,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="nav-item" onclick="showPanel('add-site')">+ Job Site</div>
     <div class="nav-divider"></div>
     <div class="nav-label">Territory</div>
+    <div class="nav-item" onclick="showPanel('todayroute')">🚗 Today's Route</div>
     <div class="nav-item" onclick="showPanel('map')">🗺 Map View</div>
     <div class="nav-divider"></div>
     <div class="nav-label">Pipeline</div>
@@ -1264,6 +1265,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="section-actions">
           <button class="btn btn-primary" onclick="showPanel('add-invoice')">+ Add Invoice</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)" onclick="exportAR()">⬇ Export Report</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--green);color:var(--green)" onclick="document.getElementById('ar-import-file').click()">⬆ Import AR</button>
+          <input type="file" id="ar-import-file" accept=".csv" style="display:none" onchange="importARCSV(this)">
         </div>
       </div>
 
@@ -1711,6 +1714,24 @@ tr:hover td{background:rgba(255,255,255,.015)}
     </div>
 
   <!-- ══ MAP VIEW ══ -->
+    <div class="panel" id="panel-todayroute">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--green)">🚗 TODAY'S ROUTE</div>
+        <div class="section-actions">
+          <select id="tr-day" onchange="renderTodayRoute()" style="margin-right:6px">
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+          </select>
+          <button class="btn btn-primary" onclick="buildRouteFromToday()">📍 Map Route</button>
+        </div>
+      </div>
+      <div id="tr-summary" style="margin-bottom:12px"></div>
+      <div id="tr-list"><div class="empty-state"><div class="empty-icon">🚗</div>Pick a day to see your stops.</div></div>
+    </div>
+
     <div class="panel" id="panel-plaud">
       <div class="section-head">
         <div class="section-title" style="color:var(--accent)">📝 PLAUD NOTES</div>
@@ -1983,7 +2004,9 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Job Site</label>
         <select id="svc-siteId" onchange="prefillServiceSite()">
           <option value="">— Select Site —</option>
+          <option value="__manual__">+ Type site manually</option>
         </select>
+        <input type="text" id="svc-site-manual" placeholder="Type job site name" style="margin-top:6px;display:none">
       </div>
       <div class="form-group"><label>Customer</label>
         <select id="svc-clientId" onchange="prefillServiceCustomer()" style="margin-bottom:6px">
@@ -2048,7 +2071,9 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Job Site</label>
         <select id="co-siteId" onchange="prefillCallOffSite()">
           <option value="">— Select Site —</option>
+          <option value="__manual__">+ Type site manually</option>
         </select>
+        <input type="text" id="co-site-manual" placeholder="Type job site name" style="margin-top:6px;display:none">
       </div>
       <div class="form-group"><label>Customer</label>
         <select id="co-clientId" onchange="prefillCallOffCustomer()" style="margin-bottom:6px">
@@ -3106,6 +3131,116 @@ function initMapAutocomplete(prefix){
     ];
     sets.forEach(([a,c,st,z])=>attachAutocomplete(a,c,st,z));
   });
+}
+function trVisitedKey(day){ return 'siteboss_tr_'+day+'_'+today(); }
+function trGetVisited(day){ try{ return JSON.parse(localStorage.getItem(trVisitedKey(day))||'[]'); }catch(e){ return []; } }
+function trSetVisited(day,arr){ localStorage.setItem(trVisitedKey(day), JSON.stringify(arr)); }
+function trStopsForDay(day){
+  const sites=jobsites.filter(s=>s.zone===day && (s.address||s.city))
+    .map(s=>({kind:'site',id:s.id,name:s.siteName,sub:(clients.find(c=>c.id==s.clientId)||{}).company||s.client||'',address:[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
+  const custs=clients.filter(c=>c.zone===day && (c.address||c.city))
+    .map(c=>({kind:'customer',id:c.id,name:c.company||c.name,sub:c.name||'',address:[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
+  return sites.concat(custs);
+}
+function renderTodayRoute(){
+  const day=(document.getElementById('tr-day')||{}).value||'Monday';
+  const list=document.getElementById('tr-list');
+  const summary=document.getElementById('tr-summary');
+  if(!list) return;
+  const stops=trStopsForDay(day);
+  const visited=trGetVisited(day);
+  if(!stops.length){
+    summary.innerHTML='';
+    list.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div>No stops set for '+day+'. Assign customers or job sites to '+day+' in their Zone field.</div>';
+    return;
+  }
+  const done=stops.filter(s=>visited.includes(s.kind+':'+s.id)).length;
+  summary.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
+    +'<div style="font-family:var(--fm);font-size:12px;color:var(--muted2)">'+day+' &middot; '+stops.length+' stops</div>'
+    +'<div style="font-family:var(--fh);font-size:15px;color:var(--green)">'+done+' / '+stops.length+' done</div></div>';
+  list.innerHTML=stops.map(s=>{
+    const key=s.kind+':'+s.id;
+    const isDone=visited.includes(key);
+    const badge=s.kind==='customer'?'<span style="font-family:var(--fm);font-size:9px;color:var(--accent)">CUSTOMER</span>':'<span style="font-family:var(--fm);font-size:9px;color:var(--blue)">JOB SITE</span>';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${isDone?'var(--green)':'var(--muted2)'};border-radius:6px;padding:10px 12px;margin-bottom:6px;${isDone?'opacity:.6':''}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <input type="checkbox" ${isDone?'checked':''} style="width:22px;height:22px;accent-color:var(--green);margin-top:1px" onchange="trToggleVisited('${s.kind}','${s.id}','${day}')">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:13px;${isDone?'text-decoration:line-through':''}">${s.name} ${badge}</div>
+          ${s.sub?`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${s.sub}</div>`:''}
+          ${s.address?`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${s.address}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;padding-left:32px">
+        ${s.address?`<button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="trNav('${s.kind}','${s.id}','${day}')">🧭 Navigate</button>`:''}
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="trCheckIn('${s.kind}','${s.id}','${day}')">✓ Check In</button>
+        <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="trMoveToDay('${s.kind}','${s.id}')">↪ Move Day</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function trToggleVisited(kind,id,day){
+  const key=kind+':'+id;
+  let visited=trGetVisited(day);
+  if(visited.includes(key)) visited=visited.filter(k=>k!==key);
+  else visited.push(key);
+  trSetVisited(day,visited);
+  renderTodayRoute();
+}
+function trNav(kind,id,day){
+  const stop=trStopsForDay(day).find(s=>s.kind===kind && String(s.id)===String(id));
+  if(!stop||!stop.address){ toast('No address for this stop',true); return; }
+  window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(stop.address)+'&travelmode=driving','_blank');
+}
+async function trCheckIn(kind,id,day){
+  if(kind==='site'){
+    const s=jobsites.find(s=>s.id==id); if(!s) return;
+    const note=prompt('Check in at '+s.siteName+' — what happened? (optional)');
+    if(note===null) return;
+    const log=parseVisitLog(s.visitLog); log.push({date:today(), note:(note||'').trim()});
+    const res=await api({action:'update',type:'jobsites',record:{...s,lastCheckIn:today(),visitLog:JSON.stringify(log)}});
+    if(res&&res.success) toast('Checked in \u2713'); else { toast('Failed',true); return; }
+  } else {
+    const c=clients.find(c=>c.id==id); if(!c) return;
+    const type=prompt('Contact type? (Office Visit, Call, Email, Text, Other)','Office Visit'); if(type===null) return;
+    const note=prompt('What happened? (optional)'); if(note===null) return;
+    const log=parseCustLog(c.visitLog); log.push({date:today(),type:(type||'Other').trim(),note:(note||'').trim()});
+    const res=await api({action:'update',type:'clients',record:{...c,lastContact:today(),visitLog:JSON.stringify(log)}});
+    if(res&&res.success) toast('Logged \u2713'); else { toast('Failed',true); return; }
+  }
+  const visited=trGetVisited(day); const key=kind+':'+id;
+  if(!visited.includes(key)){ visited.push(key); trSetVisited(day,visited); }
+  await syncAll(); renderTodayRoute();
+}
+async function trMoveToDay(kind,id){
+  const day=prompt('Move to which day? (Monday, Tuesday, Wednesday, Thursday, Friday)');
+  if(day===null) return;
+  const d=day.trim(); const valid=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const match=valid.find(v=>v.toLowerCase()===d.toLowerCase());
+  if(!match){ toast('Type a weekday Monday–Friday',true); return; }
+  if(kind==='site'){
+    const s=jobsites.find(s=>s.id==id); if(!s) return;
+    const res=await api({action:'update',type:'jobsites',record:{...s,zone:match}});
+    if(!(res&&res.success)){ toast('Move failed',true); return; }
+  } else {
+    const c=clients.find(c=>c.id==id); if(!c) return;
+    const res=await api({action:'update',type:'clients',record:{...c,zone:match}});
+    if(!(res&&res.success)){ toast('Move failed',true); return; }
+  }
+  toast('Moved to '+match+' \u2713');
+  await syncAll(); renderTodayRoute();
+}
+function buildRouteFromToday(){
+  const day=(document.getElementById('tr-day')||{}).value||'Monday';
+  const stops=trStopsForDay(day).filter(s=>s.address);
+  const visited=trGetVisited(day);
+  const remaining=stops.filter(s=>!visited.includes(s.kind+':'+s.id));
+  const use=remaining.length?remaining:stops;
+  if(!use.length){ toast('No stops with addresses for '+day,true); return; }
+  const addrs=use.map(s=>encodeURIComponent(s.address));
+  if(addrs.length===1){ window.open('https://www.google.com/maps/dir/?api=1&destination='+addrs[0]+'&travelmode=driving','_blank'); return; }
+  const dest=addrs[addrs.length-1], wps=addrs.slice(0,-1).join('|');
+  window.open('https://www.google.com/maps/dir/?api=1&origin=My+Location&destination='+dest+'&waypoints='+wps+'&travelmode=driving','_blank');
 }
 function buildRoute(){ openRouteOptimizer(); }
 
@@ -5090,6 +5225,69 @@ function parseActions(actionsStr) {
   }).reverse();
 }
 
+async function importARCSV(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const rows = parseCSV(text).filter(r => r.length && r.some(c => (c||'').trim() !== ''));
+  if (rows.length < 2) { toast('No rows found in file', true); input.value=''; return; }
+  const headers = rows[0].map(x => (x||'').trim().toLowerCase());
+  const find = (...names) => { for (const n of names){ const i = headers.indexOf(n); if (i>=0) return i; } return -1; };
+  const iCust   = find('customer','company','customer name','client','account','bill to');
+  const iNum    = find('invoice','invoice number','invoice #','inv #','number','doc number','document');
+  const iAmt    = find('amount','balance','open balance','amount due','total','current balance');
+  const iDays   = find('days','days outstanding','days past due','days overdue','aging','age');
+  const iStatus = find('status');
+  const iNotes  = find('notes','memo','description','comment');
+  if (iCust < 0 || iAmt < 0) {
+    toast('Need at least a Customer and Amount column. Check headers.', true);
+    input.value=''; return;
+  }
+  // verify batch deploy is live
+  const ver = await api({ action:'version' });
+  if (!ver || ver.build !== 'batch-2') {
+    toast('Apps Script is old version — redeploy Code.gs (New version) before importing.', true);
+    input.value=''; return;
+  }
+  const stripAcct = s => (s||'').replace(/\s*-\s*\d{3,}\s*$/,'').trim();
+  const batch = [];
+  let matched = 0, unmatched = 0;
+  for (const v of rows.slice(1)) {
+    const g = i => (i>=0 && i<v.length) ? (v[i]||'').trim() : '';
+    const custName = g(iCust);
+    if (!custName) continue;
+    const cn = stripAcct(custName).toLowerCase();
+    const c = clients.find(c => (c.company||'').toLowerCase()===cn || (c.name||'').toLowerCase()===cn
+                              || stripAcct(c.company||'').toLowerCase()===cn);
+    if (c) matched++; else unmatched++;
+    const daysRaw = (g(iDays)||'').replace(/[^0-9]/g,'');
+    batch.push({
+      clientId: c ? c.id : '',
+      number:   g(iNum),
+      amount:   (g(iAmt)||'').replace(/[^0-9.\-]/g,''),
+      invoiceDate: today(),
+      dueDate:  daysRaw || '0',     // aging buckets read days-outstanding from dueDate
+      siteId:   '',
+      status:   g(iStatus) || 'Open',
+      notes:    (g(iNotes) || '') + (c ? '' : ' [unmatched: '+custName+']')
+    });
+  }
+  if (!batch.length) { toast('No valid rows to import', true); input.value=''; return; }
+  const CHUNK = 40;
+  let saved = 0, failed = 0;
+  for (let i=0; i<batch.length; i+=CHUNK) {
+    const slice = batch.slice(i, i+CHUNK);
+    let res = await api({ action:'addBatch', type:'invoices', records:slice });
+    if (!(res && res.success)) { await new Promise(r=>setTimeout(r,600)); res = await api({ action:'addBatch', type:'invoices', records:slice }); }
+    if (res && res.success) saved += (res.count||slice.length); else failed++;
+    toast('Importing AR... '+saved+' of '+batch.length);
+  }
+  await syncAll();
+  input.value='';
+  if (failed) toast(saved+' of '+batch.length+' imported — '+failed+' batch(es) failed, run again', true);
+  else toast('AR imported — '+saved+' invoices ('+matched+' matched, '+unmatched+' unmatched) ✓');
+}
+
 function exportAR() {
   const open = invoices.filter(i => i.status !== 'Paid');
   const rows = [['Customer','Company','Amount','Days Outstanding','Status','Last Action','Notes']];
@@ -5631,6 +5829,9 @@ function prefillCallOffCustomer(){
 }
 function prefillServiceSite() {
   const siteId = document.getElementById('svc-siteId').value;
+  const man = document.getElementById('svc-site-manual');
+  if (siteId === '__manual__') { if(man){ man.style.display='block'; man.focus(); } return; }
+  if (man) man.style.display='none';
   const s = jobsites.find(s => s.id == siteId);
   if (!s) return;
   document.getElementById('svc-customer').value = s.client || ((clients.find(c => c.id == s.clientId)||{}).company || '');
@@ -5657,6 +5858,7 @@ function sendServiceCall() {
   if (!issue) { toast('Issue is required', true); return; }
   const siteId = document.getElementById('svc-siteId').value;
   const s = jobsites.find(s => s.id == siteId);
+  const siteNameResolved = s ? s.siteName : ((document.getElementById('svc-site-manual')||{}).value||'').trim();
   const priority = document.getElementById('svc-priority').value;
   const customer = document.getElementById('svc-customer').value.trim();
   const address = document.getElementById('svc-address').value.trim();
@@ -5664,7 +5866,7 @@ function sendServiceCall() {
   const notes = document.getElementById('svc-notes').value.trim();
   const toEmail = document.getElementById('svc-to-email').value.trim() || localStorage.getItem('svc_email') || '';
 
-  const subject = `${priority === 'URGENT' ? '🔴 URGENT ' : ''}Service Call — ${equip} — ${s?s.siteName:customer}`;
+  const subject = `${priority === 'URGENT' ? '🔴 URGENT ' : ''}Service Call — ${equip} — ${siteNameResolved||customer}`;
   const body = `SERVICE CALL REQUEST
 ${'='.repeat(40)}
 Priority: ${priority}
@@ -5674,7 +5876,7 @@ Sales Rep: Brad Hanna — 405-203-2125
 EQUIPMENT: ${equip}
 ISSUE: ${issue}
 CUSTOMER: ${customer}
-SITE: ${s?s.siteName:'—'}
+SITE: ${siteNameResolved||'—'}
 ADDRESS: ${address}
 SITE CONTACT: ${contact}
 ${notes?'NOTES: '+notes:''}
@@ -5688,7 +5890,7 @@ Please respond with ETA.
     type: 'Service Call',
     equip, issue, customer,
     siteId: siteId || '',
-    siteName: s ? s.siteName : '',
+    siteName: s ? s.siteName : (siteNameResolved||''),
     address, contact,
     priority,
     notes,
@@ -5717,6 +5919,9 @@ function openCallOff(siteId) {
 
 function prefillCallOffSite() {
   const siteId = document.getElementById('co-siteId').value;
+  const coMan = document.getElementById('co-site-manual');
+  if (siteId === '__manual__') { if(coMan){ coMan.style.display='block'; coMan.focus(); } return; }
+  if (coMan) coMan.style.display='none';
   const s = jobsites.find(s => s.id == siteId);
   if (!s) return;
   document.getElementById('co-customer').value = s.client || ((clients.find(c => c.id == s.clientId)||{}).company || '');
@@ -5759,6 +5964,7 @@ function sendCallOff() {
   }
   const siteId = document.getElementById('co-siteId').value;
   const s = jobsites.find(s => s.id == siteId);
+  const siteNameResolved = s ? s.siteName : ((document.getElementById('co-site-manual')||{}).value||'').trim();
   const customer = document.getElementById('co-customer').value.trim();
   const address = document.getElementById('co-address').value.trim();
   const contact = document.getElementById('co-contact').value.trim();
@@ -5766,7 +5972,7 @@ function sendCallOff() {
   const notes = document.getElementById('co-notes').value.trim();
   const toEmail = document.getElementById('co-to-email').value.trim() || localStorage.getItem('calloff_email') || '';
 
-  const subject = equipList.length > 1 ? `Call Off — ${equipList.length} pieces — ${s?s.siteName:customer} — Pickup ${mdy(date)}` : `Call Off — ${equipList[0]} — ${s?s.siteName:customer} — Pickup ${mdy(date)}`;
+  const subject = equipList.length > 1 ? `Call Off — ${equipList.length} pieces — ${siteNameResolved||customer} — Pickup ${mdy(date)}` : `Call Off — ${equipList[0]} — ${siteNameResolved||customer} — Pickup ${mdy(date)}`;
   const body = `CALL OFF REQUEST
 ${'='.repeat(40)}
 Date: ${mdy(today())}
@@ -5775,7 +5981,7 @@ Sales Rep: Brad Hanna — 405-203-2125
 EQUIPMENT: ${equip}
 PICKUP DATE: ${mdy(date)}
 CUSTOMER: ${customer}
-SITE: ${s?s.siteName:'—'}
+SITE: ${siteNameResolved||'—'}
 ADDRESS: ${address}
 SITE CONTACT: ${contact}
 REASON: ${reason}
@@ -5790,7 +5996,7 @@ Please confirm pickup.
     type: 'Call Off',
     equip, customer,
     siteId: siteId || '',
-    siteName: s ? s.siteName : '',
+    siteName: s ? s.siteName : (siteNameResolved||''),
     address, contact,
     pickupDate: date,
     reason,
@@ -7883,12 +8089,13 @@ function setMapFilter(f, btn) {
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice','plaud'];
+  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice','plaud','todayroute'];
   document.querySelectorAll('.nav-item').forEach((n,i) => {
     n.classList.toggle('active', panels[i] === id);
   });
   if (id === 'map') renderMap();
   if (id === 'plaud') renderPlaud();
+  if (id === 'todayroute') { const d=document.getElementById('tr-day'); if(d && !d._init){ d._init=true; const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; d.value=(wd==='Saturday'||wd==='Sunday')?'Monday':wd; } renderTodayRoute(); }
   if (id === 'branch-contacts') renderBranchContacts();
   if (id !== 'dashboard' && id !== 'customers' && id !== 'jobsites') closeProfile();
 }
