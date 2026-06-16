@@ -1639,6 +1639,9 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="panel" id="panel-lostrentals">
       <div class="section-head">
         <div class="section-title" style="color:var(--red)">📉 LOST RENTALS</div>
+        <div class="section-actions">
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--red);color:var(--red)" onclick="exportLostRentals()">⬇ Export Report</button>
+        </div>
       </div>
       <div class="dash-grid" style="margin-bottom:20px">
         <div class="dash-card c-red"><div class="dash-label">Total Revenue Lost</div><div class="dash-number" id="lr-total" style="font-size:26px;margin-top:4px">$0</div><div class="dash-sub">all lost quotes</div></div>
@@ -5331,6 +5334,34 @@ async function importARCSV(input) {
   else toast('AR imported — '+custCount+' customers, '+saved+' line items ('+matched+' matched, '+unmatched+' unmatched) \u2713');
 }
 
+function exportLostRentals() {
+  const fmt = v => { const n = parseFloat((String(v==null?'':v)).replace(/[^0-9.\-]/g,''))||0; return n ? '$'+n.toLocaleString('en-US') : '$0'; };
+  const rows = [['Type','Item','Customer / Company','Date','Competitor','Reason','Value','Notes']];
+  let lostTotal = 0;
+  // Lost rents (oldest-first not needed; sort newest-first by date)
+  [...lostRents].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(r => {
+    const v = parseFloat((String(r.value||'')).replace(/[^0-9.\-]/g,''))||0;
+    lostTotal += v;
+    const typeLabel = r.lossType==='availability' ? 'Availability Loss' : 'Customer Loss';
+    rows.push([typeLabel, r.equip||'—', r.clientName||r.siteName||'—', r.date||'—', r.competitor||'—', r.reason||'—', fmt(v), r.notes||'—']);
+  });
+  // Lost prospects
+  (lostProspects||[]).forEach(p => {
+    const v = parseFloat((String(p.value||'')).replace(/[^0-9.\-]/g,''))||0;
+    lostTotal += v;
+    rows.push(['Lost Prospect', p.name||'—', p.company||'—', p.date||'—', p.competitor||'—', p.lostReason||'—', fmt(v), p.notes||'—']);
+  });
+  rows.push(['','','','','','','','']);
+  rows.push(['', '', '', '', '', 'TOTAL LOST', fmt(lostTotal), '']);
+  const csv = rows.map(r => r.map(v => `"${(v==null?'':v).toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `Lost-Rentals-Report-${today()}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Lost Rentals report exported \u2713');
+}
+
 function exportAR() {
   const open = invoices.filter(i => i.status !== 'Paid');
   const tiers = [
@@ -7877,7 +7908,7 @@ function renderLostRentals() {
           ${r.notes?`<div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-top:2px">${r.notes}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-          <div style="font-family:var(--fh);font-size:22px;color:var(--red)">${r.value||'—'}</div>
+          <div style="font-family:var(--fh);font-size:22px;color:var(--red)">${r.value?money(r.value):'—'}</div>
           <button class="btn-danger" onclick="deleteLostRent('${r.id}')">✕</button>
         </div>
       </div>
@@ -7894,7 +7925,7 @@ function renderLostRentals() {
           ${p.competitor?`<div style="font-family:var(--fm);font-size:11px;color:var(--red);margin-top:2px">⚔ Lost to ${p.competitor}</div>`:''}
           ${p.lostReason?`<div style="font-family:var(--fm);font-size:11px;color:var(--yellow);margin-top:2px">Reason: ${p.lostReason}</div>`:''}
         </div>
-        <div style="font-family:var(--fh);font-size:22px;color:var(--red)">${p.value||'—'}</div>
+        <div style="font-family:var(--fh);font-size:22px;color:var(--red)">${p.value?money(p.value):'—'}</div>
       </div>
     </div>`).join('') : '';
 
