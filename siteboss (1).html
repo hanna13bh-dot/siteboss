@@ -5333,21 +5333,44 @@ async function importARCSV(input) {
 
 function exportAR() {
   const open = invoices.filter(i => i.status !== 'Paid');
-  const rows = [['Customer','Company','Amount','Days Outstanding','Status','Last Action','Notes']];
-  open.forEach(inv => {
-    const c = clients.find(c => c.id == inv.clientId);
-    const days = daysSinceInvoice(inv);
-    const actions = parseActions(inv.actions);
-    const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}: ${actions[0].notes}` : '—';
-    rows.push([c?c.name:'—', c?c.company:'—', inv.amount||'—', days, inv.status||'—', lastAction, inv.notes||'—']);
+  const tiers = [
+    { label:'CURRENT (0-30 DAYS)', test:d => d < 31 },
+    { label:'31-60 DAYS',          test:d => d >= 31 && d < 61 },
+    { label:'61-90 DAYS',          test:d => d >= 61 && d < 91 },
+    { label:'91-120 DAYS',         test:d => d >= 91 && d < 121 },
+    { label:'120+ DAYS',           test:d => d >= 121 }
+  ];
+  const fmt = n => '$' + (Math.round(n)).toLocaleString('en-US');
+  const rows = [['Customer','Company','Amount','Days Past Due','Status','Last Action','Notes']];
+  let grand = 0;
+  tiers.forEach(tier => {
+    const items = open
+      .filter(inv => tier.test(daysSinceInvoice(inv)))
+      .sort((a,b) => daysSinceInvoice(b) - daysSinceInvoice(a));
+    if (!items.length) return;
+    let subtotal = 0;
+    rows.push(['── ' + tier.label + ' ──','','','','','','']);
+    items.forEach(inv => {
+      const c = clients.find(c => c.id == inv.clientId);
+      const days = daysSinceInvoice(inv);
+      const amt = parseAmount(inv.amount);
+      subtotal += amt;
+      const actions = parseActions(inv.actions);
+      const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}: ${actions[0].notes}` : '—';
+      rows.push([c?c.name:'—', c?c.company:'—', fmt(amt), days, inv.status||'—', lastAction, inv.notes||'—']);
+    });
+    rows.push(['', 'Subtotal ' + tier.label, fmt(subtotal), '', '', '', '']);
+    rows.push(['','','','','','','']);
+    grand += subtotal;
   });
-  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  rows.push(['', 'TOTAL OUTSTANDING', fmt(grand), '', '', '', '']);
+  const csv = rows.map(r => r.map(v => `"${(v==null?'':v).toString().replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type:'text/csv' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url; a.download = `AR-Report-${today()}.csv`;
   a.click(); URL.revokeObjectURL(url);
-  toast('AR Report exported ✓');
+  toast('AR Report exported by aging \u2713');
 }
 
 function filterAR(f, btn) {
