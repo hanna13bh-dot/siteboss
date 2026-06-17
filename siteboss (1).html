@@ -5789,8 +5789,38 @@ function updateEquipField(prefix) {
   const unit = document.getElementById(prefix + '-equip-unit');
   const hidden = document.getElementById(prefix + '-equip');
   if (!cat || !hidden) return;
-  const catVal = cat.value;
   const unitVal = unit ? unit.value.trim() : '';
+
+  // Look up the on-rent equipment record by unit number and autofill the rest
+  if (unitVal) {
+    const eq = equipment.find(e => (e.unitNum||'').toString().trim().toLowerCase() === unitVal.toLowerCase());
+    if (eq) {
+      // category
+      const mapped = matchEquipCat(eq.equipClass || eq.equip);
+      if (mapped) cat.value = mapped;
+      const setVal = (id,v) => { const el=document.getElementById(id); if(el && v) el.value=v; };
+      // customer
+      const c = eq.clientId ? clients.find(x=>x.id==eq.clientId) : (eq.customerName ? clients.find(x=>(x.company||'').toLowerCase()===eq.customerName.toLowerCase()||(x.name||'').toLowerCase()===eq.customerName.toLowerCase()) : null);
+      const cliSel = document.getElementById(prefix+'-clientId');
+      if (cliSel && c) { cliSel.value = c.id; }
+      setVal(prefix+'-customer', (c ? (c.company||c.name) : eq.customerName) || '');
+      // contact
+      setVal(prefix+'-contact', eq.contact || (c ? (c.name+(c.phone?' — '+c.phone:'')) : '') || '');
+      // address
+      const addr = eq.address || (c ? [c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ') : '');
+      setVal(prefix+'-address', addr);
+      // site: match by name, else drop into manual site field
+      const siteSel = document.getElementById(prefix+'-siteId');
+      const man = document.getElementById(prefix+'-site-manual');
+      if (eq.siteName) {
+        const s = jobsites.find(js => (js.siteName||'').toLowerCase() === eq.siteName.toLowerCase());
+        if (siteSel && s) { siteSel.value = s.id; if(man) man.style.display='none'; }
+        else if (siteSel && man) { siteSel.value='__manual__'; man.style.display='block'; man.value=eq.siteName; }
+      }
+    }
+  }
+
+  const catVal = cat.value;
   hidden.value = unitVal ? `${catVal} — Unit #${unitVal}` : catVal;
 }
 
