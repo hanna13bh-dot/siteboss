@@ -3139,9 +3139,11 @@ function trVisitedKey(day){ return 'siteboss_tr_'+day+'_'+today(); }
 function trGetVisited(day){ try{ return JSON.parse(localStorage.getItem(trVisitedKey(day))||'[]'); }catch(e){ return []; } }
 function trSetVisited(day,arr){ localStorage.setItem(trVisitedKey(day), JSON.stringify(arr)); }
 function trStopsForDay(day){
-  const sites=jobsites.filter(s=>s.zone===day && (s.address||s.city))
+  const z = v => (v==null?'':String(v)).trim().toLowerCase();
+  const wanted = z(day);
+  const sites=jobsites.filter(s=>z(s.zone)===wanted)
     .map(s=>({kind:'site',id:s.id,name:s.siteName,sub:(siteCust(s.clientId)||{}).company||s.client||'',address:[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
-  const custs=clients.filter(c=>c.zone===day && (c.address||c.city))
+  const custs=clients.filter(c=>z(c.zone)===wanted)
     .map(c=>({kind:'customer',id:c.id,name:c.company||c.name,sub:c.name||'',address:[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
   return sites.concat(custs);
 }
@@ -3200,8 +3202,9 @@ async function trCheckIn(kind,id,day){
     const s=jobsites.find(s=>s.id==id); if(!s) return;
     const note=prompt('Check in at '+s.siteName+' — what happened? (optional)');
     if(note===null) return;
-    const log=parseVisitLog(s.visitLog); log.push({date:today(), note:(note||'').trim()});
-    const res=await api({action:'update',type:'jobsites',record:{...s,lastCheckIn:today(),visitLog:JSON.stringify(log)}});
+    const vdate=askVisitDate(); if(vdate===null) return;
+    const log=parseVisitLog(s.visitLog); log.push({date:vdate, note:(note||'').trim()});
+    const res=await api({action:'update',type:'jobsites',record:{...s,lastCheckIn:maxDate(s.lastCheckIn,vdate),visitLog:JSON.stringify(log)}});
     if(res&&res.success) toast('Checked in \u2713'); else { toast('Failed',true); return; }
   } else {
     const c=clients.find(c=>c.id==id); if(!c) return;
@@ -3384,6 +3387,25 @@ function launch() {
 
 function resetUrl() { localStorage.removeItem('brad_crm_v3_url'); location.reload(); }
 function today()    { return new Date().toISOString().split('T')[0]; }
+function normDate(input){
+  if(input==null) return null;
+  const s=String(input).trim();
+  if(!s) return today();
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+  m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if(m) return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
+  m=s.match(/^(\d{1,2})[\/-](\d{1,2})$/);
+  if(m) return today().slice(0,4)+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
+  return today();
+}
+function askVisitDate(){
+  const d=prompt('Date of this check-in? (MM-DD-YYYY, or leave as-is for today)', mdy(today()));
+  if(d===null) return null;
+  return normDate(d);
+}
+function maxDate(a,b){ if(!a) return b; if(!b) return a; return a>=b?a:b; }
+
 
 // ══════════════════════════════════════════════
 // API
@@ -3703,18 +3725,29 @@ function renderVisitLog(){
     </div>`;
   }).join('');
 }
-function addSiteVisitNote(){
+async function addSiteVisitNote(){
   const raw=document.getElementById('es-visitlog');
   const log=parseVisitLog(raw.value);
-  const note=prompt('What happened on this visit? (date stamped today)');
+  const note=prompt('What happened on this visit?');
   if(note===null) return;
-  log.push({date:today(), note:note.trim()});
-  raw.value=JSON.stringify(log);
-  // also stamp last check-in date
+  const vdate=askVisitDate(); if(vdate===null) return;
+  log.push({date:vdate, note:note.trim()});
+  const newLog=JSON.stringify(log);
+  raw.value=newLog;
   const ci=document.getElementById('es-checkin'); if(ci) ci.value=today();
   renderVisitLog();
   const sid=document.getElementById('es-id'); const s=sid?jobsites.find(x=>x.id==sid.value):null;
-  if(s) afterCheckInOffer(s, note.trim());
+  if(s){
+    // Persist the check-in NOW so it's saved even if you continue to a follow-up or task
+    const res=await api({action:'update',type:'jobsites',record:{...s, lastCheckIn:maxDate(s.lastCheckIn,vdate), visitLog:newLog}});
+    if(res&&res.success){
+      s.lastCheckIn=maxDate(s.lastCheckIn,vdate); s.visitLog=newLog;   // keep local copy in sync
+      toast('Check-in logged \u2713');
+      afterCheckInOffer(s, note.trim());
+    } else {
+      toast('Could not save check-in', true);
+    }
+  }
 }
 function deleteVisitNote(idx){
   const raw=document.getElementById('es-visitlog');
@@ -3729,9 +3762,10 @@ async function quickCheckInSite(id){
   const s=jobsites.find(s=>s.id==id); if(!s) return;
   const note=prompt('Check in at '+s.siteName+' — what happened? (optional)');
   if(note===null) return;
+  const vdate=askVisitDate(); if(vdate===null) return;
   const log=parseVisitLog(s.visitLog);
-  log.push({date:today(), note:(note||'').trim()});
-  const record={...s, lastCheckIn:today(), visitLog:JSON.stringify(log)};
+  log.push({date:vdate, note:(note||'').trim()});
+  const record={...s, lastCheckIn:maxDate(s.lastCheckIn,vdate), visitLog:JSON.stringify(log)};
   const res=await api({action:'update',type:'jobsites',record});
   if(res&&res.success){
     toast('Checked in \u2713');
@@ -4197,7 +4231,7 @@ function populateClientDropdowns() {
   const eqCOpts = ['<option value="">— Select Customer —</option>', ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)].join('');
   const eqClientSel = document.getElementById('eq-clientId'); if (eqClientSel) eqClientSel.innerHTML = eqCOpts;
   const dl = document.getElementById('customer-companies');
-  if (dl) dl.innerHTML = [...new Set(clients.map(c => c.company).filter(Boolean))].sort().map(co => `<option value="${co.replace(/"/g,'&quot;')}"></option>`).join('');
+  if (dl) dl.innerHTML = [...new Set([...clients.map(c => c.company), ...(prospects||[]).map(p => p.company||p.name)].filter(Boolean))].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).map(co => `<option value="${co.replace(/"/g,'&quot;')}"></option>`).join('');
   const eqSOpts = ['<option value="">— None —</option>', ...jobsites.map(s => `<option value="${s.id}">${s.siteName}</option>`)].join('');
   const eqSiteSel = document.getElementById('eq-siteId'); if (eqSiteSel) eqSiteSel.innerHTML = eqSOpts;
 }
