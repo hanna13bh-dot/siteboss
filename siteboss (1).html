@@ -4157,12 +4157,14 @@ function siteCust(id){
   return clients.find(c => c.id == id) || (prospects||[]).find(p => p.id == id) || null;
 }
 function populateClientDropdowns() {
+  const prospectOpts = (prospects||[]).filter(p=>p.id).map(p => `<option value="${p.id}">${(p.company||p.name||'')}${p.name&&p.company?(' — '+p.name):''}</option>`).join('');
+  const customerOpts = clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`).join('');
   const opts = [
-    '<option value="">— Select Customer —</option>',
+    '<option value="">— Select Customer or Prospect —</option>',
     '<option value="__new_customer__" style="color:var(--green)">➕ New Customer</option>',
     '<option value="__new_prospect__" style="color:var(--accent)">🔍 New Prospect</option>',
-    ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`),
-    ...(prospects||[]).map(p => `<option value="${p.id}">${(p.name||'')} — ${(p.company||'')} (prospect)</option>`)
+    prospectOpts ? ('<optgroup label="── PROSPECTS ──">'+prospectOpts+'</optgroup>') : '',
+    '<optgroup label="── CUSTOMERS ──">'+customerOpts+'</optgroup>'
   ].join('');
   document.getElementById('s-clientId').innerHTML = opts;
   document.getElementById('es-clientId').innerHTML = opts;
