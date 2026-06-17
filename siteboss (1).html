@@ -3140,7 +3140,7 @@ function trGetVisited(day){ try{ return JSON.parse(localStorage.getItem(trVisite
 function trSetVisited(day,arr){ localStorage.setItem(trVisitedKey(day), JSON.stringify(arr)); }
 function trStopsForDay(day){
   const sites=jobsites.filter(s=>s.zone===day && (s.address||s.city))
-    .map(s=>({kind:'site',id:s.id,name:s.siteName,sub:(clients.find(c=>c.id==s.clientId)||{}).company||s.client||'',address:[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
+    .map(s=>({kind:'site',id:s.id,name:s.siteName,sub:(siteCust(s.clientId)||{}).company||s.client||'',address:[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
   const custs=clients.filter(c=>c.zone===day && (c.address||c.city))
     .map(c=>({kind:'customer',id:c.id,name:c.company||c.name,sub:c.name||'',address:[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
   return sites.concat(custs);
@@ -4152,12 +4152,17 @@ function afterSubQuickAdd(retId,company){
   populateSubCompanySelects(retId.startsWith('es-')?'es-':'s-');
   if(company) s.value=company;
 }
+function siteCust(id){
+  if(!id) return null;
+  return clients.find(c => c.id == id) || (prospects||[]).find(p => p.id == id) || null;
+}
 function populateClientDropdowns() {
   const opts = [
     '<option value="">— Select Customer —</option>',
     '<option value="__new_customer__" style="color:var(--green)">➕ New Customer</option>',
     '<option value="__new_prospect__" style="color:var(--accent)">🔍 New Prospect</option>',
-    ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`)
+    ...clients.map(c => `<option value="${c.id}">${c.name} — ${c.company}</option>`),
+    ...(prospects||[]).map(p => `<option value="${p.id}">${(p.name||'')} — ${(p.company||'')} (prospect)</option>`)
   ].join('');
   document.getElementById('s-clientId').innerHTML = opts;
   document.getElementById('es-clientId').innerHTML = opts;
@@ -4405,7 +4410,7 @@ function renderJobProgress(){
     </div>`;
   const sorted=[...sites].sort((a,b)=>(parseInt(a.projPct)||0)-(parseInt(b.projPct)||0));
   list.innerHTML=sorted.map(s=>{
-    const c=clients.find(c=>c.id==s.clientId);
+    const c=siteCust(s.clientId);
     const proj=parseInt(s.projPct)||0;
     const data=siteDataScore(s);
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:10px 13px;margin-bottom:6px;cursor:pointer" onclick="openSiteDetail('${s.id}')">
@@ -4427,7 +4432,7 @@ function renderJobProgress(){
   }).join('');
 }
 function dashSiteCard(s) {
-  const c = clients.find(c => c.id == s.clientId);
+  const c = siteCust(s.clientId);
   return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);padding:10px 13px;margin-bottom:6px">
     <div style="font-weight:600;font-size:13px">${s.siteName}</div>
     <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:2px">${c?c.name+' — ':''} ${s.city||''}</div>
@@ -4493,7 +4498,7 @@ function quickAddProspectFromSite(){
 }
 function openSiteDetail(id){
   const s=jobsites.find(s=>s.id==id); if(!s) return;
-  const c=clients.find(c=>c.id==s.clientId);
+  const c=siteCust(s.clientId);
   const modal=document.getElementById('site-detail-modal'); if(!modal) return;
   document.getElementById('sd-title').textContent=s.siteName;
   document.getElementById('sd-sub').textContent=(c?(c.company||c.name):'')+(s.city?' \u00b7 '+s.city:'')+(s.status?' \u00b7 '+s.status:'');
@@ -4564,7 +4569,7 @@ function renderSiteFollowUpSchedule(){
   const overdue=sites.filter(s=>s.followUpDate<td).sort((a,b)=>a.followUpDate<b.followUpDate?-1:1);
   const dueNow=sites.filter(s=>s.followUpDate>=td&&s.followUpDate<=dateAdd(td,7)).sort((a,b)=>a.followUpDate<b.followUpDate?-1:1);
   const upcoming=sites.filter(s=>s.followUpDate>dateAdd(td,7)).sort((a,b)=>a.followUpDate<b.followUpDate?-1:1);
-  const row=(s,cls)=>{const c=clients.find(c=>c.id==s.clientId);return `<div class="followup-card ${cls}" style="cursor:pointer" onclick="openEditSite('${s.id}')"><div><div class="followup-name">&#127959; ${s.siteName}</div><div class="followup-meta">${c?(c.company||c.name):''}${s.city?' \u00b7 '+s.city:''}${s.zone?' \u00b7 Zone: '+s.zone:''}</div>${s.superintendent?`<div class="followup-meta">&#128100; ${s.superintendent}${s.supePhone?' \u00b7 '+s.supePhone:''}</div>`:''}</div><div class="followup-due">${mdy(s.followUpDate)}</div></div>`;};
+  const row=(s,cls)=>{const c=siteCust(s.clientId);return `<div class="followup-card ${cls}" style="cursor:pointer" onclick="openEditSite('${s.id}')"><div><div class="followup-name">&#127959; ${s.siteName}</div><div class="followup-meta">${c?(c.company||c.name):''}${s.city?' \u00b7 '+s.city:''}${s.zone?' \u00b7 Zone: '+s.zone:''}</div>${s.superintendent?`<div class="followup-meta">&#128100; ${s.superintendent}${s.supePhone?' \u00b7 '+s.supePhone:''}</div>`:''}</div><div class="followup-due">${mdy(s.followUpDate)}</div></div>`;};
   let out='';
   if(overdue.length) out+=`<div style="font-family:var(--fm);font-size:10px;font-weight:700;color:var(--red);margin:0 0 6px;text-transform:uppercase;letter-spacing:1px">&#9888; Overdue (${overdue.length})</div>`+overdue.map(s=>row(s,'urgent')).join('');
   if(dueNow.length) out+=`<div style="font-family:var(--fm);font-size:10px;font-weight:700;color:var(--yellow);margin:${overdue.length?'12px':0} 0 6px;text-transform:uppercase;letter-spacing:1px">&#128467; Due This Week (${dueNow.length})</div>`+dueNow.map(s=>row(s,'today')).join('');
@@ -4581,7 +4586,7 @@ function renderSiteTable() {
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-icon">🏗</div>No sites found.</td></tr>'; return; }
 
   tbody.innerHTML = data.map(s => {
-    const c = clients.find(c => c.id == s.clientId);
+    const c = siteCust(s.clientId);
     return `<tr>
       <td><div class="cell-name" style="cursor:default">${s.siteName}</div>${s.city?`<div class="cell-sub">${s.city}</div>`:''}</td>
       <td>${c?`<div class="cell-name" onclick="openProfile('${c.id}')" style="font-size:12px">${c.name}</div><div class="cell-sub">${c.company}</div>`:`<span style="color:var(--muted2);font-size:11px">${s.client||'—'}</span>`}</td>
@@ -5934,7 +5939,7 @@ function prefillServiceSite() {
   if (man) man.style.display='none';
   const s = jobsites.find(s => s.id == siteId);
   if (!s) return;
-  document.getElementById('svc-customer').value = s.client || ((clients.find(c => c.id == s.clientId)||{}).company || '');
+  document.getElementById('svc-customer').value = s.client || ((siteCust(s.clientId)||{}).company || '');
   document.getElementById('svc-address').value = [s.address, s.city].filter(Boolean).join(', ');
   document.getElementById('svc-contact').value = s.superintendent ? `${s.superintendent}${s.supePhone?' — '+s.supePhone:''}` : '';
   const svcEquip = s.equipOnSite || '';
@@ -6024,7 +6029,7 @@ function prefillCallOffSite() {
   if (coMan) coMan.style.display='none';
   const s = jobsites.find(s => s.id == siteId);
   if (!s) return;
-  document.getElementById('co-customer').value = s.client || ((clients.find(c => c.id == s.clientId)||{}).company || '');
+  document.getElementById('co-customer').value = s.client || ((siteCust(s.clientId)||{}).company || '');
   document.getElementById('co-address').value = [s.address, s.city].filter(Boolean).join(', ');
   document.getElementById('co-contact').value = s.superintendent ? `${s.superintendent}${s.supePhone?' — '+s.supePhone:''}` : '';
   const coEquip = s.equipOnSite || '';
@@ -6206,7 +6211,7 @@ function exportJobSiteReport() {
   const sorted = [...jobsites].sort((a,b) => (a.siteName||'').localeCompare(b.siteName||''));
 
   sorted.forEach(s => {
-    const c = clients.find(c => c.id == s.clientId);
+    const c = siteCust(s.clientId);
     const row = [
       s.siteName || '',
       c ? c.name : (s.client || ''),
@@ -8432,7 +8437,7 @@ function showMapPopup(loc) {
           <div class="popup-sub-detail">${sub.phone?`&#x1f4de; <a href="tel:${sub.phone}" style="color:var(--blue)">${sub.phone}</a>`:''} ${sub.company&&sub.name?`&middot; &#x1f3d7; ${sub.company}`:sub.company?`&#x1f3d7; ${sub.company}`:''} ${sub.wt?`&middot; &#x1f6e0; ${sub.wt}`:''}</div>
         </div>`).join('');
     }
-    const linkedClient = clients.find(c => c.id == s.clientId);
+    const linkedClient = siteCust(s.clientId);
     if (linkedClient) {
       subsHtml += `<div style="font-family:var(--fh);font-size:12px;letter-spacing:1px;color:var(--accent);margin:10px 0 6px">LINKED CUSTOMER</div>
         <div class="popup-sub-item" onclick="closeMapPopup();openProfile('${linkedClient.id}')" style="cursor:pointer;border-left:3px solid var(--accent)">
