@@ -3574,7 +3574,7 @@ async function maybeProspectFromSubs(record) {
 async function addSite() {
   const name = document.getElementById('s-name').value.trim();
   const clientId = document.getElementById('s-clientId').value;
-  if (!name || !clientId) { toast('Site Name and Customer are required', true); return; }
+  if (!name) { toast('Site Name is required', true); return; }
   const c = clients.find(c => c.id == clientId);
   const btn = document.getElementById('add-s-btn');
   btn.disabled = true; btn.textContent = 'SAVING...';
@@ -4110,7 +4110,10 @@ function buildPrompt(c, tier) {
 }
 
 function buildSubCompanyOpts(currentVal) {
-  const cos=[...new Set(clients.map(c=>c.company).filter(Boolean))].sort();
+  // Pull company names from BOTH customers and prospects
+  const custCos = clients.map(c=>c.company).filter(Boolean);
+  const prospCos = (prospects||[]).map(p=>p.company||p.name).filter(Boolean);
+  const cos=[...new Set([...custCos, ...prospCos])].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
   let o='<option value="">— Pick Company —</option>';
   o+='<option value="__np__" style="color:var(--accent)">&#x1f50d; New Prospect</option>';
   cos.forEach(co=>{const s=co.replace(/"/g,'&quot;');o+=`<option value="${s}"${co===currentVal?' selected':''}>${s}</option>`;});
