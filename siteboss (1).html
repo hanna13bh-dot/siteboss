@@ -1095,6 +1095,15 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="section-title" style="color:var(--blue)">🔍 PROSPECT PIPELINE</div>
         <div class="section-actions">
           <button class="btn btn-primary" onclick="showPanel('add-prospect')">+ Add Prospect</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--blue);color:var(--blue)" onclick="document.getElementById('permit-import-file').click()">📋 Import Permits</button>
+          <input type="file" id="permit-import-file" accept=".csv" style="display:none" onchange="importPermitsCSV(this)">
+          <select id="prospect-source-filter" onchange="renderProspects()" style="margin-left:6px">
+            <option value="">All Sources</option>
+            <option value="Permit">📋 Permit only</option>
+            <option value="Drive By">🚗 Drive By</option>
+            <option value="Referral">🤝 Referral</option>
+            <option value="Other">📌 Other</option>
+          </select>
         </div>
       </div>
 
@@ -4843,23 +4852,127 @@ async function saveProspectEdit() {
   if (res && res.success) { toast('Prospect updated ✓'); closeModals(); await syncAll(); }
 }
 
+async function importPermitsCSV(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const rows = parseCSV(text).filter(r => r.length && r.some(c => (c||'').trim() !== ''));
+  if (rows.length < 2) { toast('No rows found in file', true); input.value=''; return; }
+  const headers = rows[0].map(x => (x||'').trim().toLowerCase());
+  const find = (...names) => { for (const n of names){ const i = headers.indexOf(n); if (i>=0) return i; } return -1; };
+  const iDate = find('date','issued date','application date');
+  const iNum  = find('number','permit number','permit #','record number');
+  const iType = find('type','permit type','work type');
+  const iName = find('application name','project name','description','project');
+  const iAddr = find('address','site address','location');
+  if (iAddr < 0) { toast('Could not find an Address column. Send me the headers.', true); input.value=''; return; }
+
+  // verify batch deploy is live
+  const ver = await api({ action:'version' });
+  if (!ver || ver.build !== 'batch-2') {
+    toast('Apps Script is old version — redeploy Code.gs (New version) before importing.', true);
+    input.value=''; return;
+  }
+
+  // Build a set of addresses/names already in the system to skip duplicates
+  const normAddr = a => (a||'').toString().toLowerCase().replace(/[.,]/g,'').replace(/\s+/g,' ').trim();
+  const existing = new Set();
+  clients.forEach(c => { if(c.address) existing.add(normAddr(c.address)); });
+  (prospects||[]).forEach(p => { if(p.address) existing.add(normAddr(p.address)); });
+  jobsites.forEach(s => { if(s.address) existing.add(normAddr(s.address)); });
+
+  const toISO = d => {
+    const s=(d||'').trim(); let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m) return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
+    m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(m) return s;
+    return '';
+  };
+  const parseAddr = full => {
+    const parts = (full||'').split(',').map(x=>x.trim()).filter(Boolean);
+    if(!parts.length) return { street:'', city:'' };
+    const last = parts[parts.length-1];              // "OKLAHOMA CITY OK 73142"
+    const street = parts.slice(0,-1).join(', ') || parts[0];
+    let city = last;
+    const zipM = last.match(/(\d{5})(?:-\d{4})?$/);
+    const stM  = last.match(/\b([A-Z]{2})\b\s*\d{5}/);
+    if(zipM){ city = last.slice(0, last.indexOf(zipM[1])).trim(); }
+    if(stM){ city = city.replace(new RegExp('\\b'+stM[1]+'\\b\\s*$'),'').trim(); }
+    return { street: parts.length>1 ? street : '', city: city || last, zip: zipM?zipM[1]:'', state: stM?stM[1]:'' };
+  };
+
+  const batch = [];
+  let added = 0, skipped = 0;
+  const seenThisFile = new Set();
+  for (const v of rows.slice(1)) {
+    const g = i => (i>=0 && i<v.length) ? (v[i]||'').trim() : '';
+    const fullAddr = g(iAddr);
+    if (!fullAddr) { skipped++; continue; }
+    const key = normAddr(fullAddr);
+    if (existing.has(key) || seenThisFile.has(key)) { skipped++; continue; }
+    seenThisFile.add(key);
+    const a = parseAddr(fullAddr);
+    const projName = g(iName);
+    const label = projName || a.street || fullAddr;
+    const permitNo = g(iNum), permitType = g(iType), permitDate = g(iDate);
+    const noteBits = ['OKC Permit'];
+    if (permitNo) noteBits.push('#'+permitNo);
+    if (permitType) noteBits.push(permitType);
+    if (permitDate) noteBits.push('filed '+permitDate);
+    batch.push({
+      name: label,
+      company: projName || a.street || '',
+      contact: '', phone: '', email: '',
+      address: a.street || fullAddr,
+      city: [a.city, a.state, a.zip].filter(Boolean).join(' '),
+      zone: '',
+      startDate: toISO(permitDate),
+      value: '', equip: '',
+      stage: 'Lead',
+      source: 'Permit',
+      clientId: '',
+      notes: noteBits.join(' \u00b7 ')
+    });
+    added++;
+  }
+
+  if (!batch.length) { toast('No new permits to add (all already in system)', true); input.value=''; return; }
+
+  const CHUNK = 40;
+  let saved = 0, failed = 0;
+  for (let i=0; i<batch.length; i+=CHUNK) {
+    const slice = batch.slice(i, i+CHUNK);
+    let res = await api({ action:'addBatch', type:'prospects', records:slice });
+    if (!(res && res.success)) { await new Promise(r=>setTimeout(r,600)); res = await api({ action:'addBatch', type:'prospects', records:slice }); }
+    if (res && res.success) saved += (res.count||slice.length); else failed++;
+    toast('Importing permits... '+saved+' of '+batch.length);
+  }
+  await syncAll();
+  input.value='';
+  if (failed) toast(saved+' of '+batch.length+' added — '+failed+' batch(es) failed, run again', true);
+  else toast('Permits imported — '+saved+' new prospects ('+skipped+' skipped as duplicates) \u2713');
+}
+
 function renderProspects() {
   const stages = ['Lead','Contacted','Quoted','Won','Lost'];
   const stageKeys = ['lead','contacted','quoted','won','lost'];
   const sourceClass = { 'Drive By':'src-drive', 'Referral':'src-referral', 'Permit':'src-permit', 'Other':'src-other' };
   const sourceEmoji = { 'Drive By':'🚗', 'Referral':'🤝', 'Permit':'📋', 'Other':'📌' };
 
-  const totalVal = prospects.filter(p => p.stage !== 'Lost').reduce((sum,p) => sum + (parseFloat((String(p.value||'')).replace(/[^0-9.]/g,''))||0), 0);
+  const _sf = document.getElementById('prospect-source-filter');
+  const srcFilter = _sf ? _sf.value : '';
+  const view = srcFilter ? prospects.filter(p => (p.source||'Other') === srcFilter) : prospects;
+
+  const totalVal = view.filter(p => p.stage !== 'Lost').reduce((sum,p) => sum + (parseFloat((String(p.value||'')).replace(/[^0-9.]/g,''))||0), 0);
   const pipTot = document.getElementById('pip-total-val'); if(pipTot) pipTot.textContent = '$' + totalVal.toLocaleString();
   stages.forEach((stage,i) => {
-    const count = prospects.filter(p => p.stage === stage).length;
+    const count = view.filter(p => p.stage === stage).length;
     const pc = document.getElementById(`pip-${stageKeys[i]}-count`); if(pc) pc.textContent = count;
     const cc = document.getElementById(`col-${stageKeys[i]}-count`); if(cc) cc.textContent = count;
   });
 
   stages.forEach((stage, i) => {
     const col = document.getElementById(`col-${stageKeys[i]}`);
-    const stageProspects = prospects.filter(p => p.stage === stage);
+    const stageProspects = view.filter(p => p.stage === stage);
     if (!stageProspects.length) {
       col.innerHTML = '<div style="font-family:var(--fm);font-size:10px;color:var(--muted);text-align:center;padding:16px">Empty</div>';
       return;
