@@ -1305,6 +1305,15 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div id="ar-60-list"><div class="empty-state">No invoices over 60 days.</div></div>
       </div>
 
+      <!-- By Customer Balances -->
+      <div id="ar-bycustomer-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--muted2)">BALANCE BY CUSTOMER</div>
+          <button class="btn-small" id="ar-bycust-toggle" onclick="toggleARByCustomer()">Show ▾</button>
+        </div>
+        <div id="ar-bycustomer-list" style="display:none;margin-bottom:24px"></div>
+      </div>
+
       <!-- All Invoices Table -->
       <div id="ar-all-section">
         <div style="font-family:var(--fh);font-size:17px;letter-spacing:2px;color:var(--muted2);margin-bottom:12px">ALL OPEN INVOICES</div>
@@ -5332,8 +5341,16 @@ async function deleteInvoice(id) {
 async function markPaid(id) {
   const inv = invoices.find(i => i.id == id);
   if (!inv) return;
-  const res = await api({ action:'update', type:'invoices', record: { ...inv, status:'Paid' } });
-  if (res && res.success) { toast('Invoice marked as paid ✓'); await syncAll(); }
+  const dateStr = askVisitDate(); if(dateStr===null) return;
+  const pnote = prompt('Payment notes? (check #, date sent, method, etc. — optional)');
+  if(pnote===null) return;
+  const paidNote = 'Paid '+dateStr+((pnote||'').trim()?' \u2014 '+pnote.trim():'');
+  const existing = (inv.notes||'').trim();
+  const res = await api({ action:'update', type:'invoices', record: {
+    ...inv, status:'Paid',
+    notes: existing ? (existing+' | '+paidNote) : paidNote
+  }});
+  if (res && res.success) { toast('Invoice marked as paid \u2713'); await syncAll(); }
 }
 
 function openEditInvoice(id) {
@@ -5541,7 +5558,7 @@ function exportLostRentals() {
 }
 
 function exportAR() {
-  const open = invoices.filter(i => i.status !== 'Paid');
+  const open = invoices.filter(i => i.status !== 'Paid' && i.status !== 'Payment');
   const tiers = [
     { label:'CURRENT (0-30 DAYS)', test:d => d < 31 },
     { label:'31-60 DAYS',          test:d => d >= 31 && d < 61 },
@@ -5565,8 +5582,10 @@ function exportAR() {
       const amt = parseAmount(inv.amount);
       subtotal += amt;
       const actions = parseActions(inv.actions);
-      const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}: ${actions[0].notes}` : '—';
-      rows.push([c?c.name:'—', c?c.company:'—', fmt(amt), days, inv.status||'—', lastAction, inv.notes||'—']);
+      const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}${actions[0].notes?': '+actions[0].notes:''}` : '—';
+      // most current note only (last segment if a history was appended with " | ")
+      const currentNote = (inv.notes||'').split(' | ').pop().trim() || '—';
+      rows.push([c?c.name:'—', c?c.company:'—', fmt(amt), days, inv.status||'—', lastAction, currentNote]);
     });
     rows.push(['', 'Subtotal ' + tier.label, fmt(subtotal), '', '', '', '']);
     rows.push(['','','','','','','']);
@@ -5606,8 +5625,87 @@ function filterAR(f, btn) {
 
 function searchAR(v) { arSearch = v; renderAR(); }
 
+function toggleARByCustomer(){
+  const list=document.getElementById('ar-bycustomer-list');
+  const btn=document.getElementById('ar-bycust-toggle');
+  if(!list) return;
+  const showing = list.style.display !== 'none';
+  list.style.display = showing ? 'none' : 'block';
+  if(btn) btn.textContent = showing ? 'Show \u25be' : 'Hide \u25b4';
+  if(!showing) renderARByCustomer();
+}
+async function recordCustomerPayment(clientId){
+  const c = clients.find(c => c.id == clientId);
+  if(!c) return;
+  const nm = c.company || c.name;
+  // current outstanding for context
+  let billed=0, paid=0;
+  invoices.forEach(inv => { if(inv.clientId!=clientId) return; const a=parseAmount(inv.amount);
+    if(inv.status==='Payment') paid+=a; else { billed+=a; if(inv.status==='Paid') paid+=a; } });
+  const due = Math.max(0, billed - paid);
+  const amtStr = prompt('Record a payment for '+nm+'.\nOutstanding: $'+Math.round(due).toLocaleString()+'\n\nPayment amount:');
+  if(amtStr===null) return;
+  const amt = parseFloat((amtStr||'').replace(/[^0-9.\-]/g,''))||0;
+  if(amt<=0){ toast('Enter a valid amount', true); return; }
+  const dateStr = askVisitDate(); if(dateStr===null) return;
+  const pnote = prompt('Payment notes? (check #, date sent, method, etc. — optional)');
+  if(pnote===null) return;
+  const res = await api({ action:'add', type:'invoices', record:{
+    clientId: clientId, number:(pnote||'').trim(), amount:String(Math.round(amt)),
+    invoiceDate: dateStr, dueDate:'0', siteId:'', status:'Payment',
+    notes:'Payment received '+dateStr+((pnote||'').trim()?' \u2014 '+pnote.trim():'')
+  }});
+  if(res && res.success){ toast('Payment of $'+Math.round(amt).toLocaleString()+' recorded \u2713'); await syncAll(); renderARByCustomer(); }
+  else toast('Could not record payment', true);
+}
+function renderARByCustomer(){
+  const list=document.getElementById('ar-bycustomer-list');
+  if(!list) return;
+  const fmt = n => '$'+(Math.round(n)).toLocaleString('en-US');
+  // Roll up every invoice by customer
+  const map = {};
+  invoices.forEach(inv => {
+    const c = clients.find(c => c.id == inv.clientId);
+    const key = c ? c.id : ('__'+((inv.notes||'').match(/unmatched: ([^\]]+)/)?.[1] || 'Unassigned'));
+    const label = c ? (c.company || c.name) : (key.replace('__',''));
+    if(!map[key]) map[key] = { label, billed:0, paid:0, clientId: c?c.id:'', payments:[] };
+    const amt = parseAmount(inv.amount);
+    if(inv.status === 'Payment') { map[key].paid += amt; map[key].payments.push({date:inv.invoiceDate||'', amount:amt, note:(inv.number||'').trim()||(inv.notes||'').replace(/^Payment received[^\u2014]*\u2014?\s*/,'').trim()}); }
+    else { map[key].billed += amt; if(inv.status === 'Paid') map[key].paid += amt; }
+  });
+  Object.values(map).forEach(r => { r.due = Math.max(0, r.billed - r.paid); });
+  const rows = Object.values(map).filter(r => r.billed > 0).sort((a,b) => b.due - a.due);
+  if(!rows.length){ list.innerHTML='<div class="empty-state"><div class="empty-icon">💵</div>No invoices yet.</div>'; return; }
+  const totDue = rows.reduce((s,r)=>s+r.due,0), totPaid = rows.reduce((s,r)=>s+r.paid,0);
+  list.innerHTML =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'
+    + '<div style="flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px"><div class="dash-label">Total Outstanding</div><div style="font-family:var(--fh);font-size:22px;color:var(--red)">'+fmt(totDue)+'</div></div>'
+    + '<div style="flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px"><div class="dash-label">Total Paid</div><div style="font-family:var(--fh);font-size:22px;color:var(--green)">'+fmt(totPaid)+'</div></div>'
+    + '</div>'
+    + rows.map(r => {
+      const pct = r.billed>0 ? Math.round((r.paid/r.billed)*100) : 0;
+      return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${r.due>0?'var(--red)':'var(--green)'};border-radius:6px;padding:10px 12px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px" ${r.clientId?`onclick="openProfile('${r.clientId}')" style="cursor:pointer"`:''}>${r.label}</div>
+            <div style="font-family:var(--fm);font-size:10px;color:var(--muted2);margin-top:3px">Billed ${fmt(r.billed)} &middot; Paid ${fmt(r.paid)} (${pct}%)</div>
+            <div style="height:5px;background:var(--bg);border-radius:3px;margin-top:5px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--green)"></div></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">DUE</div>
+            <div style="font-family:var(--fh);font-size:20px;color:${r.due>0?'var(--red)':'var(--green)'}">${fmt(r.due)}</div>
+            ${r.clientId?`<button class="btn-small" style="color:var(--green);border-color:var(--green);margin-top:6px" onclick="recordCustomerPayment('${r.clientId}')">💵 Record Payment</button>`:''}
+          </div>
+        </div>
+        ${r.payments && r.payments.length ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <div style="font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--green);margin-bottom:4px">PAYMENT HISTORY</div>
+          ${r.payments.slice().reverse().map(p=>`<div style="display:flex;justify-content:space-between;font-family:var(--fm);font-size:10px;color:var(--muted2);padding:2px 0"><span>${p.date||'—'}${p.note?' · '+p.note:''}</span><span style="color:var(--green)">${fmt(p.amount)}</span></div>`).join('')}
+        </div>`:''}
+      </div>`;
+    }).join('');
+}
 function renderAR() {
-  const open = invoices.filter(i => i.status !== 'Paid');
+  const open = invoices.filter(i => i.status !== 'Paid' && i.status !== 'Payment');
   const allInv = invoices;
 
   // Totals
@@ -5659,7 +5757,7 @@ function renderAR() {
 
   // All Invoices Table
   let filtered = arFilter === 'paid' ? invoices.filter(i => i.status === 'Paid') :
-                 arFilter === 'all'  ? invoices.filter(i => i.status !== 'Paid') :
+                 arFilter === 'all'  ? invoices.filter(i => i.status !== 'Paid' && i.status !== 'Payment') :
                  open.filter(i => {
                    const d = daysSinceInvoice(i);
                    if (arFilter === '60+')   return d >= 60;
@@ -5708,6 +5806,7 @@ function renderAR() {
   }).join('');
 
   // Dashboard AR card
+  const _bc=document.getElementById('ar-bycustomer-list'); if(_bc && _bc.style.display!=='none') renderARByCustomer();
   const arDash = document.getElementById('dash-ar-60');
   if (arDash) { arDash.textContent = '$'+total60.toLocaleString(); arDash.style.color = total60 > 0 ? 'var(--red)' : 'var(--green)'; }
   // Dashboard AR cards
@@ -7566,7 +7665,7 @@ function calcHealthScore(clientId) {
   if (pendingQuotes.length) { score += 10; factors.push(`${pendingQuotes.length} pending quote${pendingQuotes.length>1?'s':''}`); }
 
   // Open AR penalty (-10 pts if 60+ days)
-  const overdueAR = invoices.filter(i => i.clientId == clientId && i.status !== 'Paid' && daysSinceInvoice(i) >= 60);
+  const overdueAR = invoices.filter(i => i.clientId == clientId && i.status !== 'Paid' && i.status !== 'Payment' && daysSinceInvoice(i) >= 60);
   if (overdueAR.length) { score -= 10; factors.push('⚠ AR 60+ days overdue'); }
 
   score = Math.max(0, Math.min(100, score));
