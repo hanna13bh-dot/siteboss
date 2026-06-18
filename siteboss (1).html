@@ -3484,7 +3484,7 @@ async function addClient() {
   const name = document.getElementById('f-name').value.trim();
   const company = document.getElementById('f-company').value.trim();
   const date = document.getElementById('f-date').value;
-  if (!name || !company || !date) { toast('Name, Company and Date are required', true); return; }
+  if (!name && !company) { toast('Enter a company or a name', true); return; }
   const btn = document.getElementById('add-c-btn');
   btn.disabled = true; btn.textContent = 'SAVING...';
   const record = {
