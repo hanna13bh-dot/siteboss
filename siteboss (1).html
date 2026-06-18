@@ -3220,8 +3220,9 @@ async function trCheckIn(kind,id,day){
     const c=clients.find(c=>c.id==id); if(!c) return;
     const type=prompt('Contact type? (Office Visit, Call, Email, Text, Other)','Office Visit'); if(type===null) return;
     const note=prompt('What happened? (optional)'); if(note===null) return;
-    const log=parseCustLog(c.visitLog); log.push({date:today(),type:(type||'Other').trim(),note:(note||'').trim()});
-    const res=await api({action:'update',type:'clients',record:{...c,lastContact:today(),visitLog:JSON.stringify(log)}});
+    const vdate=askVisitDate(); if(vdate===null) return;
+    const log=parseCustLog(c.visitLog); log.push({date:vdate,type:(type||'Other').trim(),note:(note||'').trim()});
+    const res=await api({action:'update',type:'clients',record:{...c,lastContact:maxDate(c.lastContact,vdate),visitLog:JSON.stringify(log)}});
     if(res&&res.success) toast('Logged \u2713'); else { toast('Failed',true); return; }
   }
   const visited=trGetVisited(day); const key=kind+':'+id;
@@ -3520,14 +3521,16 @@ async function touchClient(id) {
   if (type === null) return; // cancelled = do nothing
   const note = prompt('What happened? (optional — leave blank to just mark contacted)');
   if (note === null) return;
+  const vdate = askVisitDate(); if (vdate === null) return;
   const log = parseCustLog(c.visitLog);
-  log.push({ date: today(), type: (type||'Other').trim(), note: (note||'').trim() });
-  const record = { ...c, lastContact: today(), visitLog: JSON.stringify(log) };
+  log.push({ date: vdate, type: (type||'Other').trim(), note: (note||'').trim() });
+  const record = { ...c, lastContact: maxDate(c.lastContact, vdate), visitLog: JSON.stringify(log) };
   const res = await api({ action:'update', type:'clients', record });
   if (res && res.success) {
     toast('Contact logged ✓');
     await syncAll();
     if (activeProfileId == id) openProfile(id);
+    afterContactOffer(c, (note||'').trim());
   } else {
     toast('Could not log contact', true);
   }
@@ -3784,6 +3787,22 @@ async function quickCheckInSite(id){
   }
   else toast('Check-in failed',true);
 }
+async function afterContactOffer(c, note){
+  const nm = c.company || c.name || 'this customer';
+  if(confirm('Set a FOLLOW-UP for '+nm+'?')){
+    closeModals();
+    showPanel('add-followup');
+    setTimeout(()=>{
+      const set=(i,v)=>{const el=document.getElementById(i); if(el&&v!=null&&v!=='') el.value=v;};
+      set('fu-clientId', c.id);
+      set('fu-title','Follow up: '+nm+(note?' — '+note:''));
+      set('fu-due', dateAdd(today(),3));
+      set('fu-type','Call');
+      set('fu-notes','Created from customer contact');
+    },90);
+    return;
+  }
+}
 async function afterCheckInOffer(s, note){
   // Offer to turn the visit into a follow-up or a to-do
   if(confirm('Create a FOLLOW-UP for '+s.siteName+'?')){
@@ -3989,11 +4008,12 @@ async function logCustomerVisit(){
   if(type===null) return;
   const note=prompt('What happened? (optional)');
   if(note===null) return;
+  const vdate=askVisitDate(); if(vdate===null) return;
   const log=parseCustLog(c.visitLog);
-  log.push({date:today(), type:(type||'Other').trim(), note:(note||'').trim()});
-  const record={...c, lastContact:today(), visitLog:JSON.stringify(log)};
+  log.push({date:vdate, type:(type||'Other').trim(), note:(note||'').trim()});
+  const record={...c, lastContact:maxDate(c.lastContact,vdate), visitLog:JSON.stringify(log)};
   const res=await api({action:'update',type:'clients',record});
-  if(res&&res.success){ toast('Contact logged \u2713'); await syncAll(); openProfile(id); }
+  if(res&&res.success){ toast('Contact logged \u2713'); await syncAll(); openProfile(id); afterContactOffer(c, (note||'').trim()); }
   else toast('Could not log contact',true);
 }
 async function deleteCustLog(id,idx){
