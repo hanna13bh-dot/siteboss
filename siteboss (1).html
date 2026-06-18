@@ -2049,7 +2049,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <option value="Other">Other</option>
         </select>
       </div>
-      <div class="form-group"><label>Unit Number</label><input type="text" id="svc-equip-unit" placeholder="Unit #" onchange="updateEquipField('svc')"></div>
+      <div class="form-group"><label>Unit Number</label><input type="text" id="svc-equip-unit" placeholder="Unit #" onchange="updateEquipField('svc')" oninput="updateEquipField('svc')"></div>
       <input type="hidden" id="svc-equip">
       <div class="form-group"><label>Issue / Problem *</label><input type="text" id="svc-issue" placeholder="Won't start, flat tire..."></div>
       <div class="form-group"><label>Site Address</label><input type="text" id="svc-address" placeholder="123 Main St, OKC"></div>
@@ -2116,7 +2116,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <option value="Other">Other</option>
         </select>
       </div>
-      <div class="form-group"><label>Unit Number</label><input type="text" id="co-equip-unit" placeholder="Unit #" onchange="updateEquipField('co')"></div>
+      <div class="form-group"><label>Unit Number</label><input type="text" id="co-equip-unit" placeholder="Unit #" onchange="updateEquipField('co')" oninput="updateEquipField('co')"></div>
       <input type="hidden" id="co-equip">
       <div class="form-group"><label>Pickup Date *</label><input type="date" id="co-date"></div>
       <div class="form-group"><label>Site Address</label><input type="text" id="co-address" placeholder="123 Main St, OKC"></div>
@@ -5909,6 +5909,7 @@ function updateEquipField(prefix) {
   if (unitVal) {
     const eq = equipment.find(e => (e.unitNum||'').toString().trim().toLowerCase() === unitVal.toLowerCase());
     if (eq) {
+      if (unit && unit._lastFilled !== unitVal) { unit._lastFilled = unitVal; toast('Unit ' + unitVal + ' \u2192 ' + (eq.customerName||'filled') + ' \u2713'); }
       // category
       const mapped = matchEquipCat(eq.equipClass || eq.equip);
       if (mapped) cat.value = mapped;
