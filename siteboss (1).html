@@ -1274,6 +1274,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="section-actions">
           <button class="btn btn-primary" onclick="showPanel('add-invoice')">+ Add Invoice</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)" onclick="exportAR()">⬇ Export Report</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--green);color:var(--green)" onclick="openBulkPayments()">💵 Enter Checks</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--green);color:var(--green)" onclick="document.getElementById('ar-import-file').click()">⬆ Import AR</button>
           <input type="file" id="ar-import-file" accept=".csv" style="display:none" onchange="importARCSV(this)">
         </div>
@@ -2012,6 +2013,31 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </div>
 
 <!-- SERVICE CALL MODAL -->
+<div class="modal-overlay" id="bulkpay-modal">
+  <div class="modal" style="border-top-color:var(--green)">
+    <div class="modal-title" style="color:var(--green)">💵 ENTER CHECKS / PAYMENTS</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>Customer</label>
+      <select id="bp-clientId"></select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <div class="form-group" style="flex:1;margin-bottom:8px"><label>Amount</label><input type="text" id="bp-amount" placeholder="$ amount" inputmode="decimal"></div>
+      <div class="form-group" style="flex:1;margin-bottom:8px"><label>Date</label><input type="date" id="bp-date"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px"><label>Check # / Notes</label><input type="text" id="bp-note" placeholder="Check #, date sent, method..."></div>
+    <button class="btn" style="background:var(--surface2);border:1px solid var(--green);color:var(--green);width:100%;margin-bottom:10px" onclick="addPendingPayment()">➕ Add to List</button>
+    <div id="bp-pending-wrap" style="display:none;margin-bottom:10px">
+      <div style="font-family:var(--fm);font-size:9px;letter-spacing:1px;color:var(--muted2);margin-bottom:4px">PENDING — TAP SAVE WHEN DONE</div>
+      <div id="bp-pending"></div>
+      <div id="bp-pending-total" style="font-family:var(--fh);font-size:15px;color:var(--green);text-align:right;margin-top:6px"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" style="background:var(--green)" onclick="saveBulkPayments()">SAVE ALL</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="service-modal">
   <div class="modal" style="border-top-color:var(--red)">
     <div class="modal-title" style="color:var(--red)">🔧 SERVICE CALL</div>
@@ -5633,6 +5659,71 @@ function toggleARByCustomer(){
   list.style.display = showing ? 'none' : 'block';
   if(btn) btn.textContent = showing ? 'Show \u25be' : 'Hide \u25b4';
   if(!showing) renderARByCustomer();
+}
+let bpPending = [];
+function openBulkPayments(){
+  bpPending = [];
+  const sel = document.getElementById('bp-clientId');
+  if(sel){
+    const opts = clients.slice().sort((a,b)=>((a.company||a.name||'')).toLowerCase().localeCompare((b.company||b.name||'').toLowerCase()))
+      .map(c=>`<option value="${c.id}">${(c.company||c.name)}${c.company&&c.name?(' — '+c.name):''}</option>`).join('');
+    sel.innerHTML = '<option value="">— Select Customer —</option>' + opts;
+  }
+  const d=document.getElementById('bp-date'); if(d) d.value=today();
+  const a=document.getElementById('bp-amount'); if(a) a.value='';
+  const n=document.getElementById('bp-note'); if(n) n.value='';
+  renderPending();
+  const m=document.getElementById('bulkpay-modal'); if(m) m.classList.add('open');
+}
+function addPendingPayment(){
+  const sel=document.getElementById('bp-clientId');
+  const cid=sel?sel.value:'';
+  if(!cid){ toast('Pick a customer', true); return; }
+  const c=clients.find(x=>x.id==cid);
+  const amt=parseFloat((document.getElementById('bp-amount').value||'').replace(/[^0-9.\-]/g,''))||0;
+  if(amt<=0){ toast('Enter an amount', true); return; }
+  const date=document.getElementById('bp-date').value||today();
+  const note=(document.getElementById('bp-note').value||'').trim();
+  bpPending.push({ clientId:cid, label:(c?(c.company||c.name):'?'), amount:amt, date, note });
+  // reset for next entry, keep date
+  document.getElementById('bp-amount').value='';
+  document.getElementById('bp-note').value='';
+  if(sel) sel.value='';
+  renderPending();
+}
+function removePending(i){ bpPending.splice(i,1); renderPending(); }
+function renderPending(){
+  const wrap=document.getElementById('bp-pending-wrap');
+  const list=document.getElementById('bp-pending');
+  const tot=document.getElementById('bp-pending-total');
+  if(!list) return;
+  if(!bpPending.length){ if(wrap) wrap.style.display='none'; list.innerHTML=''; return; }
+  if(wrap) wrap.style.display='block';
+  const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
+  list.innerHTML = bpPending.map((p,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:4px">
+    <div style="flex:1;font-size:12px"><div style="font-weight:600">${p.label}</div><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">${p.date}${p.note?' · '+p.note:''}</div></div>
+    <div style="font-family:var(--fh);color:var(--green);margin:0 8px">${fmt(p.amount)}</div>
+    <button class="btn-small" style="color:var(--red);border-color:var(--red)" onclick="removePending(${i})">✕</button>
+  </div>`).join('');
+  tot.textContent = 'Total: ' + fmt(bpPending.reduce((s,p)=>s+p.amount,0)) + ' · ' + bpPending.length + ' check(s)';
+}
+async function saveBulkPayments(){
+  if(!bpPending.length){ toast('Add at least one check', true); return; }
+  const ver = await api({ action:'version' });
+  if(!ver || ver.build !== 'batch-2'){ toast('Redeploy Code.gs (New version) before saving.', true); return; }
+  const records = bpPending.map(p=>({
+    clientId:p.clientId, number:p.note, amount:String(Math.round(p.amount)),
+    invoiceDate:p.date, dueDate:'0', siteId:'', status:'Payment',
+    notes:'Payment received '+p.date+(p.note?' \u2014 '+p.note:'')
+  }));
+  const res = await api({ action:'addBatch', type:'invoices', records });
+  if(res && res.success){
+    toast(records.length+' payment(s) recorded \u2713');
+    bpPending=[]; closeModals(); await syncAll();
+    const bc=document.getElementById('ar-bycustomer-list'); if(bc && bc.style.display!=='none') renderARByCustomer();
+  } else {
+    toast('Could not save payments', true);
+  }
 }
 async function recordCustomerPayment(clientId){
   const c = clients.find(c => c.id == clientId);
