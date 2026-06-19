@@ -1287,6 +1287,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="dash-card c-red"><div class="dash-label">⚠ 60–90+ Days</div><div class="dash-number" id="ar-60" style="font-size:28px;margin-top:4px">$0</div><div class="dash-sub">action required</div></div>
         <div class="dash-card c-yellow"><div class="dash-label">30–60 Days</div><div class="dash-number" id="ar-30" style="font-size:28px;margin-top:4px">$0</div><div class="dash-sub">watch list</div></div>
         <div class="dash-card c-green"><div class="dash-label">30 Days</div><div class="dash-number" id="ar-current" style="font-size:28px;margin-top:4px">$0</div><div class="dash-sub">current</div></div>
+        <div class="dash-card c-green"><div class="dash-label">💵 Total Paid</div><div class="dash-number" id="ar-paid" style="font-size:28px;margin-top:4px;color:var(--green)">$0</div><div class="dash-sub">payments + paid invoices</div></div>
+        <div class="dash-card c-green"><div class="dash-label">Collected This Month</div><div class="dash-number" id="ar-paid-month" style="font-size:28px;margin-top:4px;color:var(--green)">$0</div><div class="dash-sub" id="ar-paid-month-sub">this month</div></div>
         <div class="dash-card c-red"><div class="dash-label">Invoices 60+</div><div class="dash-number" id="ar-60-count">0</div><div class="dash-sub">customers</div></div>
       </div>
 
@@ -5810,6 +5812,20 @@ function renderAR() {
   setArEl('ar-60','$'+total60.toLocaleString());
   setArEl('ar-30','$'+total30.toLocaleString());
   setArEl('ar-current','$'+totalCur.toLocaleString());
+  // Paid totals: lump payments (status Payment) + invoices marked Paid
+  const ym = today().slice(0,7);
+  let totalPaid = 0, paidMonth = 0;
+  invoices.forEach(i => {
+    if (i.status === 'Payment' || i.status === 'Paid') {
+      const a = parseAmount(i.amount);
+      totalPaid += a;
+      if ((i.invoiceDate||'').slice(0,7) === ym) paidMonth += a;
+    }
+  });
+  setArEl('ar-paid','$'+Math.round(totalPaid).toLocaleString());
+  setArEl('ar-paid-month','$'+Math.round(paidMonth).toLocaleString());
+  const mEl = document.getElementById('ar-paid-month-sub');
+  if (mEl) mEl.textContent = new Date().toLocaleString('en-US',{month:'long'});
   setArEl('ar-60-count',count60);
 
   // 60+ Day Alert Cards
