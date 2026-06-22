@@ -390,6 +390,16 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </style>
 </head>
 <body>
+<div id="visit-timer-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:var(--green,#16a34a);color:#fff;padding:10px 16px;display:none;align-items:center;justify-content:space-between;box-shadow:0 -2px 10px rgba(0,0,0,.3)">
+  <div style="display:flex;align-items:center;gap:10px;min-width:0">
+    <span style="font-size:18px">&#9201;</span>
+    <div style="min-width:0">
+      <div id="vt-name" style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+      <div id="vt-elapsed" style="font-family:var(--fm,monospace);font-size:20px;font-weight:700">00:00</div>
+    </div>
+  </div>
+  <button onclick="stopVisitTimer()" style="background:#fff;color:var(--green,#16a34a);border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer">CLOCK OUT</button>
+</div>
 
 <div id="loading-bar"></div>
 <div id="toast"></div>
@@ -594,6 +604,12 @@ tr:hover td{background:rgba(255,255,255,.015)}
             <div class="empty-state"><div class="empty-icon">⟳</div>Loading...</div>
           </div>
         </div>
+      </div>
+
+      <!-- TIME ON SITE TODAY -->
+      <div style="margin-top:18px">
+        <div class="col-title" style="color:var(--green)">⏱ TIME ON SITE TODAY</div>
+        <div id="dash-time-today"></div>
       </div>
 
       <!-- JOB PROGRESS -->
@@ -3166,6 +3182,65 @@ function attachAutocomplete(inputId, cityId, stateId, zipId){
     setVal(zipId,zip);
   });
 }
+var _vtInterval=null;
+function _vtKey(){ return 'siteboss_active_visit'; }
+function getActiveVisit(){ try{ return JSON.parse(localStorage.getItem(_vtKey())||'null'); }catch(e){ return null; } }
+function startVisitTimer(kind,id,name){
+  const cur=getActiveVisit();
+  if(cur){ if(!confirm('You\'re already clocked in at '+cur.name+'. Clock out and start a new one?')) return; }
+  const v={kind,id,name:name||'Visit',start:Date.now()};
+  localStorage.setItem(_vtKey(), JSON.stringify(v));
+  showVisitTimer();
+  toast('Clocked in at '+v.name+' \u23f1');
+  if(typeof renderTodayRoute==='function') renderTodayRoute();
+}
+function showVisitTimer(){
+  const v=getActiveVisit(); const bar=document.getElementById('visit-timer-bar');
+  if(!bar) return;
+  if(!v){ bar.style.display='none'; if(_vtInterval){clearInterval(_vtInterval);_vtInterval=null;} return; }
+  document.getElementById('vt-name').textContent='At '+v.name;
+  bar.style.display='flex';
+  tickVisitTimer();
+  if(_vtInterval) clearInterval(_vtInterval);
+  _vtInterval=setInterval(tickVisitTimer,1000);
+}
+function tickVisitTimer(){
+  const v=getActiveVisit(); const el=document.getElementById('vt-elapsed');
+  if(!v||!el){ if(_vtInterval){clearInterval(_vtInterval);_vtInterval=null;} return; }
+  let s=Math.floor((Date.now()-v.start)/1000);
+  const hh=Math.floor(s/3600); s-=hh*3600;
+  const mm=Math.floor(s/60); const ss=s-mm*60;
+  const p=n=>('0'+n).slice(-2);
+  el.textContent = hh>0 ? (hh+':'+p(mm)+':'+p(ss)) : (p(mm)+':'+p(ss));
+}
+async function stopVisitTimer(){
+  const v=getActiveVisit(); if(!v) return;
+  const mins=Math.max(1, Math.round((Date.now()-v.start)/60000));
+  const durStr = mins>=60 ? (Math.floor(mins/60)+'h '+(mins%60)+'m') : (mins+' min');
+  localStorage.removeItem(_vtKey());
+  showVisitTimer();
+  const note=prompt('Clocked out of '+v.name+' after '+durStr+'.\nAdd a note? (optional)');
+  const entryNote=(note===null?'':note.trim());
+  const dateToday=today();
+  try{
+    if(v.kind==='site'){
+      const s=jobsites.find(x=>x.id==v.id);
+      if(s){ const log=parseVisitLog(s.visitLog); log.push({date:dateToday, note:(entryNote?entryNote+' ':'')+'('+durStr+' on site)', minutes:mins});
+        await api({action:'update',type:'jobsites',record:{...s,lastCheckIn:maxDate(s.lastCheckIn,dateToday),visitLog:JSON.stringify(log)}}); }
+    } else if(v.kind==='customer'){
+      const c=clients.find(x=>x.id==v.id);
+      if(c){ const log=parseCustLog(c.visitLog); log.push({date:dateToday,type:'Office Visit',note:(entryNote?entryNote+' ':'')+'('+durStr+')',minutes:mins});
+        await api({action:'update',type:'clients',record:{...c,lastContact:maxDate(c.lastContact,dateToday),visitLog:JSON.stringify(log)}}); }
+    } else if(v.kind==='prospect'){
+      const p=(prospects||[]).find(x=>x.id==v.id);
+      if(p){ const stamp='['+dateToday+'] '+(entryNote?entryNote+' ':'')+'('+durStr+')'; const newNotes=(p.notes?p.notes+'\n':'')+stamp;
+        await api({action:'update',type:'prospects',record:{...p,notes:newNotes,lastFollowUp:dateToday}}); }
+    }
+    toast('Logged '+durStr+' at '+v.name+' \u2713');
+    await syncAll();
+    if(typeof renderTodayRoute==='function') renderTodayRoute();
+  }catch(e){ toast('Saved time but log failed',true); }
+}
 function initMapAutocomplete(prefix){
   loadGoogleMaps().then(()=>{
     // [address, city, state, zip]
@@ -3192,7 +3267,9 @@ function trStopsForDay(day){
     .map(s=>({kind:'site',id:s.id,name:s.siteName,sub:(siteCust(s.clientId)||{}).company||s.client||'',address:[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
   const custs=clients.filter(c=>z(c.zone)===wanted)
     .map(c=>({kind:'customer',id:c.id,name:c.company||c.name,sub:c.name||'',address:[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
-  return sites.concat(custs);
+  const prosp=(prospects||[]).filter(p=>z(p.zone)===wanted)
+    .map(p=>({kind:'prospect',id:p.id,name:p.company||p.name,sub:p.name||'',address:[p.address,p.city].filter(Boolean).join(', ')}));
+  return sites.concat(custs, prosp);
 }
 function renderTodayRoute(){
   const day=(document.getElementById('tr-day')||{}).value||'Monday';
@@ -3213,7 +3290,7 @@ function renderTodayRoute(){
   list.innerHTML=stops.map(s=>{
     const key=s.kind+':'+s.id;
     const isDone=visited.includes(key);
-    const badge=s.kind==='customer'?'<span style="font-family:var(--fm);font-size:9px;color:var(--accent)">CUSTOMER</span>':'<span style="font-family:var(--fm);font-size:9px;color:var(--blue)">JOB SITE</span>';
+    const badge=s.kind==='customer'?'<span style="font-family:var(--fm);font-size:9px;color:var(--accent)">CUSTOMER</span>':s.kind==='prospect'?'<span style="font-family:var(--fm);font-size:9px;color:var(--green)">PROSPECT</span>':'<span style="font-family:var(--fm);font-size:9px;color:var(--blue)">JOB SITE</span>';
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${isDone?'var(--green)':'var(--muted2)'};border-radius:6px;padding:10px 12px;margin-bottom:6px;${isDone?'opacity:.6':''}">
       <div style="display:flex;align-items:flex-start;gap:10px">
         <input type="checkbox" ${isDone?'checked':''} style="width:22px;height:22px;accent-color:var(--green);margin-top:1px" onchange="trToggleVisited('${s.kind}','${s.id}','${day}')">
@@ -3227,6 +3304,7 @@ function renderTodayRoute(){
         ${s.address?`<button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="trNav('${s.kind}','${s.id}','${day}')">🧭 Navigate</button>`:''}
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="trCheckIn('${s.kind}','${s.id}','${day}')">✓ Check In</button>
         <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="trMoveToDay('${s.kind}','${s.id}')">↪ Move Day</button>
+        ${(()=>{const av=getActiveVisit();const here=av&&av.kind===s.kind&&String(av.id)===String(s.id);return here?`<button class="btn-small" style="color:#fff;background:var(--green);border-color:var(--green)" onclick="stopVisitTimer()">⏱ Clock Out</button>`:`<button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="startVisitTimer('${s.kind}','${s.id}','${(s.name||'').replace(/'/g,'')}')">⏱ Clock In</button>`;})()}
       </div>
     </div>`;
   }).join('');
@@ -3245,26 +3323,65 @@ function trNav(kind,id,day){
   window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(stop.address)+'&travelmode=driving','_blank');
 }
 async function trCheckIn(kind,id,day){
-  if(kind==='site'){
+  let _note='', _site=null, _cust=null, _prosp=null;
+  if(kind==='prospect'){
+    const p=(prospects||[]).find(x=>x.id==id); if(!p) return;
+    const note=prompt('Visit '+(p.company||p.name)+' — what happened? (optional)');
+    if(note===null) return;
+    const vdate=askVisitDate(); if(vdate===null) return;
+    _note=(note||'').trim();
+    const stamp='['+vdate+'] '+(_note||'Visited');
+    const newNotes=(p.notes?p.notes+'\n':'')+stamp;
+    const res=await api({action:'update',type:'prospects',record:{...p,notes:newNotes,lastFollowUp:vdate}});
+    if(res&&res.success){ toast('Logged \u2713'); _prosp=p; } else { toast('Failed',true); return; }
+  } else if(kind==='site'){
     const s=jobsites.find(s=>s.id==id); if(!s) return;
     const note=prompt('Check in at '+s.siteName+' — what happened? (optional)');
     if(note===null) return;
     const vdate=askVisitDate(); if(vdate===null) return;
-    const log=parseVisitLog(s.visitLog); log.push({date:vdate, note:(note||'').trim()});
+    _note=(note||'').trim();
+    const log=parseVisitLog(s.visitLog); log.push({date:vdate, note:_note});
     const res=await api({action:'update',type:'jobsites',record:{...s,lastCheckIn:maxDate(s.lastCheckIn,vdate),visitLog:JSON.stringify(log)}});
-    if(res&&res.success) toast('Checked in \u2713'); else { toast('Failed',true); return; }
+    if(res&&res.success){ toast('Checked in \u2713'); _site=s; } else { toast('Failed',true); return; }
   } else {
     const c=clients.find(c=>c.id==id); if(!c) return;
     const type=prompt('Contact type? (Office Visit, Call, Email, Text, Other)','Office Visit'); if(type===null) return;
     const note=prompt('What happened? (optional)'); if(note===null) return;
     const vdate=askVisitDate(); if(vdate===null) return;
-    const log=parseCustLog(c.visitLog); log.push({date:vdate,type:(type||'Other').trim(),note:(note||'').trim()});
+    _note=(note||'').trim();
+    const log=parseCustLog(c.visitLog); log.push({date:vdate,type:(type||'Other').trim(),note:_note});
     const res=await api({action:'update',type:'clients',record:{...c,lastContact:maxDate(c.lastContact,vdate),visitLog:JSON.stringify(log)}});
-    if(res&&res.success) toast('Logged \u2713'); else { toast('Failed',true); return; }
+    if(res&&res.success){ toast('Logged \u2713'); _cust=c; } else { toast('Failed',true); return; }
   }
   const visited=trGetVisited(day); const key=kind+':'+id;
   if(!visited.includes(key)){ visited.push(key); trSetVisited(day,visited); }
   await syncAll(); renderTodayRoute();
+  // Offer to set a follow-up or task from this stop
+  if(_site) afterCheckInOffer(_site, _note);
+  else if(_cust) afterContactOffer(_cust, _note);
+  else if(_prosp) afterProspectOffer(_prosp, _note);
+}
+async function afterProspectOffer(p, note){
+  const nm = p.company || p.name || 'this prospect';
+  if(confirm('Set a FOLLOW-UP for '+nm+'?')){
+    closeModals();
+    showPanel('add-followup');
+    setTimeout(()=>{
+      const set=(i,v)=>{const el=document.getElementById(i); if(el&&v!=null&&v!=='') el.value=v;};
+      set('fu-prospectId', p.id);
+      set('fu-title','Follow up: '+nm+(note?' — '+note:''));
+      set('fu-due', dateAdd(today(),3));
+      set('fu-type','Call');
+      set('fu-notes','Created from prospect visit');
+    },90);
+    return;
+  }
+  if(confirm('Add a TO-DO task from this visit?')){
+    const txt=prompt('Task:', (note?note:'Follow up with '+nm));
+    if(txt===null||!txt.trim()) return;
+    const r=await api({ action:'add', type:'tasks', record:{ text:txt.trim(), when:'today', status:'open', created:today() } });
+    if(r&&r.success) toast('Task added \u2713');
+  }
 }
 async function trMoveToDay(kind,id){
   const day=prompt('Move to which zone? (Monday, Tuesday, Wednesday, Thursday, Friday, Tulsa)');
@@ -3403,6 +3520,7 @@ let SHEET_URL = localStorage.getItem('brad_crm_v3_url') || 'https://script.googl
 
 // Always hide setup screen and launch
 document.addEventListener('DOMContentLoaded', function() {
+  showVisitTimer();
   const setup = document.getElementById('setup-screen');
   if (setup) setup.style.display = 'none';
   const app = document.getElementById('main-app');
@@ -4376,6 +4494,7 @@ function renderAll() {
     ? activeSites.slice(0,5).map(s => dashSiteCard(s)).join('')
     : '<div class="empty-state"><div class="empty-icon">🏗</div>No active sites yet.</div>';
   renderJobProgress();
+  renderTimeToday();
 
   // Re-engagement
   document.getElementById('re-t2').innerHTML = t2.length ? t2.map(c => reengCard(c,2)).join('') : '<div class="empty-state">None right now.</div>';
@@ -4488,6 +4607,31 @@ function siteDataScore(s){
 function progBar(pct,color){
   pct=Math.max(0,Math.min(100,parseInt(pct)||0));
   return `<div style="flex:1;background:var(--border);height:9px;border-radius:5px;overflow:hidden;min-width:60px"><div style="height:100%;width:${pct}%;background:${color};border-radius:5px"></div></div>`;
+}
+function renderTimeToday(){
+  const box=document.getElementById('dash-time-today');
+  if(!box) return;
+  const td=today();
+  const fmtDur=m=> m>=60 ? (Math.floor(m/60)+'h '+(m%60)+'m') : (m+'m');
+  const entries=[];
+  // Job sites
+  jobsites.forEach(s=>{ parseVisitLog(s.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:s.siteName||'Site', kind:'Site', min:+e.minutes}); }); });
+  // Customers
+  clients.forEach(c=>{ parseCustLog(c.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:c.company||c.name||'Customer', kind:'Office', min:+e.minutes}); }); });
+  if(!entries.length){
+    box.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--fm);font-size:12px;color:var(--muted2)">No clocked visits today. Use ⏱ Clock In on a route stop to track your time.</div>';
+    return;
+  }
+  const total=entries.reduce((a,e)=>a+e.min,0);
+  entries.sort((a,b)=>b.min-a.min);
+  box.innerHTML=
+    '<div style="background:var(--surface2);border:1px solid var(--green);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+    +'<div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">'+entries.length+' visit'+(entries.length!==1?'s':'')+'</div>'
+    +'<div style="font-family:var(--fh);font-size:24px;color:var(--green)">'+fmtDur(total)+'</div></div>'
+    + entries.map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:5px">
+        <div style="min-width:0"><div style="font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">${e.kind}</div></div>
+        <div style="font-family:var(--fh);font-size:15px;color:var(--green);white-space:nowrap;margin-left:8px">${fmtDur(e.min)}</div>
+      </div>`).join('');
 }
 function renderJobProgress(){
   const ov=document.getElementById('dash-progress-overall');
