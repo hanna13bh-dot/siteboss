@@ -922,7 +922,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <button class="btn btn-primary" onclick="showPanel('add-prospect')">+ Add Prospect</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--blue);color:var(--blue)" onclick="document.getElementById('permit-import-file').click()">📋 Import Permits</button>
           <input type="file" id="permit-import-file" accept=".csv" style="display:none" onchange="importPermitsCSV(this)">
-          <input class="search-box" type="text" placeholder="Search prospects..." oninput="searchP(this.value)" style="margin-left:6px">
           <select id="prospect-source-filter" onchange="renderProspects()" style="margin-left:6px">
             <option value="">All Sources</option>
             <option value="Permit">📋 Permit only</option>
@@ -931,6 +930,10 @@ tr:hover td{background:rgba(255,255,255,.015)}
             <option value="Other">📌 Other</option>
           </select>
         </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <input type="text" placeholder="🔍 Search prospects by name, company, address..." oninput="searchP(this.value)" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:14px;box-sizing:border-box">
       </div>
 
       <!-- Pipeline Summary Stats -->
@@ -6938,10 +6941,7 @@ Great connecting on ${p.name||'your project'}. To get your account set up with E
   Apply online (recommended):
   ${portalLink}
 
-If you'd prefer a printable version, you can download the credit application here:
-
-  Credit Application (PDF):
-  ${pdfLink}
+If you'd prefer a printable version, I've attached the credit application (PDF) to this email — just complete it and send it back to me.
 
 Once it's approved, we'll have you set up and ready to rent. Please don't hesitate to reach out with any questions — I'm glad to help however I can.
 
