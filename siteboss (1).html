@@ -390,12 +390,14 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </style>
 </head>
 <body>
+<datalist id="worktype-list"><option value="Concrete"></option><option value="Steel"></option><option value="Electrical"></option><option value="Mechanical"></option><option value="Framing"></option><option value="Roofing"></option><option value="Excavation"></option><option value="Dirt/Excavation"></option><option value="Utilities"></option><option value="Demolition"></option><option value="Masonry"></option><option value="Plumbing"></option><option value="HVAC"></option><option value="Drywall"></option><option value="Painting"></option><option value="Flooring"></option><option value="Glass/Glazing"></option><option value="Fire Protection"></option><option value="Low Voltage"></option><option value="Landscaping"></option><option value="Other"></option></datalist>
 <div id="visit-timer-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:var(--green,#16a34a);color:#fff;padding:10px 16px;display:none;align-items:center;justify-content:space-between;box-shadow:0 -2px 10px rgba(0,0,0,.3)">
-  <div style="display:flex;align-items:center;gap:10px;min-width:0">
+  <div style="display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer" onclick="adjustVisitStart()">
     <span style="font-size:18px">&#9201;</span>
     <div style="min-width:0">
       <div id="vt-name" style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
       <div id="vt-elapsed" style="font-family:var(--fm,monospace);font-size:20px;font-weight:700">00:00</div>
+      <div style="font-size:9px;opacity:.85">tap to adjust start time &#9998;</div>
     </div>
   </div>
   <button onclick="stopVisitTimer()" style="background:#fff;color:var(--green,#16a34a);border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer">CLOCK OUT</button>
@@ -812,219 +814,39 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Sub 1 Name</label><input type="text" id="s-supe" placeholder="Mike Johnson"></div>
           <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="s-supephone" placeholder="(555) 000-0000"></div>
           <div class="form-group"><label>Sub 1 Company</label><input type="text" list="customer-companies" id="s-sub1company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 1 Work Type</label><select id="s-sub1worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 1 Work Type</label><input type="text" id="s-sub1worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 2 Name</label><input type="text" id="s-sub2name" placeholder=""></div>
           <div class="form-group"><label>Sub 2 Phone</label><input type="text" id="s-sub2phone" placeholder=""></div>
           <div class="form-group"><label>Sub 2 Company</label><input type="text" list="customer-companies" id="s-sub2company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 2 Work Type</label><select id="s-sub2worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 2 Work Type</label><input type="text" id="s-sub2worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 3 Name</label><input type="text" id="s-sub3name" placeholder=""></div>
           <div class="form-group"><label>Sub 3 Phone</label><input type="text" id="s-sub3phone" placeholder=""></div>
           <div class="form-group"><label>Sub 3 Company</label><input type="text" list="customer-companies" id="s-sub3company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 3 Work Type</label><select id="s-sub3worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 3 Work Type</label><input type="text" id="s-sub3worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 4 Name</label><input type="text" id="s-sub4name" placeholder=""></div>
           <div class="form-group"><label>Sub 4 Phone</label><input type="text" id="s-sub4phone" placeholder=""></div>
           <div class="form-group"><label>Sub 4 Company</label><input type="text" list="customer-companies" id="s-sub4company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 4 Work Type</label><select id="s-sub4worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 4 Work Type</label><input type="text" id="s-sub4worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 5 Name</label><input type="text" id="s-sub5name" placeholder=""></div>
           <div class="form-group"><label>Sub 5 Phone</label><input type="text" id="s-sub5phone" placeholder=""></div>
           <div class="form-group"><label>Sub 5 Company</label><input type="text" list="customer-companies" id="s-sub5company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 5 Work Type</label><select id="s-sub5worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 5 Work Type</label><input type="text" id="s-sub5worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 6 Name</label><input type="text" id="s-sub6name" placeholder=""></div>
           <div class="form-group"><label>Sub 6 Phone</label><input type="text" id="s-sub6phone" placeholder=""></div>
           <div class="form-group"><label>Sub 6 Company</label><input type="text" list="customer-companies" id="s-sub6company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 6 Work Type</label><select id="s-sub6worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 6 Work Type</label><input type="text" id="s-sub6worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 7 Name</label><input type="text" id="s-sub7name" placeholder=""></div>
           <div class="form-group"><label>Sub 7 Phone</label><input type="text" id="s-sub7phone" placeholder=""></div>
           <div class="form-group"><label>Sub 7 Company</label><input type="text" list="customer-companies" id="s-sub7company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 7 Work Type</label><select id="s-sub7worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 7 Work Type</label><input type="text" id="s-sub7worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 8 Name</label><input type="text" id="s-sub8name" placeholder=""></div>
           <div class="form-group"><label>Sub 8 Phone</label><input type="text" id="s-sub8phone" placeholder=""></div>
           <div class="form-group"><label>Sub 8 Company</label><input type="text" list="customer-companies" id="s-sub8company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 8 Work Type</label><select id="s-sub8worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 8 Work Type</label><input type="text" id="s-sub8worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 9 Name</label><input type="text" id="s-sub9name" placeholder=""></div>
           <div class="form-group"><label>Sub 9 Phone</label><input type="text" id="s-sub9phone" placeholder=""></div>
           <div class="form-group"><label>Sub 9 Company</label><input type="text" list="customer-companies" id="s-sub9company" placeholder="Type or pick company"></div>
-          <div class="form-group"><label>Sub 9 Work Type</label><select id="s-sub9worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+          <div class="form-group"><label>Sub 9 Work Type</label><input type="text" id="s-sub9worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 10 Name</label><input type="text" id="s-sub10name" placeholder=""></div>
           <div class="form-group"><label>Sub 10 Phone</label><input type="text" id="s-sub10phone" placeholder=""></div>
           <div class="form-group"><label>Sub 10 Company</label><input type="text" list="customer-companies" id="s-sub10company" placeholder="Type or pick company"></div>
@@ -1076,21 +898,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         </div>
         <div class="form-group" style="margin-bottom:14px"><label>Unit Number</label><input type="text" id="s-unitnum" placeholder="e.g. 12345"></div>
         <div class="form-group" style="margin-bottom:14px"><label>Type of Work</label>
-          <select id="s-worktype">
-            <option value="">— Select —</option>
-            <option value="Concrete">Concrete</option>
-            <option value="Steel">Steel</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Mechanical">Mechanical</option>
-            <option value="Framing">Framing</option>
-            <option value="Roofing">Roofing</option>
-            <option value="Excavation">Excavation</option><option value="Dirt/Excavation">Dirt/Excavation</option><option value="Utilities">Utilities</option><option value="Demolition">Demolition</option>
-            <option value="Masonry">Masonry</option>
-            <option value="Plumbing">Plumbing</option>
-            <option value="HVAC">HVAC</option>
-            <option value="General">General Construction</option>
-            <option value="Other">Other</option>
-          </select>
+          <input type="text" id="s-worktype" list="worktype-list" placeholder="Type or pick work type">
         </div>
         <div class="form-group" style="margin-bottom:14px"><label>Project Completion %</label>
           <div style="display:flex;align-items:center;gap:10px">
@@ -2539,6 +2347,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
   <div class="profile-section" style="border-bottom:none">
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary" id="pp-touch-btn" onclick="touchFromProfile()">✓ Mark Contacted Today</button>
+      <button class="btn-small" style="color:var(--green);border-color:var(--green)" id="pp-clock-btn">&#9201; Clock In</button>
       <button class="btn-small" id="pp-edit-btn" onclick="editFromProfile()">Edit Customer</button>
     </div>
   </div>
@@ -2601,6 +2410,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <button class="btn-small" style="color:var(--red);border-color:var(--red)" id="sd-svc-btn">&#128295; Service</button>
         <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" id="sd-co-btn">&#128222; Call Off</button>
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" id="sd-checkin-btn">&#10003; Check In</button>
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" id="sd-clock-btn">&#9201; Clock In</button>
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="window.open(document.getElementById('sd-map-url').value,'_blank')">&#128205; Maps</button>
         <input type="hidden" id="sd-map-url">
       </div>
@@ -2709,381 +2519,59 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Sub 1 Name</label><input type="text" id="es-supe"></div>
       <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="es-supephone"></div>
       <div class="form-group"><label>Sub 1 Company</label><input type="text" list="customer-companies" id="es-sub1company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 1 Work Type</label><select id="es-sub1worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 1 Work Type</label><input type="text" id="es-sub1worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 2 Name</label><input type="text" id="es-sub2name"></div>
       <div class="form-group"><label>Sub 2 Phone</label><input type="text" id="es-sub2phone"></div>
       <div class="form-group"><label>Sub 2 Company</label><input type="text" list="customer-companies" id="es-sub2company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 2 Work Type</label><select id="es-sub2worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 2 Work Type</label><input type="text" id="es-sub2worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 3 Name</label><input type="text" id="es-sub3name"></div>
       <div class="form-group"><label>Sub 3 Phone</label><input type="text" id="es-sub3phone"></div>
       <div class="form-group"><label>Sub 3 Company</label><input type="text" list="customer-companies" id="es-sub3company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 3 Work Type</label><select id="es-sub3worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 3 Work Type</label><input type="text" id="es-sub3worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 4 Name</label><input type="text" id="es-sub4name"></div>
       <div class="form-group"><label>Sub 4 Phone</label><input type="text" id="es-sub4phone"></div>
       <div class="form-group"><label>Sub 4 Company</label><input type="text" list="customer-companies" id="es-sub4company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 4 Work Type</label><select id="es-sub4worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 4 Work Type</label><input type="text" id="es-sub4worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 5 Name</label><input type="text" id="es-sub5name"></div>
       <div class="form-group"><label>Sub 5 Phone</label><input type="text" id="es-sub5phone"></div>
       <div class="form-group"><label>Sub 5 Company</label><input type="text" list="customer-companies" id="es-sub5company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 5 Work Type</label><select id="es-sub5worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 5 Work Type</label><input type="text" id="es-sub5worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 6 Name</label><input type="text" id="es-sub6name"></div>
       <div class="form-group"><label>Sub 6 Phone</label><input type="text" id="es-sub6phone"></div>
       <div class="form-group"><label>Sub 6 Company</label><input type="text" list="customer-companies" id="es-sub6company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 6 Work Type</label><select id="es-sub6worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 6 Work Type</label><input type="text" id="es-sub6worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 7 Name</label><input type="text" id="es-sub7name"></div>
       <div class="form-group"><label>Sub 7 Phone</label><input type="text" id="es-sub7phone"></div>
       <div class="form-group"><label>Sub 7 Company</label><input type="text" list="customer-companies" id="es-sub7company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 7 Work Type</label><select id="es-sub7worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 7 Work Type</label><input type="text" id="es-sub7worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 8 Name</label><input type="text" id="es-sub8name"></div>
       <div class="form-group"><label>Sub 8 Phone</label><input type="text" id="es-sub8phone"></div>
       <div class="form-group"><label>Sub 8 Company</label><input type="text" list="customer-companies" id="es-sub8company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 8 Work Type</label><select id="es-sub8worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 8 Work Type</label><input type="text" id="es-sub8worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 9 Name</label><input type="text" id="es-sub9name"></div>
       <div class="form-group"><label>Sub 9 Phone</label><input type="text" id="es-sub9phone"></div>
       <div class="form-group"><label>Sub 9 Company</label><input type="text" list="customer-companies" id="es-sub9company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 9 Work Type</label><select id="es-sub9worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 9 Work Type</label><input type="text" id="es-sub9worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 10 Name</label><input type="text" id="es-sub10name"></div>
       <div class="form-group"><label>Sub 10 Phone</label><input type="text" id="es-sub10phone"></div>
       <div class="form-group"><label>Sub 10 Company</label><input type="text" list="customer-companies" id="es-sub10company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 10 Work Type</label><select id="es-sub10worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 10 Work Type</label><input type="text" id="es-sub10worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 11 Name</label><input type="text" id="es-sub11name"></div>
       <div class="form-group"><label>Sub 11 Phone</label><input type="text" id="es-sub11phone"></div>
       <div class="form-group"><label>Sub 11 Company</label><input type="text" list="customer-companies" id="es-sub11company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 11 Work Type</label><select id="es-sub11worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 11 Work Type</label><input type="text" id="es-sub11worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 12 Name</label><input type="text" id="es-sub12name"></div>
       <div class="form-group"><label>Sub 12 Phone</label><input type="text" id="es-sub12phone"></div>
       <div class="form-group"><label>Sub 12 Company</label><input type="text" list="customer-companies" id="es-sub12company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 12 Work Type</label><select id="es-sub12worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 12 Work Type</label><input type="text" id="es-sub12worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 13 Name</label><input type="text" id="es-sub13name"></div>
       <div class="form-group"><label>Sub 13 Phone</label><input type="text" id="es-sub13phone"></div>
       <div class="form-group"><label>Sub 13 Company</label><input type="text" list="customer-companies" id="es-sub13company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 13 Work Type</label><select id="es-sub13worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 13 Work Type</label><input type="text" id="es-sub13worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 14 Name</label><input type="text" id="es-sub14name"></div>
       <div class="form-group"><label>Sub 14 Phone</label><input type="text" id="es-sub14phone"></div>
       <div class="form-group"><label>Sub 14 Company</label><input type="text" list="customer-companies" id="es-sub14company" placeholder="Type or pick company"></div>
-      <div class="form-group"><label>Sub 14 Work Type</label><select id="es-sub14worktype">
-<option value="">— Work Type —</option>
-<option value="Concrete">Concrete</option>
-<option value="Steel">Steel</option>
-<option value="Electrical">Electrical</option>
-<option value="Mechanical">Mechanical</option>
-<option value="Framing">Framing</option>
-<option value="Roofing">Roofing</option>
-<option value="Excavation">Excavation</option>
-<option value="Dirt/Excavation">Dirt/Excavation</option>
-<option value="Utilities">Utilities</option>
-<option value="Demolition">Demolition</option>
-<option value="Masonry">Masonry</option>
-<option value="Plumbing">Plumbing</option>
-<option value="HVAC">HVAC</option>
-<option value="Drywall">Drywall</option>
-<option value="Painting">Painting</option>
-<option value="Flooring">Flooring</option>
-<option value="Glass/Glazing">Glass/Glazing</option>
-<option value="Fire Protection">Fire Protection</option>
-<option value="Low Voltage">Low Voltage</option>
-<option value="Landscaping">Landscaping</option>
-<option value="Other">Other</option>
-</select></div>
+      <div class="form-group"><label>Sub 14 Work Type</label><input type="text" id="es-sub14worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Equipment</label><input type="text" id="es-equip"></div>
       <div class="form-group"><label>Monthly Value</label><input type="text" id="es-value"></div>
       <div class="form-group"><label>Zone</label><select id="es-zone"><option value="">— Day / Zone —</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Tulsa">🌆 Tulsa</option></select></div>
@@ -3185,6 +2673,15 @@ function attachAutocomplete(inputId, cityId, stateId, zipId){
 var _vtInterval=null;
 function _vtKey(){ return 'siteboss_active_visit'; }
 function getActiveVisit(){ try{ return JSON.parse(localStorage.getItem(_vtKey())||'null'); }catch(e){ return null; } }
+function clockToggle(kind,id,name){
+  const av=getActiveVisit();
+  if(av && av.kind===kind && String(av.id)===String(id)) stopVisitTimer();
+  else startVisitTimer(kind,id,name||'Visit');
+}
+function clockLabel(kind,id){
+  const av=getActiveVisit();
+  return (av && av.kind===kind && String(av.id)===String(id)) ? '\u23f1 Clock Out' : '\u23f1 Clock In';
+}
 function startVisitTimer(kind,id,name){
   const cur=getActiveVisit();
   if(cur){ if(!confirm('You\'re already clocked in at '+cur.name+'. Clock out and start a new one?')) return; }
@@ -3213,28 +2710,53 @@ function tickVisitTimer(){
   const p=n=>('0'+n).slice(-2);
   el.textContent = hh>0 ? (hh+':'+p(mm)+':'+p(ss)) : (p(mm)+':'+p(ss));
 }
+function adjustVisitStart(){
+  const v=getActiveVisit(); if(!v) return;
+  const curMin=Math.max(0, Math.round((Date.now()-v.start)/60000));
+  const ans=prompt('How long ago did you ACTUALLY arrive at '+v.name+'?\nEnter minutes (e.g. 45) or h:mm (e.g. 1:30).\nCurrent: '+curMin+' min', String(curMin));
+  if(ans===null) return;
+  const s=(ans||'').trim(); let mins=0;
+  const hm=s.match(/^(\d+):(\d{1,2})$/);
+  if(hm){ mins=(+hm[1])*60+(+hm[2]); }
+  else { mins=parseInt(s.replace(/[^0-9]/g,''))||0; }
+  if(mins<=0){ toast('Enter minutes greater than 0', true); return; }
+  v.start = Date.now() - mins*60000;
+  localStorage.setItem(_vtKey(), JSON.stringify(v));
+  tickVisitTimer();
+  toast('Start adjusted to '+(mins>=60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+' min'))+' ago');
+}
 async function stopVisitTimer(){
   const v=getActiveVisit(); if(!v) return;
-  const mins=Math.max(1, Math.round((Date.now()-v.start)/60000));
+  let mins=Math.max(1, Math.round((Date.now()-v.start)/60000));
+  // Let Brad correct the total in case he forgot to clock in/out on time
+  const adj=prompt('Time at '+v.name+': '+mins+' min.\nEnter the ACTUAL minutes if different, or leave as-is:', String(mins));
+  if(adj===null) return;  // cancel = keep clock running
+  const adjN=parseInt((adj||'').replace(/[^0-9]/g,''));
+  if(!isNaN(adjN) && adjN>0) mins=adjN;
   const durStr = mins>=60 ? (Math.floor(mins/60)+'h '+(mins%60)+'m') : (mins+' min');
   localStorage.removeItem(_vtKey());
   showVisitTimer();
-  const note=prompt('Clocked out of '+v.name+' after '+durStr+'.\nAdd a note? (optional)');
+  const note=prompt('Logged '+durStr+' at '+v.name+'.\nAdd a note? (optional)');
   const entryNote=(note===null?'':note.trim());
   const dateToday=today();
   try{
     if(v.kind==='site'){
       const s=jobsites.find(x=>x.id==v.id);
       if(s){ const log=parseVisitLog(s.visitLog); log.push({date:dateToday, note:(entryNote?entryNote+' ':'')+'('+durStr+' on site)', minutes:mins});
-        await api({action:'update',type:'jobsites',record:{...s,lastCheckIn:maxDate(s.lastCheckIn,dateToday),visitLog:JSON.stringify(log)}}); }
+        const newLog=JSON.stringify(log); const newCI=maxDate(s.lastCheckIn,dateToday);
+        const res=await api({action:'update',type:'jobsites',record:{...s,lastCheckIn:newCI,visitLog:newLog}});
+        if(res&&res.success){ s.visitLog=newLog; s.lastCheckIn=newCI; } }
     } else if(v.kind==='customer'){
       const c=clients.find(x=>x.id==v.id);
       if(c){ const log=parseCustLog(c.visitLog); log.push({date:dateToday,type:'Office Visit',note:(entryNote?entryNote+' ':'')+'('+durStr+')',minutes:mins});
-        await api({action:'update',type:'clients',record:{...c,lastContact:maxDate(c.lastContact,dateToday),visitLog:JSON.stringify(log)}}); }
+        const newLog=JSON.stringify(log); const newLC=maxDate(c.lastContact,dateToday);
+        const res=await api({action:'update',type:'clients',record:{...c,lastContact:newLC,visitLog:newLog}});
+        if(res&&res.success){ c.visitLog=newLog; c.lastContact=newLC; } }
     } else if(v.kind==='prospect'){
       const p=(prospects||[]).find(x=>x.id==v.id);
       if(p){ const stamp='['+dateToday+'] '+(entryNote?entryNote+' ':'')+'('+durStr+')'; const newNotes=(p.notes?p.notes+'\n':'')+stamp;
-        await api({action:'update',type:'prospects',record:{...p,notes:newNotes,lastFollowUp:dateToday}}); }
+        const res=await api({action:'update',type:'prospects',record:{...p,notes:newNotes,lastFollowUp:dateToday}});
+        if(res&&res.success){ p.notes=newNotes; p.lastFollowUp=dateToday; } }
     }
     toast('Logged '+durStr+' at '+v.name+' \u2713');
     await syncAll();
@@ -3304,6 +2826,7 @@ function renderTodayRoute(){
         ${s.address?`<button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="trNav('${s.kind}','${s.id}','${day}')">🧭 Navigate</button>`:''}
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="trCheckIn('${s.kind}','${s.id}','${day}')">✓ Check In</button>
         <button class="btn-small" style="color:var(--accent);border-color:var(--accent)" onclick="trMoveToDay('${s.kind}','${s.id}')">↪ Move Day</button>
+        <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="trEditStop('${s.kind}','${s.id}')">✎ Edit Card</button>
         ${(()=>{const av=getActiveVisit();const here=av&&av.kind===s.kind&&String(av.id)===String(s.id);return here?`<button class="btn-small" style="color:#fff;background:var(--green);border-color:var(--green)" onclick="stopVisitTimer()">⏱ Clock Out</button>`:`<button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="startVisitTimer('${s.kind}','${s.id}','${(s.name||'').replace(/'/g,'')}')">⏱ Clock In</button>`;})()}
       </div>
     </div>`;
@@ -3382,6 +2905,11 @@ async function afterProspectOffer(p, note){
     const r=await api({ action:'add', type:'tasks', record:{ text:txt.trim(), when:'today', status:'open', created:today() } });
     if(r&&r.success) toast('Task added \u2713');
   }
+}
+function trEditStop(kind,id){
+  if(kind==='site'){ openEditSite(id); }
+  else if(kind==='customer'){ openProfile(id); }
+  else if(kind==='prospect'){ openEditProspect(id); }
 }
 async function trMoveToDay(kind,id){
   const day=prompt('Move to which zone? (Monday, Tuesday, Wednesday, Thursday, Friday, Tulsa)');
@@ -4208,6 +3736,7 @@ function openProfile(id) {
   document.getElementById('pp-active').textContent  = activeSites.length;
   document.getElementById('pp-revenue').textContent = totalRev > 0 ? '$' + totalRev.toLocaleString() : '$0';
   document.getElementById('pp-touch-btn').onclick   = () => touchClient(id);
+  (function(){ const b=document.getElementById('pp-clock-btn'); if(b){ b.innerHTML=clockLabel('customer',id); b.onclick=()=>{ clockToggle('customer',id, c.company||c.name); }; } })();
   document.getElementById('pp-edit-btn').onclick    = () => openEditClient(id);
   document.getElementById('pp-add-site-btn').onclick = () => quickAddSite(id);
 
@@ -4455,6 +3984,18 @@ function copyPrompt(id) {
 // ══════════════════════════════════════════════
 // RENDER
 // ══════════════════════════════════════════════
+function refreshWorkTypeList(){
+  const dl=document.getElementById('worktype-list');
+  if(!dl) return;
+  const defaults=['Concrete','Steel','Electrical','Mechanical','Framing','Roofing','Excavation','Dirt/Excavation','Utilities','Demolition','Masonry','Plumbing','HVAC','Drywall','Painting','Flooring','Glass/Glazing','Fire Protection','Low Voltage','Landscaping','Other'];
+  const found=[];
+  jobsites.forEach(s=>{
+    if(s.workType) found.push(s.workType);
+    for(let i=1;i<=10;i++){ const v=s['sub'+i+'worktype']; if(v) found.push(v); }
+  });
+  const all=[...new Set([...defaults, ...found].map(x=>(x||'').trim()).filter(Boolean))].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
+  dl.innerHTML=all.map(w=>`<option value="${w.replace(/"/g,'&quot;')}"></option>`).join('');
+}
 function renderAll() {
   const t1 = clients.filter(c => getTier(daysSince(c.lastContact)) === 1);
   const t2 = clients.filter(c => getTier(daysSince(c.lastContact)) === 2);
@@ -4502,6 +4043,7 @@ function renderAll() {
 
   renderClientTable();
   renderSiteTable();
+  refreshWorkTypeList();
   renderSiteFollowUpSchedule();
   populateSubCompanySelects('s-');
   renderProspects();
@@ -4698,7 +4240,12 @@ function renderClientTable() {
   const tbody = document.getElementById('c-tbody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-icon">👷</div>No customers found.</td></tr>'; return; }
 
-  tbody.innerHTML = data.map(c => {
+  const zoneOrder=['Monday','Tuesday','Wednesday','Thursday','Friday','Tulsa'];
+  const zoneRank=z=>{ const i=zoneOrder.findIndex(x=>x.toLowerCase()===(z||'').trim().toLowerCase()); return i<0?(z?900:999):i; };
+  const groups={};
+  data.forEach(c=>{ const key=(c.zone||'').trim()||'— No Zone —'; (groups[key]=groups[key]||[]).push(c); });
+  const gkeys=Object.keys(groups).sort((a,b)=>{ const ra=zoneRank(a==='— No Zone —'?'':a), rb=zoneRank(b==='— No Zone —'?'':b); return ra!==rb?ra-rb:a.localeCompare(b); });
+  const rowHtml = c => {
     const days = daysSince(c.lastContact);
     const tier = getTier(days);
     const sites = clientSites(c.id);
@@ -4725,7 +4272,11 @@ function renderClientTable() {
         <button class="btn-danger" onclick="deleteClient('${c.id}')">✕</button>
       </div></td>
     </tr>`;
-  }).join('');
+  };
+  tbody.innerHTML = gkeys.map(k =>
+    `<tr style="background:var(--surface2)"><td colspan="8" style="font-family:var(--fm);font-size:11px;letter-spacing:2px;color:var(--accent);padding:8px 12px;font-weight:700">${k.toUpperCase()} &middot; ${groups[k].length}</td></tr>`
+    + groups[k].map(rowHtml).join('')
+  ).join('');
 }
 
 function calcSiteCompleteness(s) {
@@ -4754,6 +4305,7 @@ function openSiteDetail(id){
   document.getElementById('sd-svc-btn').onclick=()=>{closeModals();setTimeout(()=>openServiceCall(id),80);};
   document.getElementById('sd-co-btn').onclick=()=>{closeModals();setTimeout(()=>openCallOff(id),80);};
   document.getElementById('sd-checkin-btn').onclick=()=>{quickCheckInSite(id);};
+  (function(){ const s=jobsites.find(x=>x.id==id); const b=document.getElementById('sd-clock-btn'); if(b){ b.innerHTML=clockLabel('site',id); b.onclick=()=>{ clockToggle('site',id, s?s.siteName:'Site'); closeModals(); }; } })();
   const row=(label,val,color)=>val?`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><div style="font-family:var(--fm);font-size:10px;color:var(--muted2);min-width:110px;padding-top:1px">${label}</div><div style="flex:1;color:${color||'var(--text)'};">${val}</div></div>`:'';
   const sec=(t,col)=>`<div style="font-family:var(--fh);font-size:11px;letter-spacing:1px;color:${col||'var(--muted2)'};margin:14px 0 6px;text-transform:uppercase">${t}</div>`;
   let body='';
@@ -4832,7 +4384,12 @@ function renderSiteTable() {
   const tbody = document.getElementById('s-tbody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-icon">🏗</div>No sites found.</td></tr>'; return; }
 
-  tbody.innerHTML = data.map(s => {
+  const zoneOrder=['Monday','Tuesday','Wednesday','Thursday','Friday','Tulsa'];
+  const zoneRank=z=>{ const i=zoneOrder.findIndex(x=>x.toLowerCase()===(z||'').trim().toLowerCase()); return i<0?(z?900:999):i; };
+  const groups={};
+  data.forEach(s=>{ const key=(s.zone||'').trim()||'— No Zone —'; (groups[key]=groups[key]||[]).push(s); });
+  const gkeys=Object.keys(groups).sort((a,b)=>{ const ra=zoneRank(a==='— No Zone —'?'':a), rb=zoneRank(b==='— No Zone —'?'':b); return ra!==rb?ra-rb:a.localeCompare(b); });
+  const rowHtml = s => {
     const c = siteCust(s.clientId);
     return `<tr>
       <td><div class="cell-name" style="cursor:default">${s.siteName}</div>${s.city?`<div class="cell-sub">${s.city}</div>`:''}</td>
@@ -4853,7 +4410,11 @@ function renderSiteTable() {
         <button class="btn-danger" onclick="deleteSite('${s.id}')">&#x2715;</button>
       </div></td>
     </tr>`;
-  }).join('');
+  };
+  tbody.innerHTML = gkeys.map(k =>
+    `<tr style="background:var(--surface2)"><td colspan="12" style="font-family:var(--fm);font-size:11px;letter-spacing:2px;color:var(--accent);padding:8px 12px;font-weight:700">${k.toUpperCase()} &middot; ${groups[k].length} site${groups[k].length!==1?'s':''}</td></tr>`
+    + groups[k].map(rowHtml).join('')
+  ).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -7231,18 +6792,24 @@ function sendCreditApp(prospectId) {
   const recipient = p.contact || p.company;
   const body = `Hi ${p.contact||'there'},
 
-Great connecting on ${p.name||'your project'}. To get your account set up with EquipmentShare, you can complete our credit application online — it only takes about 5 minutes:
+Great connecting on ${p.name||'your project'}. To get your account set up with EquipmentShare, the fastest way is to complete our credit application online — it takes about 5 minutes:
 
-Online Portal: ${portalLink}
+  Apply online (recommended):
+  ${portalLink}
 
-Or download and complete the PDF version:
-${pdfLink}
+If you'd prefer a printable version, you can download the credit application here:
 
-Once approved we'll have you ready to rent. Let me know if you have any questions — happy to help.
+  Credit Application (PDF):
+  ${pdfLink}
 
-Thanks,
+Once it's approved, we'll have you set up and ready to rent. Please don't hesitate to reach out with any questions — I'm glad to help however I can.
+
+Best regards,
+
 Brad Hanna
-EquipmentShare | 405-203-2125
+Territory Account Manager
+EquipmentShare
+405-203-2125
 brad.hanna@equipmentshare.com`;
   openMessageWithRecipients('Credit Application', body, prospectId);
 }
