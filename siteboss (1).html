@@ -508,6 +508,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="nav-item" onclick="showPanel('stories')">📖 Story Capture</div>
     <div class="nav-item" onclick="showPanel('digest-setup')">☀️ Morning Digest</div>
     <div class="nav-item" onclick="showPanel('branch-contacts');renderBranchContacts()">📧 Branch Contacts</div>
+    <div class="nav-item" onclick="showPanel('worktypes')">🔧 Work Types</div>
     <div class="nav-item" onclick="showPanel('servicelog')">🔧 Service Log</div>
     <div class="nav-item" onclick="showPanel('equipment')">🔧 Equipment on Rent</div>
     <div class="nav-divider"></div>
@@ -921,6 +922,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <button class="btn btn-primary" onclick="showPanel('add-prospect')">+ Add Prospect</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--blue);color:var(--blue)" onclick="document.getElementById('permit-import-file').click()">📋 Import Permits</button>
           <input type="file" id="permit-import-file" accept=".csv" style="display:none" onchange="importPermitsCSV(this)">
+          <input class="search-box" type="text" placeholder="Search prospects..." oninput="searchP(this.value)" style="margin-left:6px">
           <select id="prospect-source-filter" onchange="renderProspects()" style="margin-left:6px">
             <option value="">All Sources</option>
             <option value="Permit">📋 Permit only</option>
@@ -1581,6 +1583,14 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div id="tr-list"><div class="empty-state"><div class="empty-icon">🚗</div>Pick a day to see your stops.</div></div>
     </div>
 
+    <div class="panel" id="panel-worktypes">
+      <div class="section-head">
+        <div class="section-title" style="color:var(--green)">🔧 WORK TYPES IN USE</div>
+      </div>
+      <div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-bottom:12px">These are the work types saved across your job sites. Rename fixes a typo everywhere; Remove clears it from every site using it.</div>
+      <div id="worktypes-list"></div>
+    </div>
+
     <div class="panel" id="panel-plaud">
       <div class="section-head">
         <div class="section-title" style="color:var(--accent)">📝 PLAUD NOTES</div>
@@ -1839,6 +1849,23 @@ tr:hover td{background:rgba(255,255,255,.015)}
 </div>
 
 <!-- SERVICE CALL MODAL -->
+<div class="modal-overlay" id="prospect-link-modal">
+  <div class="modal" style="border-top-color:var(--blue)">
+    <div class="modal-title" style="color:var(--blue)">🔗 LINK PROSPECT TO JOB SITE</div>
+    <div id="pl-prospect-name" style="font-family:var(--fm);font-size:12px;color:var(--muted2);margin-bottom:8px"></div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>Job Site</label>
+      <select id="pl-siteId"></select>
+    </div>
+    <div id="pl-current" style="margin-bottom:10px"></div>
+    <input type="hidden" id="pl-prospect-id">
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" style="background:var(--blue)" onclick="saveProspectLink()">LINK</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="bulkpay-modal">
   <div class="modal" style="border-top-color:var(--green)">
     <div class="modal-title" style="color:var(--green)">💵 ENTER CHECKS / PAYMENTS</div>
@@ -2779,18 +2806,32 @@ function initMapAutocomplete(prefix){
     sets.forEach(([a,c,st,z])=>attachAutocomplete(a,c,st,z));
   });
 }
+function trWeekKey(){
+  const d=new Date(); d.setHours(0,0,0,0);
+  const monday=new Date(d); monday.setDate(d.getDate()-((d.getDay()+6)%7));
+  return ''+monday.getFullYear()+('0'+(monday.getMonth()+1)).slice(-2)+('0'+monday.getDate()).slice(-2);
+}
+function trOverrides(){ try{ return JSON.parse(localStorage.getItem('siteboss_tr_ovr_'+trWeekKey())||'[]'); }catch(e){ return []; } }
+function trSetOverrides(arr){ localStorage.setItem('siteboss_tr_ovr_'+trWeekKey(), JSON.stringify(arr)); }
+function trOverrideFor(kind,id){ return trOverrides().find(o=>o.kind===kind && String(o.id)===String(id)) || null; }
 function trVisitedKey(day){ return 'siteboss_tr_'+day+'_'+today(); }
 function trGetVisited(day){ try{ return JSON.parse(localStorage.getItem(trVisitedKey(day))||'[]'); }catch(e){ return []; } }
 function trSetVisited(day,arr){ localStorage.setItem(trVisitedKey(day), JSON.stringify(arr)); }
 function trStopsForDay(day){
   const z = v => (v==null?'':String(v)).trim().toLowerCase();
   const wanted = z(day);
-  const sites=jobsites.filter(s=>z(s.zone)===wanted)
-    .map(s=>({kind:'site',id:s.id,name:s.siteName,sub:(siteCust(s.clientId)||{}).company||s.client||'',address:[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
-  const custs=clients.filter(c=>z(c.zone)===wanted)
-    .map(c=>({kind:'customer',id:c.id,name:c.company||c.name,sub:c.name||'',address:[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}));
-  const prosp=(prospects||[]).filter(p=>z(p.zone)===wanted)
-    .map(p=>({kind:'prospect',id:p.id,name:p.company||p.name,sub:p.name||'',address:[p.address,p.city].filter(Boolean).join(', ')}));
+  const onDay = (kind,id,homeZone) => {
+    const o = trOverrideFor(kind,id);
+    if(o) return z(o.toDay)===wanted;   // bumped this week: only on its override day
+    return z(homeZone)===wanted;        // normal: on its home day
+  };
+  const moved = (kind,id) => !!trOverrideFor(kind,id);
+  const sites=jobsites.filter(s=>onDay('site',s.id,s.zone))
+    .map(s=>({kind:'site',id:s.id,name:s.siteName,sub:(siteCust(s.clientId)||{}).company||s.client||'',address:[s.address,s.city,[s.state,s.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '),moved:moved('site',s.id)}));
+  const custs=clients.filter(c=>onDay('customer',c.id,c.zone))
+    .map(c=>({kind:'customer',id:c.id,name:c.company||c.name,sub:c.name||'',address:[c.address,c.city,[c.state,c.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '),moved:moved('customer',c.id)}));
+  const prosp=(prospects||[]).filter(p=>onDay('prospect',p.id,p.zone))
+    .map(p=>({kind:'prospect',id:p.id,name:p.company||p.name,sub:p.name||'',address:[p.address,p.city].filter(Boolean).join(', '),moved:moved('prospect',p.id)}));
   return sites.concat(custs, prosp);
 }
 function renderTodayRoute(){
@@ -2817,7 +2858,7 @@ function renderTodayRoute(){
       <div style="display:flex;align-items:flex-start;gap:10px">
         <input type="checkbox" ${isDone?'checked':''} style="width:22px;height:22px;accent-color:var(--green);margin-top:1px" onchange="trToggleVisited('${s.kind}','${s.id}','${day}')">
         <div style="flex:1">
-          <div style="font-weight:600;font-size:13px;${isDone?'text-decoration:line-through':''}">${s.name} ${badge}</div>
+          <div style="font-weight:600;font-size:13px;${isDone?'text-decoration:line-through':''}">${s.name} ${badge}${s.moved?' <span style="font-family:var(--fm);font-size:9px;color:var(--accent)">&#8631; this wk</span>':''}</div>
           ${s.sub?`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${s.sub}</div>`:''}
           ${s.address?`<div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">${s.address}</div>`:''}
         </div>
@@ -2912,22 +2953,24 @@ function trEditStop(kind,id){
   else if(kind==='prospect'){ openEditProspect(id); }
 }
 async function trMoveToDay(kind,id){
-  const day=prompt('Move to which zone? (Monday, Tuesday, Wednesday, Thursday, Friday, Tulsa)');
+  const day=prompt('Move to which day for THIS WEEK only? (Monday, Tuesday, Wednesday, Thursday, Friday, Tulsa)\nIt returns to its home day next week.');
   if(day===null) return;
   const d=day.trim(); const valid=['Monday','Tuesday','Wednesday','Thursday','Friday','Tulsa'];
   const match=valid.find(v=>v.toLowerCase()===d.toLowerCase());
-  if(!match){ toast('Type a weekday Monday–Friday',true); return; }
-  if(kind==='site'){
-    const s=jobsites.find(s=>s.id==id); if(!s) return;
-    const res=await api({action:'update',type:'jobsites',record:{...s,zone:match}});
-    if(!(res&&res.success)){ toast('Move failed',true); return; }
+  if(!match){ toast('Type Monday–Friday or Tulsa',true); return; }
+  const entity = kind==='site' ? jobsites.find(s=>s.id==id)
+               : kind==='customer' ? clients.find(c=>c.id==id)
+               : (prospects||[]).find(p=>p.id==id);
+  const home = ((entity&&entity.zone)||'').trim();
+  let ovr = trOverrides().filter(o=>!(o.kind===kind && String(o.id)===String(id)));
+  if(match.toLowerCase()!==home.toLowerCase()){
+    ovr.push({kind, id:String(id), toDay:match});   // this-week-only bump
+    toast('Moved to '+match+' for this week \u2713 (back to '+(home||'home')+' next week)');
   } else {
-    const c=clients.find(c=>c.id==id); if(!c) return;
-    const res=await api({action:'update',type:'clients',record:{...c,zone:match}});
-    if(!(res&&res.success)){ toast('Move failed',true); return; }
+    toast('Back on its home day '+match);
   }
-  toast('Moved to '+match+' \u2713');
-  await syncAll(); renderTodayRoute();
+  trSetOverrides(ovr);
+  renderTodayRoute();
 }
 function buildRouteFromToday(){
   const day=(document.getElementById('tr-day')||{}).value||'Monday';
@@ -3984,6 +4027,53 @@ function copyPrompt(id) {
 // ══════════════════════════════════════════════
 // RENDER
 // ══════════════════════════════════════════════
+function _wtFields(){ const f=['workType']; for(let i=1;i<=14;i++) f.push('sub'+i+'worktype'); return f; }
+function renderWorkTypes(){
+  const box=document.getElementById('worktypes-list'); if(!box) return;
+  const fields=_wtFields();
+  const counts={};
+  jobsites.forEach(s=>{ fields.forEach(f=>{ const v=(s[f]||'').trim(); if(v) counts[v]=(counts[v]||0)+1; }); });
+  const keys=Object.keys(counts).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
+  if(!keys.length){ box.innerHTML='<div class="empty-state"><div class="empty-icon">🔧</div>No work types saved yet.</div>'; return; }
+  box.innerHTML=keys.map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:6px">
+      <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">${k.replace(/</g,'&lt;')}</div><div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">used on ${counts[k]} ${counts[k]===1?'entry':'entries'}</div></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="renameWorkType('${k.replace(/'/g,"\\'")}')">Rename</button>
+        <button class="btn-small" style="color:var(--red);border-color:var(--red)" onclick="removeWorkType('${k.replace(/'/g,"\\'")}')">Remove</button>
+      </div>
+    </div>`).join('');
+}
+async function _applyWorkTypeChange(oldVal, newVal){
+  const fields=_wtFields();
+  const changed=[];
+  jobsites.forEach(s=>{
+    let touched=false; const rec={...s};
+    fields.forEach(f=>{ if((s[f]||'').trim()===oldVal){ rec[f]=newVal; touched=true; } });
+    if(touched) changed.push(rec);
+  });
+  if(!changed.length){ toast('Nothing to update',true); return; }
+  let ok=0;
+  for(const rec of changed){
+    const res=await api({action:'update',type:'jobsites',record:rec});
+    if(res&&res.success){ ok++; const local=jobsites.find(x=>x.id==rec.id); if(local) Object.assign(local, rec); }
+    toast('Updating... '+ok+' of '+changed.length);
+  }
+  await syncAll(); renderWorkTypes(); refreshWorkTypeList();
+  return ok;
+}
+async function renameWorkType(oldVal){
+  const nv=prompt('Rename work type "'+oldVal+'" to:', oldVal);
+  if(nv===null) return;
+  const newVal=nv.trim(); if(!newVal){ toast('Enter a name',true); return; }
+  if(newVal===oldVal) return;
+  const ok=await _applyWorkTypeChange(oldVal,newVal);
+  if(ok) toast('Renamed to "'+newVal+'" on '+ok+' entr'+(ok===1?'y':'ies')+' \u2713');
+}
+async function removeWorkType(oldVal){
+  if(!confirm('Remove "'+oldVal+'" from every site using it? This clears that work type field.')) return;
+  const ok=await _applyWorkTypeChange(oldVal,'');
+  if(ok) toast('Removed from '+ok+' entr'+(ok===1?'y':'ies')+' \u2713');
+}
 function refreshWorkTypeList(){
   const dl=document.getElementById('worktype-list');
   if(!dl) return;
@@ -4405,6 +4495,7 @@ function renderSiteTable() {
       <td style="font-family:var(--fm);font-size:10px;white-space:nowrap">${s.startDate||'—'}${s.endDate?'<br>→ '+s.endDate:''}</td>
       <td><div class="actions">
         <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="openSiteDetail('${s.id}')">&#128203; Details</button>
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="event.stopPropagation();clockToggle('site','${s.id}','${(s.siteName||'').replace(/'/g,'')}')">${(()=>{const av=getActiveVisit();return av&&av.kind==='site'&&String(av.id)===String(s.id)?'&#9201; Out':'&#9201; In';})()}</button>
         <button class="btn-small" onclick="openEditSite('${s.id}')">Edit</button>
         <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('${(s.address||s.siteName)+(s.city?', '+s.city:'')}'),'_blank')">&#128205;</button>
         <button class="btn-danger" onclick="deleteSite('${s.id}')">&#x2715;</button>
@@ -4439,6 +4530,8 @@ function filterS(f, btn) {
 }
 
 function searchS(v) { sSearch = v; renderSiteTable(); }
+let pSearch = "";
+function searchP(v) { pSearch = v; renderProspects(); }
 
 // ══════════════════════════════════════════════
 // TOAST
@@ -4715,6 +4808,47 @@ async function importPermitsCSV(input) {
   else toast('Permits imported — '+saved+' new prospects ('+skipped+' skipped as duplicates) \u2713');
 }
 
+function linkProspectToSite(prospectId){
+  const p=(prospects||[]).find(x=>x.id==prospectId); if(!p) return;
+  document.getElementById('pl-prospect-id').value=prospectId;
+  document.getElementById('pl-prospect-name').textContent=(p.company||p.name)+(p.name&&p.company?(' — '+p.name):'');
+  const sel=document.getElementById('pl-siteId');
+  const opts=jobsites.slice().sort((a,b)=>((a.siteName||'')).toLowerCase().localeCompare((b.siteName||'').toLowerCase()))
+    .map(s=>`<option value="${s.id}">${s.siteName||'(site)'}${s.city?(' — '+s.city):''}</option>`).join('');
+  sel.innerHTML='<option value="">— Select Job Site —</option>'+opts;
+  const linked=prospectSites(p);
+  document.getElementById('pl-current').innerHTML = linked.length
+    ? '<div style="font-family:var(--fm);font-size:10px;color:var(--muted2)">Already on: '+linked.map(s=>s.siteName).join(', ')+'</div>' : '';
+  document.getElementById('prospect-link-modal').classList.add('open');
+}
+async function saveProspectLink(){
+  const pid=document.getElementById('pl-prospect-id').value;
+  const sid=document.getElementById('pl-siteId').value;
+  const p=(prospects||[]).find(x=>x.id==pid); const s=jobsites.find(x=>x.id==sid);
+  if(!p){ toast('Prospect not found',true); return; }
+  if(!s){ toast('Pick a job site',true); return; }
+  const pname=(p.company||p.name||'').trim();
+  if(prospectSites(p).some(x=>x.id==s.id)){ toast('Already linked to '+s.siteName); closeModals(); return; }
+  let slot=0;
+  for(let i=1;i<=14;i++){ if(!((s['sub'+i+'company']||'').trim())){ slot=i; break; } }
+  if(!slot){ toast('That site already has 14 subs — no open slot',true); return; }
+  const rec={...s}; rec['sub'+slot+'company']=pname;
+  const res=await api({action:'update',type:'jobsites',record:rec});
+  if(res&&res.success){
+    const local=jobsites.find(x=>x.id==s.id); if(local) local['sub'+slot+'company']=pname;
+    toast(pname+' linked to '+s.siteName+' \u2713');
+    closeModals(); await syncAll(); renderProspects();
+  } else { toast('Link failed',true); }
+}
+function prospectSites(p){
+  if(!p) return [];
+  const names=[(p.company||'').trim().toLowerCase(),(p.name||'').trim().toLowerCase()].filter(Boolean);
+  return jobsites.filter(s=>{
+    if(String(s.clientId)===String(p.id)) return true;
+    for(let i=1;i<=14;i++){ const co=(s['sub'+i+'company']||'').trim().toLowerCase(); if(co && names.includes(co)) return true; }
+    return false;
+  });
+}
 function renderProspects() {
   const stages = ['Lead','Contacted','Quoted','Won','Lost'];
   const stageKeys = ['lead','contacted','quoted','won','lost'];
@@ -4723,7 +4857,12 @@ function renderProspects() {
 
   const _sf = document.getElementById('prospect-source-filter');
   const srcFilter = _sf ? _sf.value : '';
-  const view = srcFilter ? prospects.filter(p => (p.source||'Other') === srcFilter) : prospects;
+  let view = srcFilter ? prospects.filter(p => (p.source||'Other') === srcFilter) : prospects.slice();
+  const _pq = (pSearch||'').trim().toLowerCase();
+  if(_pq){
+    view = view.filter(p => [p.name,p.company,p.contact,p.phone,p.email,p.address,p.city,p.source,p.notes,p.competitor,p.referredBy]
+      .some(f => (f||'').toString().toLowerCase().includes(_pq)));
+  }
 
   const totalVal = view.filter(p => p.stage !== 'Lost').reduce((sum,p) => sum + (parseFloat((String(p.value||'')).replace(/[^0-9.]/g,''))||0), 0);
   const pipTot = document.getElementById('pip-total-val'); if(pipTot) pipTot.textContent = '$' + totalVal.toLocaleString();
@@ -4747,6 +4886,7 @@ function renderProspects() {
         ${p.contact ? `<div class="prospect-card-sub">👤 ${p.contact}${p.phone?' · '+p.phone:''}</div>` : ''}
         ${p.email ? `<div class="prospect-card-sub">📧 ${p.email}</div>` : ''}
         ${p.city ? `<div class="prospect-card-sub">📍 ${p.city}${p.zone?' · '+p.zone:''}</div>` : ''}
+        ${(()=>{const n=prospectSites(p).length; return n?`<div class="prospect-card-sub" style="color:var(--blue)">🏗 On ${n} job site${n!==1?'s':''}</div>`:'';})()}
         ${p.value ? `<div class="prospect-card-value">💰 ${p.value}/mo</div>` : ''}
         ${p.startDate ? `<div class="prospect-card-date">🗓 Start: ${p.startDate}</div>` : ''}
         ${p.equip ? `<div class="prospect-card-sub">🔧 ${p.equip}</div>` : ''}
@@ -4756,6 +4896,7 @@ function renderProspects() {
         <div style="margin-top:6px"><span class="prospect-source ${sourceClass[p.source]||'src-other'}">${sourceEmoji[p.source]||'📌'} ${p.source||'Other'}</span></div>
         <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap" onclick="event.stopPropagation()">
           <button class="btn-small" onclick="openEditProspect('${p.id}')">Edit</button>
+          <button class="btn-small" style="color:var(--blue);border-color:var(--blue)" onclick="event.stopPropagation();linkProspectToSite('${p.id}')">🔗 Link Site</button>
           ${p.stage !== 'Won' && p.stage !== 'Lost' ? `<button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="event.stopPropagation();convertToSite('${p.id}')">→ Convert</button>` : ''}
           <button class="btn-small" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();openSubCompTracker('${p.id}','prospect')">⚔ Subs</button>
           <button class="btn-small" onclick="event.stopPropagation();sendCreditApp('${p.id}')">💳 Credit App</button>
@@ -8312,12 +8453,13 @@ function setMapFilter(f, btn) {
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice','plaud','todayroute'];
+  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice','plaud','todayroute','worktypes'];
   document.querySelectorAll('.nav-item').forEach((n,i) => {
     n.classList.toggle('active', panels[i] === id);
   });
   if (id === 'map') renderMap();
   if (id === 'plaud') renderPlaud();
+  if (id === 'worktypes') renderWorkTypes();
   if (id === 'todayroute') { const d=document.getElementById('tr-day'); if(d && !d._init){ d._init=true; const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; d.value=(wd==='Saturday'||wd==='Sunday')?'Monday':wd; } renderTodayRoute(); }
   if (id === 'branch-contacts') renderBranchContacts();
   if (id !== 'dashboard' && id !== 'customers' && id !== 'jobsites') closeProfile();
