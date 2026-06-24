@@ -2793,8 +2793,13 @@ async function stopVisitTimer(){
         if(res&&res.success){ p.notes=newNotes; p.lastFollowUp=dateToday; } }
     }
     toast('Logged '+durStr+' at '+v.name+' \u2713');
+    markRouteDone(v.kind, v.id);
     await syncAll();
     if(typeof renderTodayRoute==='function') renderTodayRoute();
+    // Clock-out counts as a full check-in: offer a follow-up / task
+    if(v.kind==='site'){ const s2=jobsites.find(x=>x.id==v.id); if(s2) afterCheckInOffer(s2, entryNote); }
+    else if(v.kind==='customer'){ const c2=clients.find(x=>x.id==v.id); if(c2) afterContactOffer(c2, entryNote); }
+    else if(v.kind==='prospect'){ const p2=(prospects||[]).find(x=>x.id==v.id); if(p2) afterProspectOffer(p2, entryNote); }
   }catch(e){ toast('Saved time but log failed',true); }
 }
 function initMapAutocomplete(prefix){
@@ -2824,6 +2829,20 @@ function trOverrideFor(kind,id){ return trOverrides().find(o=>o.kind===kind && S
 function trVisitedKey(day){ return 'siteboss_tr_'+day+'_'+today(); }
 function trGetVisited(day){ try{ return JSON.parse(localStorage.getItem(trVisitedKey(day))||'[]'); }catch(e){ return []; } }
 function trSetVisited(day,arr){ localStorage.setItem(trVisitedKey(day), JSON.stringify(arr)); }
+function markRouteDone(kind,id){
+  // Mark this stop completed on Today's Route, wherever the check-in came from.
+  const entity = kind==='site' ? jobsites.find(s=>s.id==id)
+               : kind==='customer' ? clients.find(c=>c.id==id)
+               : (prospects||[]).find(p=>p.id==id);
+  if(!entity) return;
+  const o = (typeof trOverrideFor==='function') ? trOverrideFor(kind,id) : null;
+  const day = (o ? o.toDay : (entity.zone||'')).trim();
+  if(!day) return;
+  const visited = trGetVisited(day);
+  const key = kind+':'+id;
+  if(!visited.includes(key)){ visited.push(key); trSetVisited(day, visited); }
+  if(typeof renderTodayRoute==='function') renderTodayRoute();
+}
 function trStopsForDay(day){
   const z = v => (v==null?'':String(v)).trim().toLowerCase();
   const wanted = z(day);
@@ -3262,6 +3281,7 @@ async function touchClient(id) {
   const res = await api({ action:'update', type:'clients', record });
   if (res && res.success) {
     toast('Contact logged ✓');
+    markRouteDone('customer', id);
     await syncAll();
     if (activeProfileId == id) openProfile(id);
     afterContactOffer(c, (note||'').trim());
@@ -3469,7 +3489,10 @@ function renderVisitLog(){
     return `<div style="background:var(--surface2);border-left:3px solid var(--green);border-radius:0 6px 6px 0;padding:7px 10px;margin-bottom:5px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-family:var(--fh);font-size:12px;color:var(--green)">${mdy(e.date)}</span>
-        <button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);padding:1px 7px" onclick="deleteVisitNote(${idx})">&#x2715;</button>
+        <span style="display:flex;gap:4px">
+          <button type="button" class="btn-small" style="color:var(--blue);border-color:var(--blue);padding:1px 7px" onclick="editVisitNote(${idx})">&#9998;</button>
+          <button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);padding:1px 7px" onclick="deleteVisitNote(${idx})">&#x2715;</button>
+        </span>
       </div>
       <div style="font-size:12px;margin-top:3px;line-height:1.5;white-space:pre-wrap">${(e.note||'').replace(/</g,'&lt;')}</div>
     </div>`;
@@ -3499,6 +3522,23 @@ async function addSiteVisitNote(){
     }
   }
 }
+async function editVisitNote(idx){
+  const raw=document.getElementById('es-visitlog');
+  const log=parseVisitLog(raw.value);
+  if(idx<0||idx>=log.length) return;
+  const e=log[idx];
+  const note=prompt('Edit visit note:', e.note||'');
+  if(note===null) return;
+  const dStr=prompt('Date (MM-DD-YYYY):', mdy(e.date||today()));
+  if(dStr===null) return;
+  const vdate=normDate(dStr);
+  log[idx]={...e, note:note.trim(), date:vdate};
+  const newLog=JSON.stringify(log);
+  raw.value=newLog; renderVisitLog();
+  const sid=document.getElementById('es-id'); const s=sid?jobsites.find(x=>x.id==sid.value):null;
+  if(s){ const res=await api({action:'update',type:'jobsites',record:{...s, visitLog:newLog}});
+    if(res&&res.success){ s.visitLog=newLog; toast('Check-in updated \u2713'); } else toast('Could not update',true); }
+}
 function deleteVisitNote(idx){
   const raw=document.getElementById('es-visitlog');
   const log=parseVisitLog(raw.value);
@@ -3519,6 +3559,7 @@ async function quickCheckInSite(id){
   const res=await api({action:'update',type:'jobsites',record});
   if(res&&res.success){
     toast('Checked in \u2713');
+    markRouteDone('site', id);
     await afterCheckInOffer(s, note);
     closeModals(); await syncAll();
   }
@@ -3734,7 +3775,10 @@ function renderCustomerLog(c){
     return `<div style="background:var(--surface2);border-left:3px solid ${col};border-radius:0 6px 6px 0;padding:7px 10px;margin-bottom:5px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-family:var(--fm);font-size:11px"><span style="color:${col};font-weight:600">${e.type||'Contact'}</span> &middot; <span style="color:var(--muted2)">${mdy(e.date)}</span></span>
-        <button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);padding:1px 7px" onclick="deleteCustLog('${activeProfileId}',${idx})">&#x2715;</button>
+        <span style="display:flex;gap:4px">
+          <button type="button" class="btn-small" style="color:var(--blue);border-color:var(--blue);padding:1px 7px" onclick="editCustLog('${activeProfileId}',${idx})">&#9998;</button>
+          <button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);padding:1px 7px" onclick="deleteCustLog('${activeProfileId}',${idx})">&#x2715;</button>
+        </span>
       </div>
       ${e.note?`<div style="font-size:12px;margin-top:3px;line-height:1.5;white-space:pre-wrap">${e.note.replace(/</g,'&lt;')}</div>`:''}
     </div>`;
@@ -3754,6 +3798,21 @@ async function logCustomerVisit(){
   const res=await api({action:'update',type:'clients',record});
   if(res&&res.success){ toast('Contact logged \u2713'); await syncAll(); openProfile(id); afterContactOffer(c, (note||'').trim()); }
   else toast('Could not log contact',true);
+}
+async function editCustLog(id,idx){
+  const c=clients.find(c=>c.id==id); if(!c) return;
+  const log=parseCustLog(c.visitLog);
+  if(idx<0||idx>=log.length) return;
+  const e=log[idx];
+  const type=prompt('Contact type? (Office Visit, Call, Email, Text, Other)', e.type||'Office Visit');
+  if(type===null) return;
+  const note=prompt('Edit note:', e.note||'');
+  if(note===null) return;
+  const dStr=prompt('Date (MM-DD-YYYY):', mdy(e.date||today()));
+  if(dStr===null) return;
+  log[idx]={...e, type:(type||'Other').trim(), note:note.trim(), date:normDate(dStr)};
+  const res=await api({action:'update',type:'clients',record:{...c, visitLog:JSON.stringify(log)}});
+  if(res&&res.success){ toast('Contact updated \u2713'); await syncAll(); openProfile(id); } else toast('Could not update',true);
 }
 async function deleteCustLog(id,idx){
   const c=clients.find(c=>c.id==id); if(!c) return;
@@ -4259,10 +4318,12 @@ function renderTimeToday(){
   const td=today();
   const fmtDur=m=> m>=60 ? (Math.floor(m/60)+'h '+(m%60? (m%60)+'m':'') ).trim() : (m+'m');
   const entries=[];
-  jobsites.forEach(s=>{ parseVisitLog(s.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:s.siteName||'Site', kind:'site', min:+e.minutes}); }); });
-  clients.forEach(c=>{ parseCustLog(c.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:c.company||c.name||'Customer', kind:'office', min:+e.minutes}); }); });
+  jobsites.forEach(s=>{ parseVisitLog(s.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td) entries.push({name:s.siteName||'Site', kind:'site', min:+(e.minutes||0)}); }); });
+  clients.forEach(c=>{ parseCustLog(c.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td) entries.push({name:c.company||c.name||'Customer', kind:'office', min:+(e.minutes||0)}); }); });
+  const _minsFromText=line=>{ let m=line.match(/\((\d+)\s*h(?:r)?\s*(\d+)?\s*m?\)/i); if(m) return (+m[1])*60+(+(m[2]||0)); m=line.match(/\((\d+)\s*min/i); if(m) return +m[1]; return 0; };
+  (prospects||[]).forEach(p=>{ (p.notes||'').split('\n').forEach(line=>{ const dm=line.match(/^\[(\d{4}-\d{2}-\d{2})\]/); if(dm && dm[1]===td) entries.push({name:p.company||p.name||'Prospect', kind:'prospect', min:_minsFromText(line)}); }); });
   if(!entries.length){
-    box.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--fm);font-size:12px;color:var(--muted2)">No clocked visits today. Tap &#9201; Clock In on any site, customer, or route stop to track your time.</div>';
+    box.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--fm);font-size:12px;color:var(--muted2)">No check-ins today. Check in or tap &#9201; Clock In on any site or customer.</div>';
     return;
   }
   // merge duplicate stops (same name+kind) into one row summing minutes
@@ -4272,28 +4333,33 @@ function renderTimeToday(){
   const total=rows.reduce((a,e)=>a+e.min,0);
   const siteMin=rows.filter(r=>r.kind==='site').reduce((a,e)=>a+e.min,0);
   const offMin=rows.filter(r=>r.kind==='office').reduce((a,e)=>a+e.min,0);
+  const prosMin=rows.filter(r=>r.kind==='prospect').reduce((a,e)=>a+e.min,0);
+  const hasPros=rows.some(r=>r.kind==='prospect');
   const maxMin=Math.max(...rows.map(r=>r.min),1);
   const visitCount=entries.length;
+  const timedCount=rows.filter(r=>r.min>0).length;
   // Header: big total + Site/Office split
   let html='<div style="background:linear-gradient(135deg,var(--surface2),var(--surface));border:1px solid var(--green);border-radius:10px;padding:14px;margin-bottom:10px">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">'
-    +'<div style="font-family:var(--fm);font-size:10px;letter-spacing:1px;color:var(--muted2)">'+visitCount+' visit'+(visitCount!==1?'s':'')+' &middot; '+rows.length+' stop'+(rows.length!==1?'s':'')+'</div>'
+    +'<div style="font-family:var(--fm);font-size:10px;letter-spacing:1px;color:var(--muted2)">'+visitCount+' check-in'+(visitCount!==1?'s':'')+' &middot; '+rows.length+' stop'+(rows.length!==1?'s':'')+(timedCount<rows.length?' &middot; '+timedCount+' timed':'')+'</div>'
     +'<div style="font-family:var(--fh);font-size:30px;line-height:1;color:var(--green)">'+fmtDur(total)+'</div></div>'
     +'<div style="display:flex;gap:8px">'
     +'<div style="flex:1;background:var(--bg);border-radius:6px;padding:8px 10px"><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">&#127959;&#65039; SITES</div><div style="font-family:var(--fh);font-size:17px;color:var(--text)">'+fmtDur(siteMin)+'</div></div>'
     +'<div style="flex:1;background:var(--bg);border-radius:6px;padding:8px 10px"><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">&#127970; OFFICES</div><div style="font-family:var(--fh);font-size:17px;color:var(--text)">'+fmtDur(offMin)+'</div></div>'
+    +(hasPros?'<div style="flex:1;background:var(--bg);border-radius:6px;padding:8px 10px"><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">&#127919; PROSPECTS</div><div style="font-family:var(--fh);font-size:17px;color:var(--text)">'+fmtDur(prosMin)+'</div></div>':'')
     +'</div></div>';
   // Per-stop rows with proportional bars
   html+=rows.map(e=>{
-    const pct=Math.round((e.min/maxMin)*100);
-    const col=e.kind==='site'?'var(--blue)':'var(--accent)';
-    const icon=e.kind==='site'?'&#127959;&#65039;':'&#127970;';
+    const pct=e.min>0?Math.round((e.min/maxMin)*100):0;
+    const col=e.kind==='site'?'var(--blue)':e.kind==='prospect'?'var(--green)':'var(--accent)';
+    const icon=e.kind==='site'?'&#127959;&#65039;':e.kind==='prospect'?'&#127919;':'&#127970;';
+    const timeLabel=e.min>0?fmtDur(e.min):'<span style="font-family:var(--fm);font-size:10px;color:var(--muted2)">&#10003; logged</span>';
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:5px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+      <div style="display:flex;justify-content:space-between;align-items:center;${e.min>0?'margin-bottom:5px':''}">
         <div style="min-width:0;display:flex;align-items:center;gap:6px"><span>${icon}</span><span style="font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</span>${e.visits>1?`<span style="font-family:var(--fm);font-size:9px;color:var(--muted2)">&times;${e.visits}</span>`:''}</div>
-        <div style="font-family:var(--fh);font-size:15px;color:var(--green);white-space:nowrap;margin-left:8px">${fmtDur(e.min)}</div>
+        <div style="font-family:var(--fh);font-size:15px;color:var(--green);white-space:nowrap;margin-left:8px">${timeLabel}</div>
       </div>
-      <div style="height:5px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col}"></div></div>
+      ${e.min>0?`<div style="height:5px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col}"></div></div>`:''}
     </div>`;
   }).join('');
   box.innerHTML=html;
