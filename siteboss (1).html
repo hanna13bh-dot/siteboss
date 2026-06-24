@@ -789,6 +789,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Project Type</label><input type="text" id="f-project" placeholder="Commercial, residential..."></div>
           <div class="form-group"><label>Est. Monthly Value</label><input type="text" id="f-value" placeholder="$5,000"></div>
         </div>
+        <div class="form-group" style="margin-bottom:10px"><label>Assigned Rep (leave blank if this is your account)</label><input type="text" id="f-otherRep" placeholder="Other rep name"></div>
         <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="f-notes" rows="3" placeholder="What did you last discuss? Any upcoming projects?"></textarea></div>
         <button class="btn btn-primary" id="add-c-btn" onclick="addClient()">ADD CUSTOMER →</button>
       </div>
@@ -909,6 +910,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         </div>
         <div class="form-group" style="margin-bottom:14px"><label>Competitor on Site</label><input type="text" id="s-competitor" placeholder="e.g. Sunbelt, United, RSC..."></div>
         <div class="form-group" style="margin-bottom:14px"><label>Quotes (one per line: amount | date | status | link)</label><textarea id="s-quotes" rows="3" placeholder="$5,000 | 2026-06-01 | Pending | drive.google.com/..."></textarea></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Subs assigned to another rep (optional)</label><input type="text" id="s-otherRepSubs" placeholder="e.g. ABC Concrete - John (other rep)"></div>
         <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="s-notes" rows="3" placeholder="Access details, equipment needs, key contacts..."></textarea></div>
         <button class="btn btn-green" id="add-s-btn" onclick="addSite()">ADD JOB SITE →</button>
       </div>
@@ -2398,6 +2400,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Project Type</label><input type="text" id="ec-project"></div>
       <div class="form-group"><label>Monthly Value</label><input type="text" id="ec-value"></div>
     </div>
+    <div class="form-group" style="margin-top:10px"><label>Assigned Rep (leave blank if yours)</label><input type="text" id="ec-otherRep" placeholder="Other rep name"></div>
     <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="ec-notes" rows="3"></textarea></div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
@@ -2623,6 +2626,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
             <span id="es-projpct-val" style="font-family:var(--fh);font-size:16px;color:var(--blue);min-width:44px">0%</span>
           </div>
         </div>
+    <div class="form-group" style="margin-top:10px"><label>Subs assigned to another rep (optional)</label><input type="text" id="es-otherRepSubs" placeholder="e.g. ABC Concrete - John (other rep)"></div>
     <div class="form-group" style="margin-top:10px"><label>Notes</label><textarea id="es-notes" rows="3"></textarea></div>
     <div class="form-group" style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -3229,13 +3233,14 @@ async function addClient() {
     lastContact: date,
     project: document.getElementById('f-project').value.trim(),
     value: document.getElementById('f-value').value.trim(),
-    notes: document.getElementById('f-notes').value.trim()
+    notes: document.getElementById('f-notes').value.trim(),
+    otherRep: document.getElementById('f-otherRep').value.trim()
   };
   const res = await api({ action:'add', type:'clients', record });
   btn.disabled = false; btn.textContent = 'ADD CUSTOMER →';
   if (res && res.success) {
     toast('Customer added ✓');
-    ['f-name','f-company','f-phone','f-email','f-equip','f-project','f-value','f-notes','f-address','f-city','f-zone','f-state','f-zip'].forEach(id => document.getElementById(id).value = '');
+    ['f-name','f-company','f-phone','f-email','f-equip','f-project','f-value','f-notes','f-otherRep','f-address','f-city','f-zone','f-state','f-zip'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f-date').value = today();
     await syncAll();
     showPanel('customers');
@@ -3289,6 +3294,7 @@ function openEditClient(id) {
   document.getElementById('ec-project').value = c.project || '';
   document.getElementById('ec-value').value = c.value || '';
   document.getElementById('ec-notes').value = c.notes || '';
+  document.getElementById('ec-otherRep').value = c.otherRep || '';
   document.getElementById('ec-modal').classList.add('open');
 }
 
@@ -3311,7 +3317,8 @@ async function saveClientEdit() {
     lastContact: document.getElementById('ec-date').value,
     project: document.getElementById('ec-project').value.trim(),
     value: document.getElementById('ec-value').value.trim(),
-    notes: document.getElementById('ec-notes').value.trim()
+    notes: document.getElementById('ec-notes').value.trim(),
+    otherRep: document.getElementById('ec-otherRep').value.trim()
   };
   const res = await api({ action:'update', type:'clients', record });
   btn.disabled = false; btn.textContent = 'SAVE →';
@@ -3423,13 +3430,14 @@ async function addSite() {
     startDate: document.getElementById('s-start').value,
     endDate: document.getElementById('s-end').value,
     status: document.getElementById('s-status').value,
-    notes: document.getElementById('s-notes').value.trim()
+    notes: document.getElementById('s-notes').value.trim(),
+    otherRepSubs: document.getElementById('s-otherRepSubs').value.trim()
   };
   const res = await api({ action:'add', type:'jobsites', record });
   btn.disabled = false; btn.textContent = 'ADD JOB SITE →';
   if (res && res.success) {
     toast('Job site added ✓');
-    ['s-name','s-gc','s-gcname','s-gcphone','s-followUpDate','s-followUpDate','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-equipclass','s-unitnum','s-worktype','s-competitor','s-quotes','s-quotes','s-value','s-zone','s-end','s-notes','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
+    ['s-name','s-gc','s-gcname','s-gcphone','s-followUpDate','s-followUpDate','s-address','s-city','s-checkin','s-supe','s-supephone','s-sub1company','s-equip','s-equipclass','s-unitnum','s-worktype','s-competitor','s-quotes','s-quotes','s-value','s-zone','s-end','s-notes','s-otherRepSubs','s-sub2name','s-sub2phone','s-sub2company','s-sub3name','s-sub3phone','s-sub3company','s-sub4name','s-sub4phone','s-sub4company','s-sub5name','s-sub5phone','s-sub5company','s-sub6name','s-sub6phone','s-sub6company','s-sub7name','s-sub7phone','s-sub7company','s-sub8name','s-sub8phone','s-sub8company','s-sub9name','s-sub9phone','s-sub9company','s-sub10name','s-sub10phone','s-sub10company'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('s-clientId').value = '';
     document.getElementById('s-start').value = today();
   var ry = document.getElementById('rev-year'); if(ry) ry.value = new Date().getFullYear();
@@ -3598,6 +3606,7 @@ function openEditSite(id) {
   sv('es-end', s.endDate);
   sv('es-status', s.status || 'Active');
   sv('es-notes', s.notes);
+  sv('es-otherRepSubs', s.otherRepSubs);
   const vlEl=document.getElementById('es-visitlog'); if(vlEl) vlEl.value=s.visitLog||'';
   renderVisitLog();
   document.getElementById('es-modal').classList.add('open');
@@ -3698,6 +3707,7 @@ async function saveSiteEdit() {
     endDate: document.getElementById('es-end').value,
     status: document.getElementById('es-status').value,
     notes: document.getElementById('es-notes').value.trim(),
+    otherRepSubs: document.getElementById('es-otherRepSubs').value.trim(),
     visitLog: gval('es-visitlog', prev.visitLog||'')
   };
   const res = await api({ action:'update', type:'jobsites', record });
@@ -4247,26 +4257,46 @@ function renderTimeToday(){
   const box=document.getElementById('dash-time-today');
   if(!box) return;
   const td=today();
-  const fmtDur=m=> m>=60 ? (Math.floor(m/60)+'h '+(m%60)+'m') : (m+'m');
+  const fmtDur=m=> m>=60 ? (Math.floor(m/60)+'h '+(m%60? (m%60)+'m':'') ).trim() : (m+'m');
   const entries=[];
-  // Job sites
-  jobsites.forEach(s=>{ parseVisitLog(s.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:s.siteName||'Site', kind:'Site', min:+e.minutes}); }); });
-  // Customers
-  clients.forEach(c=>{ parseCustLog(c.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:c.company||c.name||'Customer', kind:'Office', min:+e.minutes}); }); });
+  jobsites.forEach(s=>{ parseVisitLog(s.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:s.siteName||'Site', kind:'site', min:+e.minutes}); }); });
+  clients.forEach(c=>{ parseCustLog(c.visitLog).forEach(e=>{ if((e.date||'').slice(0,10)===td && e.minutes) entries.push({name:c.company||c.name||'Customer', kind:'office', min:+e.minutes}); }); });
   if(!entries.length){
-    box.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--fm);font-size:12px;color:var(--muted2)">No clocked visits today. Use ⏱ Clock In on a route stop to track your time.</div>';
+    box.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--fm);font-size:12px;color:var(--muted2)">No clocked visits today. Tap &#9201; Clock In on any site, customer, or route stop to track your time.</div>';
     return;
   }
-  const total=entries.reduce((a,e)=>a+e.min,0);
-  entries.sort((a,b)=>b.min-a.min);
-  box.innerHTML=
-    '<div style="background:var(--surface2);border:1px solid var(--green);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
-    +'<div style="font-family:var(--fm);font-size:11px;color:var(--muted2)">'+entries.length+' visit'+(entries.length!==1?'s':'')+'</div>'
-    +'<div style="font-family:var(--fh);font-size:24px;color:var(--green)">'+fmtDur(total)+'</div></div>'
-    + entries.map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:5px">
-        <div style="min-width:0"><div style="font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">${e.kind}</div></div>
+  // merge duplicate stops (same name+kind) into one row summing minutes
+  const merged={};
+  entries.forEach(e=>{ const k=e.kind+'|'+e.name; if(!merged[k]) merged[k]={name:e.name,kind:e.kind,min:0,visits:0}; merged[k].min+=e.min; merged[k].visits++; });
+  const rows=Object.values(merged).sort((a,b)=>b.min-a.min);
+  const total=rows.reduce((a,e)=>a+e.min,0);
+  const siteMin=rows.filter(r=>r.kind==='site').reduce((a,e)=>a+e.min,0);
+  const offMin=rows.filter(r=>r.kind==='office').reduce((a,e)=>a+e.min,0);
+  const maxMin=Math.max(...rows.map(r=>r.min),1);
+  const visitCount=entries.length;
+  // Header: big total + Site/Office split
+  let html='<div style="background:linear-gradient(135deg,var(--surface2),var(--surface));border:1px solid var(--green);border-radius:10px;padding:14px;margin-bottom:10px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">'
+    +'<div style="font-family:var(--fm);font-size:10px;letter-spacing:1px;color:var(--muted2)">'+visitCount+' visit'+(visitCount!==1?'s':'')+' &middot; '+rows.length+' stop'+(rows.length!==1?'s':'')+'</div>'
+    +'<div style="font-family:var(--fh);font-size:30px;line-height:1;color:var(--green)">'+fmtDur(total)+'</div></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<div style="flex:1;background:var(--bg);border-radius:6px;padding:8px 10px"><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">&#127959;&#65039; SITES</div><div style="font-family:var(--fh);font-size:17px;color:var(--text)">'+fmtDur(siteMin)+'</div></div>'
+    +'<div style="flex:1;background:var(--bg);border-radius:6px;padding:8px 10px"><div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">&#127970; OFFICES</div><div style="font-family:var(--fh);font-size:17px;color:var(--text)">'+fmtDur(offMin)+'</div></div>'
+    +'</div></div>';
+  // Per-stop rows with proportional bars
+  html+=rows.map(e=>{
+    const pct=Math.round((e.min/maxMin)*100);
+    const col=e.kind==='site'?'var(--blue)':'var(--accent)';
+    const icon=e.kind==='site'?'&#127959;&#65039;':'&#127970;';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:5px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div style="min-width:0;display:flex;align-items:center;gap:6px"><span>${icon}</span><span style="font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</span>${e.visits>1?`<span style="font-family:var(--fm);font-size:9px;color:var(--muted2)">&times;${e.visits}</span>`:''}</div>
         <div style="font-family:var(--fh);font-size:15px;color:var(--green);white-space:nowrap;margin-left:8px">${fmtDur(e.min)}</div>
-      </div>`).join('');
+      </div>
+      <div style="height:5px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+  box.innerHTML=html;
 }
 function renderJobProgress(){
   const ov=document.getElementById('dash-progress-overall');
@@ -4345,7 +4375,7 @@ function renderClientTable() {
     const rev = clientRevenue(c.id);
     return `<tr>
       <td>
-        <div class="cell-name" onclick="openProfile('${c.id}')">${c.name}</div>
+        <div class="cell-name" onclick="openProfile('${c.id}')">${c.name}${c.otherRep?` <span style="font-family:var(--fm);font-size:9px;color:var(--red);border:1px solid var(--red);border-radius:3px;padding:1px 4px">&#128274; ${c.otherRep}</span>`:''}</div>
         <div class="cell-sub">${c.company}</div>
         ${c.phone?`<div class="cell-sub">${c.phone}</div>`:''}
       </td>
@@ -4485,7 +4515,7 @@ function renderSiteTable() {
   const rowHtml = s => {
     const c = siteCust(s.clientId);
     return `<tr>
-      <td><div class="cell-name" style="cursor:default">${s.siteName}</div>${s.city?`<div class="cell-sub">${s.city}</div>`:''}</td>
+      <td><div class="cell-name" style="cursor:default">${s.siteName}</div>${s.city?`<div class="cell-sub">${s.city}</div>`:''}${s.otherRepSubs?`<div class="cell-sub" style="color:var(--red)">&#128274; Other rep: ${s.otherRepSubs}</div>`:''}</td>
       <td>${c?`<div class="cell-name" onclick="openProfile('${c.id}')" style="font-size:12px">${c.name}</div><div class="cell-sub">${c.company}</div>`:`<span style="color:var(--muted2);font-size:11px">${s.client||'—'}</span>`}</td>
       <td style="font-size:11px;font-family:var(--fm)">${s.address||'—'}</td>
       <td><div style="font-size:12px;font-weight:500">${s.superintendent||'—'}</div>${s.supePhone?`<div class="cell-sub">${s.supePhone}</div>`:''}</td>
