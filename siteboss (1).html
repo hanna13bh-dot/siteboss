@@ -509,6 +509,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="nav-item" onclick="showPanel('digest-setup')">☀️ Morning Digest</div>
     <div class="nav-item" onclick="showPanel('branch-contacts');renderBranchContacts()">📧 Branch Contacts</div>
     <div class="nav-item" onclick="showPanel('worktypes')">🔧 Work Types</div>
+    <div class="nav-item" onclick="showPanel('templates')">✉️ Email Templates</div>
     <div class="nav-item" onclick="showPanel('servicelog')">🔧 Service Log</div>
     <div class="nav-item" onclick="showPanel('equipment')">🔧 Equipment on Rent</div>
     <div class="nav-divider"></div>
@@ -815,6 +816,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
           <div class="form-group"><label>Last Check-In Date</label><input type="date" id="s-checkin"></div>
           <div class="form-group"><label>Sub 1 Name</label><input type="text" id="s-supe" placeholder="Mike Johnson"></div>
           <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="s-supephone" placeholder="(555) 000-0000"></div>
+          <div style="margin-bottom:10px"><button type="button" class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="document.getElementById('s-sublist-file').click()">📷 Scan Sub List</button><input type="file" id="s-sublist-file" accept="image/*" capture="environment" style="display:none" onchange="scanSubList(this,'s')"><button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);margin-left:6px" onclick="clearScannedSubs('s')">✕ Clear Subs</button></div>
           <div class="form-group"><label>Sub 1 Company</label><input type="text" list="customer-companies" id="s-sub1company" placeholder="Type or pick company"></div>
           <div class="form-group"><label>Sub 1 Work Type</label><input type="text" id="s-sub1worktype" list="worktype-list" placeholder="Type or pick work type"></div>
           <div class="form-group"><label>Sub 2 Name</label><input type="text" id="s-sub2name" placeholder=""></div>
@@ -922,6 +924,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="section-title" style="color:var(--blue)">🔍 PROSPECT PIPELINE</div>
         <div class="section-actions">
           <button class="btn btn-primary" onclick="showPanel('add-prospect')">+ Add Prospect</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--green);color:var(--green)" onclick="document.getElementById('cardscan-file').click()">📇 Scan Card</button>
+          <input type="file" id="cardscan-file" accept="image/*" capture="environment" style="display:none" onchange="scanBusinessCard(this)">
           <button class="btn" style="background:var(--surface2);border:1px solid var(--blue);color:var(--blue)" onclick="document.getElementById('permit-import-file').click()">📋 Import Permits</button>
           <input type="file" id="permit-import-file" accept=".csv" style="display:none" onchange="importPermitsCSV(this)">
           <select id="prospect-source-filter" onchange="renderProspects()" style="margin-left:6px">
@@ -1296,6 +1300,20 @@ tr:hover td{background:rgba(255,255,255,.015)}
 
   <!-- ══ MORNING DIGEST SETUP ══ -->
     <div class="panel" id="panel-digest-setup">
+      <div style="background:var(--surface2);border:1px solid var(--green);border-radius:8px;padding:14px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-weight:700;font-size:14px;color:var(--green)">🤖 AI Card / Sub Scan</div><div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-top:3px">Most accurate scans. Requires your API key in Apps Script (see setup below). When off, uses the free on-device scanner.</div></div>
+          <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="toggleAIScan()">Status: <span id="aiscan-status">OFF</span></button>
+        </div>
+        <details style="margin-top:10px"><summary style="font-family:var(--fm);font-size:11px;color:var(--blue);cursor:pointer">How to turn on AI scan</summary>
+          <ol style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin:8px 0 0 16px;line-height:1.7">
+            <li>In Apps Script: Project Settings → Script Properties → Add property <b>ANTHROPIC_API_KEY</b> = your key (sk-ant-...)</li>
+            <li>(Optional) Add <b>ANTHROPIC_MODEL</b> to override the default vision model</li>
+            <li>Redeploy Code.gs as a New version</li>
+            <li>Tap the Status button above to flip it ON</li>
+          </ol>
+        </details>
+      </div>
       <div class="section-head">
         <div class="section-title" style="color:var(--accent)">☀️ MORNING DIGEST SETUP</div>
       </div>
@@ -1594,6 +1612,15 @@ tr:hover td{background:rgba(255,255,255,.015)}
       </div>
       <div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-bottom:12px">These are the work types saved across your job sites. Rename fixes a typo everywhere; Remove clears it from every site using it.</div>
       <div id="worktypes-list"></div>
+    </div>
+
+    <div class="panel" id="panel-templates">
+      <div class="section-head"><div class="section-title" style="color:var(--accent)">✉️ EMAIL TEMPLATES</div></div>
+      <div style="font-family:var(--fm);font-size:11px;color:var(--muted2);margin-bottom:14px">Rewrite these in your own words. Use the tags below and they'll auto-fill when you send. Saved on this device.</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-family:var(--fm);font-size:11px;color:var(--muted2)">
+        Tags you can use: <b>{contact}</b> name &middot; <b>{company}</b> &middot; <b>{project}</b> &middot; <b>{portal}</b> (credit link) &middot; <b>{amount}</b> (AR reminder)
+      </div>
+      <div id="templates-list"></div>
     </div>
 
     <div class="panel" id="panel-plaud">
@@ -2551,6 +2578,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
       <div class="form-group"><label>Last Check-In Date</label><input type="date" id="es-checkin"></div>
       <div class="form-group"><label>Sub 1 Name</label><input type="text" id="es-supe"></div>
       <div class="form-group"><label>Sub 1 Phone</label><input type="text" id="es-supephone"></div>
+      <div style="margin-bottom:10px"><button type="button" class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="document.getElementById('es-sublist-file').click()">📷 Scan Sub List</button><input type="file" id="es-sublist-file" accept="image/*" capture="environment" style="display:none" onchange="scanSubList(this,'es')"><button type="button" class="btn-small" style="color:var(--red);border-color:var(--red);margin-left:6px" onclick="clearScannedSubs('es')">✕ Clear Subs</button></div>
       <div class="form-group"><label>Sub 1 Company</label><input type="text" list="customer-companies" id="es-sub1company" placeholder="Type or pick company"></div>
       <div class="form-group"><label>Sub 1 Work Type</label><input type="text" id="es-sub1worktype" list="worktype-list" placeholder="Type or pick work type"></div>
       <div class="form-group"><label>Sub 2 Name</label><input type="text" id="es-sub2name"></div>
@@ -3195,6 +3223,7 @@ async function api(params) {
 }
 
 async function syncAll() {
+  loadTemplatesFromServer();
   const btn = document.getElementById('sync-btn');
   btn.innerHTML = '<span class="spinning">⟳</span> SYNCING';
   const [cd, sd, pd, fd, id_, td, rd, lrd] = await Promise.all([
@@ -4807,6 +4836,205 @@ async function saveProspectEdit() {
   if (res && res.success) { toast('Prospect updated ✓'); closeModals(); await syncAll(); }
 }
 
+async function _loadTesseract(){
+  if(window.Tesseract) return true;
+  return new Promise((resolve)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    sc.onload=()=>resolve(true); sc.onerror=()=>resolve(false);
+    document.head.appendChild(sc);
+  });
+}
+function _parseCard(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const joined=lines.join(' ');
+  const out={name:'',company:'',phone:'',email:'',address:'',city:'',website:''};
+  // email
+  const em=joined.match(/[\w.+-]+@[\w-]+\.[\w.-]+/); if(em) out.email=em[0];
+  // phone (prefer mobile/cell if labeled, else first match)
+  const phones=joined.match(/(\+?1[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}/g)||[];
+  if(phones.length){
+    const cell=lines.find(l=>/\b(c|cell|mobile|m)\b/i.test(l) && /\d{3}[ .-]?\d{4}/.test(l));
+    out.phone=(cell && (cell.match(/(\+?1[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}/)||[])[0]) || phones[0];
+  }
+  // website
+  const web=joined.match(/(?:https?:\/\/)?(?:www\.)[\w.-]+\.[a-z]{2,}/i); if(web) out.website=web[0];
+  // address line (number + street suffix)
+  const addrLine=lines.find(l=>/\d{2,6}\s+\w+/.test(l) && /(st|street|ave|avenue|rd|road|dr|drive|blvd|ln|lane|way|ct|court|hwy|suite|ste|pkwy|pike)\b/i.test(l));
+  if(addrLine) out.address=addrLine;
+  // city/state/zip line
+  const csz=lines.find(l=>/[A-Za-z .]+,\s*[A-Z]{2}\s*\d{5}/.test(l));
+  if(csz){ const m=csz.match(/([A-Za-z .]+),\s*([A-Z]{2})\s*(\d{5})/); if(m) out.city=m[1].trim(); }
+  // company: line containing a business keyword, or the email domain
+  const compLine=lines.find(l=>/\b(inc|llc|l\.l\.c|co\.|company|construction|contractors?|builders?|concrete|electric|mechanical|services?|group|corp|enterprises?|industries|excavat|plumbing|roofing|steel)\b/i.test(l));
+  if(compLine) out.company=compLine;
+  // name: a line with 2-3 capitalized words, no digits, not the company/address
+  const nameLine=lines.find(l=> l!==out.company && l!==out.address && !/\d/.test(l) && !/@/.test(l)
+    && /^([A-Z][a-zA-Z.'-]+\s+){1,2}[A-Z][a-zA-Z.'-]+$/.test(l));
+  if(nameLine) out.name=nameLine;
+  // fallbacks: derive company from email domain
+  if(!out.company && out.email){ const dom=out.email.split('@')[1]||''; const base=dom.split('.')[0]; if(base) out.company=base.charAt(0).toUpperCase()+base.slice(1); }
+  return out;
+}
+function clearScannedSubs(prefix){
+  if(!confirm('Clear all sub fields in this form?')) return;
+  for(let n=1;n<=14;n++){
+    ['company','worktype','phone','name'].forEach(f=>{ const el=document.getElementById(prefix+'-sub'+n+f); if(el) el.value=''; });
+  }
+  toast('Subs cleared');
+}
+function _aiScanEnabled(){ return localStorage.getItem('siteboss_aiscan')==='1'; }
+function toggleAIScan(){
+  const on=!_aiScanEnabled();
+  localStorage.setItem('siteboss_aiscan', on?'1':'0');
+  const el=document.getElementById('aiscan-status'); if(el) el.textContent=on?'ON':'OFF';
+  toast('AI Scan '+(on?'enabled':'disabled')+(on?' — needs API key in Apps Script':''));
+}
+function _fileToResizedB64(file, maxDim){
+  return new Promise((resolve)=>{
+    const img=new Image(); const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let w=img.width,h=img.height; const m=maxDim||1600;
+      if(w>m||h>m){ if(w>=h){ h=Math.round(h*m/w); w=m; } else { w=Math.round(w*m/h); h=m; } }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=cv.toDataURL('image/jpeg',0.85);
+      URL.revokeObjectURL(url);
+      resolve(dataUrl.split(',')[1]);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); resolve(null); };
+    img.src=url;
+  });
+}
+async function _aiScan(file, mode){
+  const b64=await _fileToResizedB64(file,1600);
+  if(!b64) return {error:'img'};
+  const res=await api({ action:'aiScan', image:b64, mode });
+  if(!res) return {error:'conn'};
+  if(res.error==='no_key'){ return {error:'no_key'}; }
+  if(res.success && res.result){
+    try{ return { data: JSON.parse(String(res.result).replace(/```json|```/g,'').trim()) }; }
+    catch(e){ return {error:'parse'}; }
+  }
+  return {error:'fail'};
+}
+function parseSubList(text){
+  const trades=['concrete','electrical','electric','plumbing','framing','roofing','excavation','excavating','masonry','steel','mechanical','hvac','drywall','painting','flooring','glass','glazing','landscaping','landscape','demolition','demo','utilities','fire protection','fire','low voltage','grading','earthwork','asphalt','paving','insulation','sitework','dirt'];
+  const detectWT=s=>{ const low=s.toLowerCase(); const hit=trades.find(t=>low.includes(t)); if(!hit) return ''; return hit.charAt(0).toUpperCase()+hit.slice(1); };
+  const skip=/^(sub\s*contractor|subcontractor|trade|company|phone|contact|name|page|job\s*site|project|gc\b|general contractor)\b/i;
+  const out=[];
+  text.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line=>{
+    if(line.length<3) return;
+    if(skip.test(line)) return;
+    if(!/[a-zA-Z]/.test(line)) return;            // skip pure numbers
+    const phM=line.match(/(\+?1[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}/);
+    const phone=phM?phM[0]:'';
+    let rest=line.replace(phone,'').replace(/\s{2,}/g,' ').trim().replace(/[|•·\-–—]+$/,'').trim();
+    let worktype=detectWT(rest);
+    let company=rest;
+    // "Trade: Company" or "Trade - Company"
+    const sp=rest.match(/^([A-Za-z ]{3,20})\s*[:\-–]\s*(.+)$/);
+    if(sp){ const left=sp[1].trim(); const right=sp[2].trim(); if(detectWT(left)){ worktype=detectWT(left); company=right; } }
+    // strip leading worktype word from company if it duplicates
+    company=company.replace(/[,;]+$/,'').trim();
+    if(!company) return;
+    out.push({company, worktype, phone, name:''});
+  });
+  return out;
+}
+async function scanSubList(input, prefix){
+  const file=input&&input.files&&input.files[0]; if(!file){ return; }
+  if(_aiScanEnabled()){
+    toast('AI reading sub list...');
+    const r=await _aiScan(file,'sublist');
+    if(r.error==='no_key'){ toast('AI Scan on, but no API key in Apps Script — using basic scan',true); }
+    else if(r.data){
+      const list=Array.isArray(r.data)?r.data:(r.data.subs||[]);
+      if(list.length){
+        let filled=0;
+        for(let n=1;n<=14 && list.length;n++){
+          const cEl=document.getElementById(prefix+'-sub'+n+'company'); if(!cEl) continue;
+          if((cEl.value||'').trim()) continue;
+          const sub=list.shift();
+          cEl.value=sub.company||sub.name||'';
+          const wtEl=document.getElementById(prefix+'-sub'+n+'worktype'); if(wtEl && sub.worktype) wtEl.value=sub.worktype;
+          const phEl=document.getElementById(prefix+'-sub'+n+'phone'); if(phEl && sub.phone) phEl.value=sub.phone;
+          const nmEl=document.getElementById(prefix+'-sub'+n+'name'); if(nmEl && sub.contact) nmEl.value=sub.contact;
+          filled++;
+        }
+        toast(filled+' sub'+(filled!==1?'s':'')+' added by AI — review & save \u2713');
+        input.value=''; return;
+      }
+    } else { toast('AI scan didn\'t work — using basic scan',true); }
+  }
+  toast('Loading scanner...');
+  const ok=await _loadTesseract();
+  if(!ok){ toast('Could not load scanner. Check your connection.',true); input.value=''; return; }
+  toast('Reading sub list... a few seconds');
+  try{
+    const { data } = await Tesseract.recognize(file,'eng');
+    const subs=parseSubList(data.text||'');
+    if(!subs.length){ toast('Could not read any subs — try a clearer photo',true); input.value=''; return; }
+    let filled=0;
+    for(let n=1;n<=14 && subs.length;n++){
+      const cEl=document.getElementById(prefix+'-sub'+n+'company');
+      if(!cEl) continue;
+      if((cEl.value||'').trim()) continue;        // don't overwrite existing
+      const sub=subs.shift();
+      cEl.value=sub.company;
+      const wtEl=document.getElementById(prefix+'-sub'+n+'worktype'); if(wtEl && sub.worktype) wtEl.value=sub.worktype;
+      const phEl=document.getElementById(prefix+'-sub'+n+'phone');    if(phEl && sub.phone)    phEl.value=sub.phone;
+      filled++;
+    }
+    toast(filled? (filled+' sub'+(filled!==1?'s':'')+' added — review & save \u2713') : 'No open sub slots to fill', !filled);
+  }catch(e){ toast('Scan failed — try a clearer photo',true); }
+  input.value='';
+}
+async function scanBusinessCard(input){
+  const file=input&&input.files&&input.files[0]; if(!file){ return; }
+  if(_aiScanEnabled()){
+    toast('AI reading card...');
+    const r=await _aiScan(file,'card');
+    if(r.error==='no_key'){ toast('AI Scan on, but no API key in Apps Script — using basic scan',true); }
+    else if(r.data){
+      const d=r.data;
+      showPanel('add-prospect');
+      setTimeout(()=>{ const set=(id,v)=>{const el=document.getElementById(id); if(el&&v) el.value=v;};
+        set('p-name',d.name); set('p-company',d.company); set('p-contact',d.name||d.contact);
+        set('p-phone',d.phone); set('p-email',d.email); set('p-address',d.address); set('p-city',d.city);
+        toast('AI scanned the card — review & save \u2713'); },120);
+      input.value=''; return;
+    } else { toast('AI scan didn\'t work — using basic scan',true); }
+  }
+  toast('Loading scanner...');
+  const ok=await _loadTesseract();
+  if(!ok){ toast('Could not load scanner. Check your connection.',true); input.value=''; return; }
+  toast('Reading card... this takes a few seconds');
+  try{
+    const { data } = await Tesseract.recognize(file, 'eng', {
+      logger: m => { if(m.status==='recognizing text' && m.progress) { /* could show % */ } }
+    });
+    const parsed=_parseCard(data.text||'');
+    // Open Add Prospect and prefill
+    showPanel('add-prospect');
+    setTimeout(()=>{
+      const set=(id,v)=>{ const el=document.getElementById(id); if(el && v) el.value=v; };
+      set('p-name', parsed.name);
+      set('p-company', parsed.company);
+      set('p-contact', parsed.name);
+      set('p-phone', parsed.phone);
+      set('p-email', parsed.email);
+      set('p-address', parsed.address);
+      set('p-city', parsed.city);
+      const src=document.getElementById('p-source'); // source dropdown if present
+      const found=[parsed.name,parsed.company,parsed.phone,parsed.email].filter(Boolean).length;
+      toast(found? ('Scanned '+found+' field'+(found!==1?'s':'')+' — review & save \u2713') : 'Could not read much — please fill in manually', !found);
+    }, 120);
+  }catch(e){
+    toast('Scan failed — try a clearer photo',true);
+  }
+  input.value='';
+}
 async function importPermitsCSV(input) {
   const file = input.files && input.files[0];
   if (!file) return;
@@ -7024,18 +7252,15 @@ function emailMessage() {
 }
 
 // Credit App — prospects only
-function sendCreditApp(prospectId) {
-  const p = prospects.find(p => p.id == prospectId);
-  if (!p) return;
-  const portalLink = localStorage.getItem('creditPortalLink') || 'https://www.equipmentshare.com/signup';
-  const pdfLink = 'https://hanna13bh-dot.github.io/siteboss/EquipmentShare-Credit-Application.pdf';
-  const recipient = p.contact || p.company;
-  const body = `Hi ${p.contact||'there'},
+const TPL_DEFAULTS = {
+  creditApp: {
+    label: 'Credit Application',
+    text: `Hi {contact},
 
-Great connecting on ${p.name||'your project'}. To get your account set up with EquipmentShare, the fastest way is to complete our credit application online — it takes about 5 minutes:
+Great connecting on {project}. To get your account set up with EquipmentShare, the fastest way is to complete our credit application online — it takes about 5 minutes:
 
   Apply online (recommended):
-  ${portalLink}
+  {portal}
 
 If you'd prefer a printable version, I've attached the credit application (PDF) to this email — just complete it and send it back to me.
 
@@ -7047,7 +7272,95 @@ Brad Hanna
 Territory Account Manager
 EquipmentShare
 405-203-2125
-brad.hanna@equipmentshare.com`;
+brad.hanna@equipmentshare.com`
+  },
+  reEngage: {
+    label: 'Re-Engagement',
+    text: `Hi {contact},
+
+Wanted to circle back on {project}. I know things move fast out there — just checking where you're at on equipment needs and whether I can help get you taken care of.
+
+Happy to swing by the site or jump on a quick call whenever works.
+
+Thanks,
+Brad Hanna`
+  },
+  arReminder: {
+    label: 'Payment Reminder (AR)',
+    text: `Hi {contact},
+
+Hope all's going well! Just a friendly heads up that we've got an open balance of {amount} on the account that's gotten a little aged. No worries at all — just wanted to make sure it didn't slip through the cracks.
+
+Could you let me know when we might expect payment? Happy to help if there's anything you need from our end.
+
+Appreciate you,
+Brad Hanna`
+  }
+};
+function getTemplate(key){
+  const saved = localStorage.getItem('siteboss_tpl_'+key);
+  return (saved!=null && saved!=='') ? saved : (TPL_DEFAULTS[key]?TPL_DEFAULTS[key].text:'');
+}
+function _allTemplates(){ const o={}; Object.keys(TPL_DEFAULTS).forEach(k=>{ const v=localStorage.getItem('siteboss_tpl_'+k); if(v!=null && v!=='') o[k]=v; }); return o; }
+async function pushTemplates(){ try{ await api({ action:'saveTemplates', templates:_allTemplates() }); }catch(e){} }
+async function loadTemplatesFromServer(){
+  try{
+    const res=await fetch(SHEET_URL+'?action=getTemplates');
+    const data=await res.json();
+    if(data && data.success){
+      const t=data.templates||{};
+      Object.keys(TPL_DEFAULTS).forEach(k=>{
+        if(t[k]!=null && t[k]!=='') localStorage.setItem('siteboss_tpl_'+k, t[k]);
+        else localStorage.removeItem('siteboss_tpl_'+k);
+      });
+      if(document.getElementById('templates-list')) renderTemplates();
+    }
+  }catch(e){}
+}
+function fillTemplate(key, vars){
+  let t = getTemplate(key);
+  Object.keys(vars||{}).forEach(k=>{ t = t.split('{'+k+'}').join(vars[k]==null?'':vars[k]); });
+  return t;
+}
+function renderTemplates(){
+  const box=document.getElementById('templates-list'); if(!box) return;
+  box.innerHTML = Object.keys(TPL_DEFAULTS).map(key=>{
+    const d=TPL_DEFAULTS[key];
+    const val=getTemplate(key).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const customized = (localStorage.getItem('siteboss_tpl_'+key)||'')!=='';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700;font-size:13px;color:var(--accent)">${d.label}${customized?' <span style="font-family:var(--fm);font-size:9px;color:var(--green)">&bull; edited</span>':''}</div>
+      </div>
+      <textarea id="tpl-${key}" rows="9" style="width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">${val}</textarea>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn-small" style="color:var(--green);border-color:var(--green)" onclick="saveTemplate('${key}')">Save</button>
+        <button class="btn-small" style="color:var(--muted2);border-color:var(--border)" onclick="resetTemplate('${key}')">Reset to default</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function saveTemplate(key){
+  const el=document.getElementById('tpl-'+key); if(!el) return;
+  localStorage.setItem('siteboss_tpl_'+key, el.value);
+  renderTemplates();
+  await pushTemplates();
+  toast('Template saved & synced \u2713');
+}
+async function resetTemplate(key){
+  if(!confirm('Reset this template to the original wording?')) return;
+  localStorage.removeItem('siteboss_tpl_'+key);
+  renderTemplates();
+  await pushTemplates();
+  toast('Reset to default & synced');
+}
+function sendCreditApp(prospectId) {
+  const p = prospects.find(p => p.id == prospectId);
+  if (!p) return;
+  const portalLink = localStorage.getItem('creditPortalLink') || 'https://www.equipmentshare.com/signup';
+  const pdfLink = 'https://hanna13bh-dot.github.io/siteboss/EquipmentShare-Credit-Application.pdf';
+  const recipient = p.contact || p.company;
+  const body = fillTemplate('creditApp', { contact: p.contact||'there', company: p.company||'', project: p.name||'your project', portal: portalLink });
   openMessageWithRecipients('Credit Application', body, prospectId);
 }
 
@@ -7056,14 +7369,7 @@ function sendReEngagement(prospectId) {
   const p = prospects.find(p => p.id == prospectId);
   if (!p) return;
   const recipient = p.contact || p.company;
-  const body = `Hi ${p.contact||'there'},
-
-Wanted to circle back on ${p.name||'your project'}. I know things move fast out there — just checking where you're at on equipment needs and whether I can help get you taken care of.
-
-Happy to swing by the site or jump on a quick call whenever works.
-
-Thanks,
-Brad Hanna`;
+  const body = fillTemplate('reEngage', { contact: p.contact||'there', company: p.company||'', project: p.name||'your project' });
   openMessageWithRecipients('Re-Engagement', body, prospectId);
 }
 
@@ -7073,14 +7379,7 @@ function sendARReminder(invId) {
   if (!inv) return;
   const c = clients.find(c => c.id == inv.clientId);
   const recipient = c ? c.name : 'there';
-  const body = `Hi ${c?c.name:'there'},
-
-Hope all's going well! Just a friendly heads up that we've got an open balance of ${inv.amount||''} on the account that's gotten a little aged. No worries at all — just wanted to make sure it didn't slip through the cracks.
-
-Could you let me know when we might expect payment? Happy to help if there's anything you need from our end.
-
-Appreciate you,
-Brad Hanna`;
+  const body = fillTemplate('arReminder', { contact: c?c.name:'there', company: c?(c.company||''):'', amount: inv.amount||'' });
   showMessage('Payment Reminder', body, recipient, c?c.phone:'');
 }
 
@@ -8549,13 +8848,15 @@ function setMapFilter(f, btn) {
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice','plaud','todayroute','worktypes'];
+  const panels = ['dashboard','customers','jobsites','reengagement','add-customer','add-site','ar','tasks','revenue','visits','add-visit','activity','servicelog','stories','digest-setup','branch-contacts','equipment','add-equipment','relationships','competitors','lostrentals','map','prospects','add-prospect','followups','add-followup','add-invoice','plaud','todayroute','worktypes','templates'];
   document.querySelectorAll('.nav-item').forEach((n,i) => {
     n.classList.toggle('active', panels[i] === id);
   });
   if (id === 'map') renderMap();
   if (id === 'plaud') renderPlaud();
   if (id === 'worktypes') renderWorkTypes();
+  if (id === 'templates') renderTemplates();
+  if (id === 'digest-setup'){ const a=document.getElementById('aiscan-status'); if(a) a.textContent=_aiScanEnabled()?'ON':'OFF'; }
   if (id === 'todayroute') { const d=document.getElementById('tr-day'); if(d && !d._init){ d._init=true; const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; d.value=(wd==='Saturday'||wd==='Sunday')?'Monday':wd; } renderTodayRoute(); }
   if (id === 'branch-contacts') renderBranchContacts();
   if (id !== 'dashboard' && id !== 'customers' && id !== 'jobsites') closeProfile();
