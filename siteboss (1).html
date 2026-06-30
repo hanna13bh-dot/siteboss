@@ -5771,7 +5771,12 @@ function exportAR() {
   const rows = [['Customer','Company','Amount','Days Past Due','Status','Last Action','Notes']];
   let grand = 0;
   tiers.forEach(tier => {
-    const custName = inv => { const c = clients.find(c => c.id == inv.clientId); return ((c && (c.name || c.company)) || (inv.notes||'').replace(/^unmatched:\s*/i,'').split(' | ')[0] || 'zzz').toString().toLowerCase().trim(); };
+    const custName = inv => {
+      const c = clients.find(c => c.id == inv.clientId);
+      if (c) return (c.name || c.company || 'zzz').toString().toLowerCase().trim();
+      const m = (inv.notes||'').match(/\[unmatched:\s*([^\]]+)\]/i);
+      return (m ? m[1] : 'zzz').toString().toLowerCase().trim();
+    };
     const items = open
       .filter(inv => tier.test(daysSinceInvoice(inv)))
       .sort((a,b) => custName(a).localeCompare(custName(b)) || (daysSinceInvoice(b) - daysSinceInvoice(a)));
@@ -5785,7 +5790,8 @@ function exportAR() {
       const custInvs = byCust[key];
       let custSub = 0;
       const c0 = clients.find(c => c.id == custInvs[0].clientId);
-      const custLabel = c0 ? (c0.name || c0.company) : ((custInvs[0].notes||'').replace(/^unmatched:\s*/i,'').split(' | ')[0] || '—');
+      const _um = (custInvs[0].notes||'').match(/\[unmatched:\s*([^\]]+)\]/i);
+      const custLabel = c0 ? (c0.name || c0.company) : (_um ? _um[1].trim() : '—');
       custInvs.forEach(inv => {
         const c = clients.find(c => c.id == inv.clientId);
         const days = daysSinceInvoice(inv);
@@ -5794,7 +5800,7 @@ function exportAR() {
         const actions = parseActions(inv.actions);
         const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}${actions[0].notes?': '+actions[0].notes:''}` : '—';
         const currentNote = (inv.notes||'').split(' | ').pop().trim() || '—';
-        rows.push([c?c.name:custLabel, c?c.company:'—', fmt(amt), days, inv.status||'—', lastAction, currentNote]);
+        rows.push([c?(c.name||c.company):custLabel, c?c.company:'—', fmt(amt), days, inv.status||'—', lastAction, currentNote]);
       });
       if (custInvs.length > 1) rows.push(['', '   ' + custLabel + ' subtotal', fmt(custSub), '', '', '', '']);
     });
