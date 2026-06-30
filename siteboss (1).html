@@ -5771,22 +5771,32 @@ function exportAR() {
   const rows = [['Customer','Company','Amount','Days Past Due','Status','Last Action','Notes']];
   let grand = 0;
   tiers.forEach(tier => {
+    const custName = inv => { const c = clients.find(c => c.id == inv.clientId); return ((c && (c.name || c.company)) || (inv.notes||'').replace(/^unmatched:\s*/i,'').split(' | ')[0] || 'zzz').toString().toLowerCase().trim(); };
     const items = open
       .filter(inv => tier.test(daysSinceInvoice(inv)))
-      .sort((a,b) => daysSinceInvoice(b) - daysSinceInvoice(a));
+      .sort((a,b) => custName(a).localeCompare(custName(b)) || (daysSinceInvoice(b) - daysSinceInvoice(a)));
     if (!items.length) return;
     let subtotal = 0;
     rows.push(['── ' + tier.label + ' ──','','','','','','']);
-    items.forEach(inv => {
-      const c = clients.find(c => c.id == inv.clientId);
-      const days = daysSinceInvoice(inv);
-      const amt = parseAmount(inv.amount);
-      subtotal += amt;
-      const actions = parseActions(inv.actions);
-      const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}${actions[0].notes?': '+actions[0].notes:''}` : '—';
-      // most current note only (last segment if a history was appended with " | ")
-      const currentNote = (inv.notes||'').split(' | ').pop().trim() || '—';
-      rows.push([c?c.name:'—', c?c.company:'—', fmt(amt), days, inv.status||'—', lastAction, currentNote]);
+    // Group this tier's invoices by customer (alphabetical), with a per-customer subtotal
+    const byCust = {};
+    items.forEach(inv => { const key = custName(inv); (byCust[key] = byCust[key] || []).push(inv); });
+    Object.keys(byCust).sort((a,b) => a.localeCompare(b)).forEach(key => {
+      const custInvs = byCust[key];
+      let custSub = 0;
+      const c0 = clients.find(c => c.id == custInvs[0].clientId);
+      const custLabel = c0 ? (c0.name || c0.company) : ((custInvs[0].notes||'').replace(/^unmatched:\s*/i,'').split(' | ')[0] || '—');
+      custInvs.forEach(inv => {
+        const c = clients.find(c => c.id == inv.clientId);
+        const days = daysSinceInvoice(inv);
+        const amt = parseAmount(inv.amount);
+        subtotal += amt; custSub += amt;
+        const actions = parseActions(inv.actions);
+        const lastAction = actions.length ? `${actions[0].date} — ${actions[0].type}${actions[0].notes?': '+actions[0].notes:''}` : '—';
+        const currentNote = (inv.notes||'').split(' | ').pop().trim() || '—';
+        rows.push([c?c.name:custLabel, c?c.company:'—', fmt(amt), days, inv.status||'—', lastAction, currentNote]);
+      });
+      if (custInvs.length > 1) rows.push(['', '   ' + custLabel + ' subtotal', fmt(custSub), '', '', '', '']);
     });
     rows.push(['', 'Subtotal ' + tier.label, fmt(subtotal), '', '', '', '']);
     rows.push(['','','','','','','']);
@@ -5799,7 +5809,7 @@ function exportAR() {
   const a    = document.createElement('a');
   a.href = url; a.download = `AR-Report-${today()}.csv`;
   a.click(); URL.revokeObjectURL(url);
-  toast('AR Report exported by aging \u2713');
+  toast('AR Report exported — by aging, A\u2013Z by customer \u2713');
 }
 
 function filterAR(f, btn) {
