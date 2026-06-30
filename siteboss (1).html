@@ -5702,6 +5702,7 @@ async function importARCSV(input) {
           dueDate: b.days,
           siteId: '',
           status: 'Open',
+          source: 'aging',
           notes: b.label + (c ? '' : ' [unmatched: ' + name + ']')
         });
       }
@@ -5728,6 +5729,12 @@ async function importARCSV(input) {
   }
 
   if (!batch.length) { toast('No outstanding balances found to import', true); input.value=''; return; }
+  if (isAging) {
+    if (!confirm('Replace your previously imported AR aging with this file?\n\nThis prevents balances from doubling. Payments you\'ve recorded are kept.')) { input.value=''; return; }
+    toast('Clearing previous aging...');
+    const clr = await api({ action:'clearAging' });
+    if (!(clr && clr.success)) { toast('Could not clear old aging — redeploy Code.gs (New version) first', true); input.value=''; return; }
+  }
 
   const CHUNK = 40;
   let saved = 0, failed = 0;
