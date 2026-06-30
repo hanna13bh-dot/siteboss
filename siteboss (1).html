@@ -1109,6 +1109,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="section-actions">
           <button class="btn btn-primary" onclick="showPanel('add-invoice')">+ Add Invoice</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)" onclick="exportAR()">⬇ Export Report</button>
+          <button class="btn" style="background:var(--surface2);border:1px solid var(--blue);color:var(--blue)" onclick="arMatchUnmatched()">🔗 Match Unmatched</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--green);color:var(--green)" onclick="openBulkPayments()">💵 Enter Checks</button>
           <button class="btn" style="background:var(--surface2);border:1px solid var(--green);color:var(--green)" onclick="document.getElementById('ar-import-file').click()">⬆ Import AR</button>
           <input type="file" id="ar-import-file" accept=".csv" style="display:none" onchange="importARCSV(this)">
@@ -1894,6 +1895,19 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
       <button class="btn btn-primary" style="background:var(--blue)" onclick="saveProspectLink()">LINK</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ar-assign-modal">
+  <div class="modal" style="border-top-color:var(--blue)">
+    <div class="modal-title" style="color:var(--blue)">🔗 ASSIGN TO CUSTOMER</div>
+    <div id="ar-assign-label" style="font-family:var(--fm);font-size:12px;color:var(--muted2);margin-bottom:8px"></div>
+    <div class="form-group" style="margin-bottom:8px"><label>Customer</label><select id="ar-assign-clientId"></select></div>
+    <input type="hidden" id="ar-assign-name">
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModals()">CANCEL</button>
+      <button class="btn btn-primary" style="background:var(--blue)" onclick="saveArAssign()">ASSIGN</button>
     </div>
   </div>
 </div>
@@ -5940,6 +5954,63 @@ async function recordCustomerPayment(clientId){
   if(res && res.success){ toast('Payment of $'+Math.round(amt).toLocaleString()+' recorded \u2713'); await syncAll(); renderARByCustomer(); }
   else toast('Could not record payment', true);
 }
+function _arNorm(s){
+  return (s||'').toLowerCase()
+    .replace(/\s*-\s*[\w ]*\d{3,}\s*$/,'')
+    .replace(/[.,&'"\/]/g,' ')
+    .replace(/\b(llc|inc|incorporated|corp|corporation|co|ltd|lp|llp|the)\b/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+function _arFindClient(name){
+  const n=_arNorm(name); if(!n) return null;
+  let c=clients.find(c=>_arNorm(c.company)===n || _arNorm(c.name)===n);
+  if(c) return c;
+  if(n.length>=5){
+    c=clients.find(c=>{ const cc=_arNorm(c.company), cn=_arNorm(c.name);
+      return (cc.length>=5 && (cc.includes(n)||n.includes(cc))) || (cn.length>=5 && (cn.includes(n)||n.includes(cn))); });
+    if(c) return c;
+  }
+  return null;
+}
+async function arMatchUnmatched(){
+  const unmatched=invoices.filter(i=>!i.clientId && /\[unmatched:/i.test(i.notes||''));
+  if(!unmatched.length){ toast('No unmatched invoices to match'); return; }
+  const updates=[];
+  unmatched.forEach(inv=>{
+    const m=(inv.notes||'').match(/\[unmatched:\s*([^\]]+)\]/i); const nm=m?m[1]:'';
+    const c=_arFindClient(nm);
+    if(c) updates.push({...inv, clientId:c.id, notes:(inv.notes||'').replace(/\s*\[unmatched:[^\]]*\]/i,'').trim()});
+  });
+  if(!updates.length){ toast(unmatched.length+' still unmatched — use Assign on each',true); return; }
+  toast('Matching '+updates.length+'...');
+  let ok=0;
+  for(const rec of updates){ const res=await api({action:'update',type:'invoices',record:rec}); if(res&&res.success){ ok++; const local=invoices.find(x=>x.id==rec.id); if(local){ local.clientId=rec.clientId; local.notes=rec.notes; } } }
+  toast(ok+' matched \u2713'+(unmatched.length-ok>0?(', '+(unmatched.length-ok)+' still need Assign'):''));
+  await syncAll(); renderAR(); renderARByCustomer();
+}
+function arAssignCustomer(encName){
+  const name=decodeURIComponent(encName);
+  document.getElementById('ar-assign-name').value=name;
+  document.getElementById('ar-assign-label').textContent='Unmatched: '+name;
+  const sel=document.getElementById('ar-assign-clientId');
+  const opts=clients.slice().sort((a,b)=>((a.company||a.name||'')).toLowerCase().localeCompare((b.company||b.name||'').toLowerCase()))
+    .map(c=>`<option value="${c.id}">${(c.company||c.name)}${c.company&&c.name?(' — '+c.name):''}</option>`).join('');
+  sel.innerHTML='<option value="">— Select Customer —</option>'+opts;
+  document.getElementById('ar-assign-modal').classList.add('open');
+}
+async function saveArAssign(){
+  const name=document.getElementById('ar-assign-name').value;
+  const cid=document.getElementById('ar-assign-clientId').value;
+  if(!cid){ toast('Pick a customer',true); return; }
+  const targets=invoices.filter(i=>!i.clientId && new RegExp('\\[unmatched:\\s*'+name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*\\]','i').test(i.notes||''));
+  if(!targets.length){ toast('None found',true); return; }
+  toast('Assigning '+targets.length+'...');
+  let ok=0;
+  for(const inv of targets){ const rec={...inv, clientId:cid, notes:(inv.notes||'').replace(/\s*\[unmatched:[^\]]*\]/i,'').trim()};
+    const res=await api({action:'update',type:'invoices',record:rec}); if(res&&res.success){ ok++; const local=invoices.find(x=>x.id==inv.id); if(local){ local.clientId=cid; local.notes=rec.notes; } } }
+  toast(ok+' invoice'+(ok!==1?'s':'')+' assigned \u2713');
+  closeModals(); await syncAll(); renderAR(); renderARByCustomer();
+}
 function renderARByCustomer(){
   const list=document.getElementById('ar-bycustomer-list');
   if(!list) return;
@@ -5976,7 +6047,7 @@ function renderARByCustomer(){
           <div style="text-align:right">
             <div style="font-family:var(--fm);font-size:9px;color:var(--muted2)">DUE</div>
             <div style="font-family:var(--fh);font-size:20px;color:${r.due>0?'var(--red)':'var(--green)'}">${fmt(r.due)}</div>
-            ${r.clientId?`<button class="btn-small" style="color:var(--green);border-color:var(--green);margin-top:6px" onclick="recordCustomerPayment('${r.clientId}')">💵 Record Payment</button>`:''}
+            ${r.clientId?`<button class="btn-small" style="color:var(--green);border-color:var(--green);margin-top:6px" onclick="recordCustomerPayment('${r.clientId}')">💵 Record Payment</button>`:`<button class="btn-small" style="color:var(--blue);border-color:var(--blue);margin-top:6px" onclick="arAssignCustomer('${encodeURIComponent(r.label)}')">🔗 Assign Customer</button>`}
           </div>
         </div>
         ${r.payments && r.payments.length ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
